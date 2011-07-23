@@ -9,12 +9,20 @@ class EstStats(ExpSwitcher):
         if len(sensels_shape) != 1:
             self.unsupported('I assume 1D signals.')
             
-        self.num_sensels = sensels_shape[0]
+        #self.num_sensels = sensels_shape[0]
         self.y_stats = MeanCovariance()
 
     def process_observations(self, observations):
         self.y_stats.update(observations)
         
+    def get_state(self):
+        return dict(y_stats=self.y_stats)
+    
+    def set_state(self, state):
+#        if not isinstance(state, dict) or not 'y_stats' in state:
+#            raise ValueError('Invalid state---perhaps I changed the format?')
+        self.y_stats = state['y_stats']
+    
     def publish(self, pub):
         Py = self.y_stats.get_covariance()
         Ry = self.y_stats.get_correlation()

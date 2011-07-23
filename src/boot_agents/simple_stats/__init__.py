@@ -1,2 +1,2 @@
 from .exp_switcher import *
-from .estimate_covariance import *
+from .est_stats import *
