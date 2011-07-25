@@ -8,3 +8,4 @@ logger.setLevel(logging.DEBUG)
 
 
 from .simple_stats import *
+from .bds import *
