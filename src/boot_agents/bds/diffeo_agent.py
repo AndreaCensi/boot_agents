@@ -73,6 +73,7 @@ class DiffeoAgent(AgentInterface):
             for i in range(n):
                 diff = y0[i] - yT
                 score = np.abs(diff)
+                score = scale_score(score)
                 S[i, :] = score
 
             self.D[ui].update(S)
@@ -81,27 +82,7 @@ class DiffeoAgent(AgentInterface):
         self.q_u.pop(0)
         self.q_times.pop(0)
         self.q_y.pop(0)
-
-#        
-#        
-#        # XXX: not unbiased
-#        y_dot = (y - self.last_y) / dt
-#        
-#        # T =  (y - E{y}) * y_dot * u
-#        y_n = y - self.y_stats.get_mean()       
-#        T = outer(self.u, outer(y_n, y_dot))         
-#
-#        self.T.update(T)
-#        self.y_stats.update(y)
-#        self.y_dot_stats.update(y_dot)
-#        
-#        self.last_y = y
-        
-#        if int(self.time) % 100 == 0 and int(self.time) != self.time_last_print:     
-#            self.print_averages()
-#            self.time_last_print = int(self.time)
-#        
-
+ 
     state_vars = ['D', 'q_u', 'q_y', 'q_times', 'cmds']
     
     def get_state(self):
@@ -130,11 +111,22 @@ class DiffeoAgent(AgentInterface):
         publisher.text('cmds', s)
 
         self.Ds = [] 
+        self.Dn = [] 
+        alpha = 0.3
+#        alpha = 0.01 # cam
         for i in range(len(self.cmds)):
             self.Ds.append(discretize(self.D[i].get_value()))
+            self.Dn.append(normalize(self.D[i].get_value(), alpha))
             
         for i in range(len(self.cmds)):
-            name = 'D%dn' % i
+            name = 'D%dn_normalize' % i
+            value = self.Dn[i]
+            
+            publisher.array_as_image(name, value,
+                                    filter=publisher.FILTER_SCALE,
+                                    filter_params={})
+        for i in range(len(self.cmds)):
+            name = 'D%d_discretize' % i
             value = self.Ds[i]
             
             publisher.array_as_image(name, value,
@@ -149,26 +141,45 @@ class DiffeoAgent(AgentInterface):
                                     filter=publisher.FILTER_SCALE,
                                     filter_params={})
 
+        a = 1; b = 3
+        a = 0; b = 1 # cam
+        Da = self.Dn[a]
+        Db = self.Dn[b]
+        Dma = Da.T
+        Dmb = Db.T
+        D_a_b = np.dot(Db, Da)
+        D_a_b_ma = np.dot(Dma, D_a_b) 
+        D_a_b_ma_mb = np.dot(Dmb, D_a_b_ma)
+        publisher.array_as_image("f:a", Da, publisher.FILTER_SCALE)
+        publisher.array_as_image("f:b", Db, publisher.FILTER_SCALE)
+        publisher.array_as_image("f:a,b", D_a_b, publisher.FILTER_SCALE)
+        publisher.array_as_image("f:a,b,ma", D_a_b_ma, publisher.FILTER_SCALE)
+        publisher.array_as_image("f:a,b,ma,mb", D_a_b_ma_mb, publisher.FILTER_SCALE)
+        
 
 def discretize(M):
     X = np.zeros(M.shape)
     for i in range(M.shape[0]):
         which = np.argmin(M[i, :])
         X[i, which] = 1 
-    return X
-#    
-#        publisher.array_as_image(name='P', value=self.P,
-#                                         filter=publisher.FILTER_POSNEG,
-#                                         filter_params={})
-#                
-#        max_value = np.abs(self.T).max()
-#        
-#        for i in range(self.num_commands):
-#            Ti = self.T[i, :, :]
-#            publisher.array_as_image(name='T%d' % i, value=Ti,
-#                                         filter=publisher.FILTER_POSNEG,
-#                                         filter_params={'max_value':max_value})
-#                
+    return X 
 
+def normalize(M, alpha):
+    X = np.zeros(M.shape)
+    for i in range(M.shape[0]):
+        dist = scale_score(M[i, :])
+        p = np.exp(-dist * alpha)
+        p /= p.sum()
+        X[i, :] = p
+    return X 
+
+
+def scale_score(x):
+    y = x.copy()
+    order = np.argsort(x.flat)
+    # Black magic ;-) Probably the smartest thing I came up with today. 
+    order_order = np.argsort(order)
+    y.flat[:] = order_order.astype(y.dtype)
+    return y
 
 
