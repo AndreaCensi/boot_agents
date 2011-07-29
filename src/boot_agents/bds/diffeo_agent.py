@@ -20,8 +20,7 @@ class DiffeoAgent(AgentInterface):
     def init(self, sensels_shape, commands_spec):
         choices = [[a, 0, b] for a, b in commands_spec]
         self.cmds = list(itertools.product(*choices))
-        self.info('cmds: %s' % self.cmds)
-        
+        self.info('cmds: %s' % self.cmds)  
         interval = lambda: np.random.exponential(self.beta, 1)
         value = lambda: self.cmds[np.random.randint(len(self.cmds))]
         self.switcher = RandomSwitcher(interval, value)
@@ -29,7 +28,7 @@ class DiffeoAgent(AgentInterface):
         
         n = sensels_shape[0]
         for i in range(len(self.cmds)):
-            self.D[i].update(np.zeros((n, n)))
+            self.D[i].update(np.zeros((n, n), dtype='float32'))
             
     def cmd2index(self, u):
         for i, cmd in enumerate(self.cmds):
@@ -69,7 +68,7 @@ class DiffeoAgent(AgentInterface):
             yT = self.q_y[-1]
             
             n = y0.size
-            S = np.zeros((n, n))
+            S = np.zeros((n, n), dtype='float32')
             for i in range(n):
                 diff = y0[i] - yT
                 score = np.abs(diff)
@@ -101,7 +100,7 @@ class DiffeoAgent(AgentInterface):
             name = 'D%d' % i
             value = self.D[i].get_value()
             
-            publisher.array_as_image(name, value,
+            publisher.array_as_image(('D', name), value,
                                     filter=publisher.FILTER_SCALE,
                                     filter_params={'max_value':max_value})
 
@@ -122,14 +121,14 @@ class DiffeoAgent(AgentInterface):
             name = 'D%dn_normalize' % i
             value = self.Dn[i]
             
-            publisher.array_as_image(name, value,
+            publisher.array_as_image(('normalize', name), value,
                                     filter=publisher.FILTER_SCALE,
                                     filter_params={})
         for i in range(len(self.cmds)):
             name = 'D%d_discretize' % i
             value = self.Ds[i]
             
-            publisher.array_as_image(name, value,
+            publisher.array_as_image(('discretize', name), value,
                                     filter=publisher.FILTER_SCALE,
                                     filter_params={})
 
@@ -158,17 +157,24 @@ class DiffeoAgent(AgentInterface):
         
 
 def discretize(M):
-    X = np.zeros(M.shape)
+    X = np.zeros(M.shape, dtype='float32')
     for i in range(M.shape[0]):
-        which = np.argmin(M[i, :])
-        X[i, which] = 1 
+        score = scale_score(M[i, :])
+        which, = np.nonzero(score <= 4)
+        X[i, which] += 1 
+    for j in range(M.shape[0]):
+        score = scale_score(M[:, j])
+        which, = np.nonzero(score <= 4)
+        X[which, j] += 1 
     return X 
 
 def normalize(M, alpha):
     X = np.zeros(M.shape)
     for i in range(M.shape[0]):
         dist = scale_score(M[i, :])
-        p = np.exp(-dist * alpha)
+#        p = np.exp(-dist * alpha)
+#        p = np.exp(-dist * alpha)
+        p = -dist
         p /= p.sum()
         X[i, :] = p
     return X 
