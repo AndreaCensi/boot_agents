@@ -45,12 +45,14 @@ class BDSAgent(ExpSwitcher):
         y = np.minimum(2.0, y)
         y[100] = np.random.rand()
         w = obs.commands
-        A = np.array([[1, 1], [1, -1]])
+        # A = np.array([[1, 1], [1, -1]])
+        A = np.eye(2)
         u = np.dot(A, w)
+        
 #        s = vec2subspace(u)
 #        accept = s[0] == s[1]
         accept = True 
-        accept = (u[0] != 0) and (u[1] == 0)
+       # accept = (u[0] != 0) and (u[1] == 0)
 #        self.info('%s  w %s u %s accept? %s' % (obs.counter, w, u, accept))
         
         
@@ -70,32 +72,19 @@ class BDSAgent(ExpSwitcher):
             if not accept: return
             
             y_sync, y_dot_sync = self.y_deriv.get_value()
-            #y_mean = self.y_stats.get_mean()
+                
+            y_mean = self.y_stats.get_mean()
             # T =  (y - E{y}) * y_dot * u
-            #y_n = y_sync - y_mean     
-            # 
-#            y_n = y_sync   
-#            T = outer(u, outer(y_n, y_dot_sync))         
-#            self.T.update(T , dt)
-#            self.yy.update(outer(y_n, y_n), dt)
-#            self.uu.update(outer(u, u), dt)
-#        
-            self.bds_estimator.update(u=u, y=y_sync, y_dot=y_dot_sync, dt=dt)
+            y_n = y_sync - y_mean      
+            self.bds_estimator.update(u=u.astype('float32'),
+                                      y=y_n.astype('float32'),
+                                      y_dot=y_dot_sync.astype('float32'),
+                                      dt=dt)
             
             self.u_stats.update(u, dt)
             self.y_dot_stats.update(y_dot_sync, dt)
             self.y_dot_abs_stats.update(np.abs(y_dot_sync), dt)
 
-            #self.count += 1
-
-#            if self.count % 200 == 0:
-#                P = self.y_stats.get_covariance().copy()
-#                for i in range(P.shape[0]):
-#                    if P[i, i] == 0:
-#                        P[i, i] = 1
-#                self.info('updating pinv0')
-#                self.Pinv0 = np.linalg.pinv(P, rcond=1e-1) # TODO: make param 
-                
     
     def get_state(self):
         return self.get_state_vars(BDSAgent.state_vars)
@@ -141,7 +130,7 @@ class BDSAgent(ExpSwitcher):
         self.u_stats.publish(publisher, 'u')
         self.y_dot_stats.publish(publisher, 'y_dot')
         self.y_dot_abs_stats.publish(publisher, 'y_dot_abs')
-        self.y_dot_abs_stats.publish(publisher, 'dt')
+#        self.dt_stats.publish(publisher, 'dt')
         
     
         publisher.array_as_image('Tplus', Tplus, **params)

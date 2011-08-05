@@ -12,8 +12,7 @@
 from contracts import contract
 import numpy as np
 from numpy.linalg.linalg import pinv, LinAlgError
-from numpy import  multiply
-from numpy.lib.shape_base import kron
+from numpy import  multiply 
 outer = multiply.outer
 
 from . import logger
@@ -87,11 +86,15 @@ class ExpectationFast:
             If max_window is given, the covariance is computed
             over a certain interval. 
         '''
+        self.max_window = max_window
         self.accum_mass = 0
         self.accum = None
-        self.max_window = max_window
         self.needs_normalization = True
-        
+    
+    def reset(self, cur_mass=1.0):    
+        self.accum = self.get_value()
+        self.accum_mass = cur_mass    
+
     def update(self, value, dt=1.0):
         if self.accum is None:
             self.accum = value * dt
@@ -111,6 +114,7 @@ class ExpectationFast:
             self.accum_mass += dt
             
         if self.max_window and self.accum_mass > self.max_window:
+            self.accum = self.max_window * self.get_value()
             self.accum_mass = self.max_window 
     
     def get_value(self):
@@ -239,5 +243,8 @@ class MeanCovariance:
 #            pylab.legend()
             
         with pub.plot(n('P_diagonal')) as pylab:
+            pylab.plot(P.diagonal(), 'x-')
+
+        with pub.plot(n('P_diagonal_sqrt')) as pylab:
             pylab.plot(np.sqrt(P.diagonal()), 'x-')
     
