@@ -94,16 +94,21 @@ class BDSEstimator2:
         self.last_Py_dot = Py_dot
         self.last_Py_dot_pred = Py_dot_pred
         
-        
     def get_yy_inv(self, rcond=1e-5):
-        if self.yy_inv_needs_update:
+        if not hasattr(self, 'yy_inv_rcond'):
+            setattr(self, 'yy_inv_rcond', 0)
+        if self.yy_inv_needs_update or (rcond != self.yy_inv_rcond):
             self.yy_inv_needs_update = False
             yy = self.yy.get_value()
-            self.yy_inv = np.linalg.pinv(yy, rcond) 
+            self.yy_inv = np.linalg.pinv(yy, rcond)
+            self.yy_inv_rcond = rcond 
         return self.yy_inv 
     
     def get_M(self, rcond=1e-5, use_old_version=False):
-        if self.M is None or (self.M_needs_update and not use_old_version):
+        if not hasattr(self, 'M_rcond'):
+            setattr(self, 'M_rcond', 0)
+        needs_update = self.M_needs_update or (self.M_rcond != rcond)
+        if self.M is None or (needs_update and not use_old_version):
             self.M_needs_update = False
             T = self.get_T()
             if self.MP is None:
@@ -154,7 +159,7 @@ class BDSEstimator2:
         #params = dict(filter=pub.FILTER_POSNEG, filter_params={'skim':2})
         params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
-        rcond = 1e-3
+        rcond = 1e-2
         T = self.get_T()
         M = self.get_M(rcond)
         yy_inv = self.get_yy_inv(rcond)
@@ -165,13 +170,20 @@ class BDSEstimator2:
 
         y_dots_corr = self.y_dots_stats.get_correlation()
         n = T.shape[2]
-        fit = y_dots_corr[:n, n:].diagonal() # upper right
-
+        measured_corr = y_dots_corr[:n, n:].diagonal() # upper right
+        var_noise = self.y_dot_noise.get_covariance().diagonal()
+        var_prediction = y_dots_corr.diagonal()[n:]
+        invalid = var_noise == 0
+        var_noise[invalid] = 0
+        var_prediction[invalid] = 1
+        corrected_corr = measured_corr * np.sqrt(1 + var_noise / var_prediction) 
         with pub.plot('correlation') as pylab:
-            pylab.plot(fit, 'x')
+            pylab.plot(measured_corr, 'bx', label='raw')
+            pylab.plot(corrected_corr, 'rx', label='corrected')
             pylab.axis((-1, n, -0.1, 1.1))
             pylab.ylabel('correlation')
             pylab.xlabel('sensel')
+            pylab.legend()
             
         def pub_tensor(name, V):
             for i in range(V.shape[0]):
