@@ -171,20 +171,23 @@ class BDSEstimator2:
         y_dots_corr = self.y_dots_stats.get_correlation()
         n = T.shape[2]
         measured_corr = y_dots_corr[:n, n:].diagonal() # upper right
-        var_noise = self.y_dot_noise.get_covariance().diagonal()
-        var_prediction = y_dots_corr.diagonal()[n:]
-        invalid = var_noise == 0
-        var_noise[invalid] = 0
-        var_prediction[invalid] = 1
-        corrected_corr = measured_corr * np.sqrt(1 + var_noise / var_prediction) 
-        with pub.plot('correlation') as pylab:
-            pylab.plot(measured_corr, 'bx', label='raw')
-            pylab.plot(corrected_corr, 'rx', label='corrected')
-            pylab.axis((-1, n, -0.1, 1.1))
-            pylab.ylabel('correlation')
-            pylab.xlabel('sensel')
-            pylab.legend()
-            
+        try:
+            var_noise = self.y_dot_noise.get_covariance().diagonal()
+            var_prediction = y_dots_corr.diagonal()[n:]
+            invalid = var_noise == 0
+            var_noise[invalid] = 0
+            var_prediction[invalid] = 1
+            corrected_corr = measured_corr * np.sqrt(1 + var_noise / var_prediction) 
+            with pub.plot('correlation') as pylab:
+                pylab.plot(measured_corr, 'bx', label='raw')
+                pylab.plot(corrected_corr, 'rx', label='corrected')
+                pylab.axis((-1, n, -0.1, 1.1))
+                pylab.ylabel('correlation')
+                pylab.xlabel('sensel')
+                pylab.legend()
+        except:
+            pass # XXX: 
+                    
         def pub_tensor(name, V):
             for i in range(V.shape[0]):
                 pub.array_as_image((name, '%s%d' % (name, i)), V[i, :, :], **params)

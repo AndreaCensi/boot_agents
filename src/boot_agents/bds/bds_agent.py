@@ -92,7 +92,9 @@ class BDSAgent(ExpSwitcher):
     
     
     def publish(self, publisher):
-        if self.count < 10: return
+        if self.count < 10: 
+            self.info('Skipping publishing as count=%d' % self.count)
+            return
 
         params = dict(filter=publisher.FILTER_POSNEG, filter_params={'skim':2})
 
@@ -124,6 +126,8 @@ class BDSAgent(ExpSwitcher):
             publisher.array_as_image(('M', 'Mminus'), Mminus, **params)
              
              
+        publisher.array('rand', np.random.rand(10))
+        
         self.y_stats.publish(publisher, 'y')
         self.u_stats.publish(publisher, 'u')
         self.y_dot_stats.publish(publisher, 'y_dot')
