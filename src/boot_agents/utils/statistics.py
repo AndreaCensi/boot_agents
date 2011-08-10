@@ -100,8 +100,10 @@ class ExpectationFast:
             self.accum = value * dt
             self.accum_mass = dt
             self.needs_normalization = True
-            self.buf = np.empty_like(value) * np.NaN
-            self.result = np.empty_like(value) * np.NaN
+            self.buf = np.empty_like(value)
+            self.buf.fill(np.NaN)
+            self.result = np.empty_like(value)
+            self.result.fill(np.NaN)
         else:
             if False:
                 np.multiply(value, dt, self.buf) # buf = value * dt

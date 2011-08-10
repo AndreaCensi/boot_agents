@@ -5,7 +5,6 @@ from contracts import contract
 from . import BDSEstimator2
 
 
-
 class BDSAgent(ExpSwitcher):
     
     def __init__(self, beta, y_dot_tolerance=1, skip=1):
@@ -46,13 +45,13 @@ class BDSAgent(ExpSwitcher):
         y[100] = np.random.rand()
         w = obs.commands
         # A = np.array([[1, 1], [1, -1]])
-        A = np.eye(2)
+        A = np.eye(w.size)
         u = np.dot(A, w)
         
 #        s = vec2subspace(u)
 #        accept = s[0] == s[1]
         accept = True 
-       # accept = (u[0] != 0) and (u[1] == 0)
+        # accept = (u[0] != 0) and (u[1] == 0)
 #        self.info('%s  w %s u %s accept? %s' % (obs.counter, w, u, accept))
         
         
@@ -84,7 +83,6 @@ class BDSAgent(ExpSwitcher):
             self.u_stats.update(u, dt)
             self.y_dot_stats.update(y_dot_sync, dt)
             self.y_dot_abs_stats.update(np.abs(y_dot_sync), dt)
-
     
     def get_state(self):
         return self.get_state_vars(BDSAgent.state_vars)

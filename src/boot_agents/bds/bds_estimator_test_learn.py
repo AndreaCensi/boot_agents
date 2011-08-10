@@ -8,7 +8,7 @@ def main():
     N = 20
     K = 2
     
-#    M = np.random.rand(N, N, K)
+    # M = np.random.rand(N, N, K)
     M = np.zeros((K, N, N))
     for i, j in itertools.product(range(N), range(N)):
         if i <= j:

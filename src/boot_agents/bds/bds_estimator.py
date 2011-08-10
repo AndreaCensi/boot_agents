@@ -211,9 +211,8 @@ class BDSEstimator2:
         pub.array_as_image(('stats', 'uu'), self.get_uu(), **params)
 
         with pub.plot('yy_svd') as pylab:
-            u, s, v = np.linalg.svd(yy)
+            u, s, v = np.linalg.svd(yy) #@UnusedVariable
             s /= s[0]
-            
             pylab.semilogy(s, 'bx-')
             pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
 
