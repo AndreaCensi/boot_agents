@@ -7,16 +7,18 @@ from boot_agents.diffeo import diffeomorphism_to_rgb
 def f_identity(X): 
     return X
 
+P = 3.0
+
 def f_pow3(X):
-    return np.power(X[0], 3), np.power(X[1], 3)
+    return np.power(X[0], P), np.power(X[1], P)
 
 def f_pow3x(X):
-    return np.power(X[0], 3), X[1]
+    return np.power(X[0], P), X[1]
 
 def f_pow3x_inv(X):
     A = np.abs(X[0])
     S = np.sign(X[0])
-    return S * np.power(A, 1 / 3.0), X[1] 
+    return S * np.power(A, 1 / P), X[1] 
 
 def mod1d(x):
     ''' bounds in [-1,1] '''
@@ -86,5 +88,8 @@ def diffeo_creation_suite(f):
     filename = 'out/diffeo_creation_suite/%s.html' % name
     print('Writing to %r.' % filename)
     r.to_html(filename)
+    
+
+
     
     

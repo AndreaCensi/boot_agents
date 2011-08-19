@@ -1,5 +1,4 @@
 from . import np, coords_iterate, new_contract, contract
-from geometry.basic_utils import assert_allclose
 
 @new_contract
 @contract(x='array[MxNx2](int32)')

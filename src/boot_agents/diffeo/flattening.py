@@ -50,3 +50,8 @@ class Flattening:
             k = flat[i, j]
             res[i, j, :] = self.index2cell[k, :]
         return res
+
+    def random_coords(self):
+        k = np.random.randint(self.size)
+        return tuple(self.index2cell[k, :])
+    

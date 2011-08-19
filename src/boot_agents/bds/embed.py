@@ -1,10 +1,10 @@
 from . import ExpSwitcher
 from ..utils import MeanCovariance
-from boot_agents.utils.statistics import cov2corr
 import numpy as np
-from geometry.mds_algos import spherical_mds, mds, inner_product_embedding
+from geometry import   inner_product_embedding
 from boot_agents.bds.bds_agent import DerivativeBox
-from boot_agents.bds.diffeo_agent import scale_score
+from ..utils import scale_score
+
 
 class Embed(ExpSwitcher):
     ''' A simple agent that estimates the covariance of the observations. '''
@@ -55,8 +55,6 @@ class Embed(ExpSwitcher):
             pylab.plot(S[0, :], S[1, :], '.')
         self.z_stats.publish(pub, 'z_stats')
         
-
-
 
 
 def discretize(M, w):

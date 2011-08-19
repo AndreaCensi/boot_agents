@@ -1,10 +1,8 @@
-from bootstrapping_olympics.interfaces.commands_utils import random_commands 
-import numpy as np
-from boot_agents.utils import MeanCovariance, Expectation, outer
-from boot_agents.simple_stats import ExpSwitcher
-from bootstrapping_olympics.interfaces.agent_interface import AgentInterface
+from ..utils import Expectation, RandomCanonicalCommand, scale_score
 from boot_agents.simple_stats.exp_switcher import RandomSwitcher
-import itertools
+from bootstrapping_olympics.interfaces.agent_interface import AgentInterface
+from . import np
+
 
 
 class DiffeoAgent(AgentInterface):
@@ -18,11 +16,8 @@ class DiffeoAgent(AgentInterface):
         self.q_u = []
         
     def init(self, sensels_shape, commands_spec):
-        choices = [[a, 0, b] for a, b in commands_spec]
-        self.cmds = list(itertools.product(*choices))
-        self.info('cmds: %s' % self.cmds)  
         interval = lambda: np.random.exponential(self.beta, 1)
-        value = lambda: self.cmds[np.random.randint(len(self.cmds))]
+        value = RandomCanonicalCommand(commands_spec).sample
         self.switcher = RandomSwitcher(interval, value)
         self.D = [Expectation() for i in range(len(self.cmds))] #@UnusedVariable
         
@@ -178,14 +173,4 @@ def normalize(M, alpha):
         p /= p.sum()
         X[i, :] = p
     return X 
-
-
-def scale_score(x):
-    y = x.copy()
-    order = np.argsort(x.flat)
-    # Black magic ;-) Probably the smartest thing I came up with today. 
-    order_order = np.argsort(order)
-    y.flat[:] = order_order.astype(y.dtype)
-    return y
-
 

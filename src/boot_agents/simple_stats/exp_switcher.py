@@ -1,8 +1,9 @@
 from bootstrapping_olympics import AgentInterface, random_commands
-import numpy as np
+
+from . import  np
+from ..utils import RandomCanonicalCommand
 
 class RandomSwitcher:
-    
     def __init__(self, interval_function, value_function):
         self.interval_function = interval_function
         self.value_function = value_function
@@ -19,7 +20,10 @@ class RandomSwitcher:
     
 class ExpSwitcher(AgentInterface):
     ''' A simple agent that switches commands randomly according 
-        to an exponential distribution. '''
+        to an exponential distribution. 
+        
+        ``beta`` is the scale parameter; E{switch} = beta
+    '''
 
     def __init__(self, beta):
         self.beta = beta 
@@ -28,12 +32,32 @@ class ExpSwitcher(AgentInterface):
         interval = lambda: np.random.exponential(self.beta, 1)
         value = lambda: random_commands(commands_spec)
         self.switcher = RandomSwitcher(interval, value)
-
+        self.dt = 0
+        
     def process_observations(self, observations):
-        pass
+        self.dt = observations.dt
 
     def choose_commands(self):
-        dt = 0.1 # XXX
-        return self.switcher.get_value(dt)
+        return self.switcher.get_value(self.dt)
+
+
+
+class ExpSwitcherCanonical(AgentInterface):
+    ''' Only canonical commands are chosen. '''
+
+    def __init__(self, beta):
+        self.beta = beta 
+        
+    def init(self, sensels_shape, commands_spec):
+        interval = lambda: np.random.exponential(self.beta, 1)
+        value = RandomCanonicalCommand(commands_spec).sample
+        self.switcher = RandomSwitcher(interval, value)
+        self.dt = 0
+        
+    def process_observations(self, observations):
+        self.dt = observations.dt
+
+    def choose_commands(self):
+        return self.switcher.get_value(self.dt)
 
 
