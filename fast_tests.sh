@@ -1,0 +1,1 @@
+nosetests -w src -v -a '!slow'

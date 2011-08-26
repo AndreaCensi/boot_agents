@@ -1,3 +1,6 @@
 *.pyc
 *.egg-info
 bds_estimator_test_learn.html*
+.noseids
+src/out
+src/boot_agents/out

@@ -1,4 +1,3 @@
-
 #Here are a couple references on computing sample variance.
 #
 #Chan, Tony F.; Golub, Gene H.; LeVeque, Randall J. (1983). 
@@ -9,13 +8,14 @@
 #Means and Variances. Journal of the American Statistical Association,
 # Vol. 69, No. 348, 859-866. 
  
-from contracts import contract
 import numpy as np
 from numpy.linalg.linalg import pinv, LinAlgError
 from numpy import  multiply 
-outer = multiply.outer
 
-from . import logger
+from . import logger, Expectation
+
+
+outer = multiply.outer
 
 def cov2corr(covariance, zero_diagonal=False):
     ''' 
@@ -45,97 +45,6 @@ def cov2corr(covariance, zero_diagonal=False):
     
     return correlation
 
-@contract(A='array', wA='>=0', B='array', wB='>=0')
-def weighted_average(A, wA, B, wB):
-    mA = wA / (wA + wB)
-    mB = wB / (wA + wB)
-    return (mA * A + mB * B) 
-
-
-class ExpectationSlow:
-    ''' A class to compute the mean of a quantity over time '''
-    def __init__(self, max_window=None):
-        ''' 
-            If max_window is given, the covariance is computed
-            over a certain interval. 
-        '''
-        self.num_samples = 0
-        self.value = None
-        self.max_window = max_window
-        
-    def update(self, value, dt=1.0):
-        if self.value is None:
-            self.value = value
-        else:
-            self.value = weighted_average(self.value, float(self.num_samples), value, float(dt)) 
-        self.num_samples += dt
-        if self.max_window and self.num_samples > self.max_window:
-            self.num_samples = self.max_window 
-    
-    def get_value(self):
-        return self.value
-    
-    def get_mass(self):
-        return self.num_samples
-
-
-class ExpectationFast:
-    ''' A more efficient implementation. '''
-    def __init__(self, max_window=None):
-        ''' 
-            If max_window is given, the covariance is computed
-            over a certain interval. 
-        '''
-        self.max_window = max_window
-        self.accum_mass = 0
-        self.accum = None
-        self.needs_normalization = True
-    
-    def reset(self, cur_mass=1.0):    
-        self.accum = self.get_value()
-        self.accum_mass = cur_mass    
-
-    def update(self, value, dt=1.0):
-        if self.accum is None:
-            self.accum = value * dt
-            self.accum_mass = dt
-            self.needs_normalization = True
-            self.buf = np.empty_like(value)
-            self.buf.fill(np.NaN)
-            self.result = np.empty_like(value)
-            self.result.fill(np.NaN)
-        else:
-            if False:
-                np.multiply(value, dt, self.buf) # buf = value * dt
-                np.add(self.buf, self.accum, self.accum) # accum += buf
-            else:
-                self.buf = value * dt
-                self.accum += self.buf
-                
-            self.needs_normalization = True
-            self.accum_mass += dt
-            
-        if self.max_window and self.accum_mass > self.max_window:
-            self.accum = self.max_window * self.get_value()
-            self.accum_mass = self.max_window 
-    
-    def get_value(self):
-        if self.needs_normalization:
-            ratio = 1.0 / self.accum_mass
-            if False:
-                np.multiply(ratio, self.accum, self.result)
-            else:
-                self.result = ratio * self.accum
-            self.needs_normalization = False
-        return self.result
-    
-    def get_mass(self):
-        return self.accum_mass
-
-
-Expectation = ExpectationFast
-#Expectation = ExpectationSlow
-
 class MeanCovariance:
     ''' Computes mean and covariance of a quantity '''
     def __init__(self, max_window=None):
@@ -164,15 +73,8 @@ class MeanCovariance:
         self.mean_accum.update(value, dt)
         mean = self.mean_accum.get_value()        
         value_norm = value - mean
-        
-#        for i in range(n):
-#            x = value_norm[i] * value_norm
-#            print x.shape, x.dtype, self.P_t.shape, self.P_t.dtype
-#            self.P_t[:, i] = x
-#            
-#        P = self.P_
+         
         P = outer(value_norm, value_norm)
-#        P = self.P_t.copy()
         self.covariance_accum.update(P, dt)
         self.last_value = value
     
@@ -229,21 +131,13 @@ class MeanCovariance:
         if publish_information:
             P_inv = self.get_information()
             pub.array_as_image(n('information'), P_inv)
-#        pub.array_as_image(n('information_n'), np.linalg.pinv(R))
         
         with pub.plot(n('y_stats')) as pylab:
             pylab.plot(Ey, label='expectation')
             pylab.plot(y_max, label='max')
             pylab.plot(y_min, label='min')
             pylab.legend()
-
-#        
-#        with pub.plot(n('y_stats_log')) as pylab:
-#            pylab.semilogy(Ey, label='expectation')
-#            pylab.semilogy(y_max, label='max')
-#            pylab.semilogy(y_min, label='min')
-#            pylab.legend()
-            
+ 
         with pub.plot(n('P_diagonal')) as pylab:
             pylab.plot(P.diagonal(), 'x-')
 

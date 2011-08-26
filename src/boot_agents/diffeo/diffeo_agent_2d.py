@@ -1,11 +1,10 @@
-from . import DiffeomorphismEstimator
-from boot_agents.simple_stats.exp_switcher import RandomSwitcher
+from . import DiffeomorphismEstimator, PureCommands
+from ..simple_stats import RandomSwitcher
+from ..utils import RandomCanonicalCommand
 from bootstrapping_olympics.interfaces import AgentInterface
 from contracts import contract
-import numpy as np
 from numpy.core.numeric import allclose
-from ..utils import RandomCanonicalCommand
-from boot_agents.diffeo.pure_commands import PureCommands
+import numpy as np
 
 __all__ = ['DiffeoAgent2Db']
 

@@ -1,8 +1,7 @@
-from ..utils import Expectation, RandomCanonicalCommand, scale_score
-from boot_agents.simple_stats.exp_switcher import RandomSwitcher
-from bootstrapping_olympics.interfaces.agent_interface import AgentInterface
 from . import np
-
+from ..utils import Expectation, RandomCanonicalCommand, scale_score
+from boot_agents.simple_stats import RandomSwitcher
+from bootstrapping_olympics.interfaces import AgentInterface
 
 
 class DiffeoAgent(AgentInterface):
@@ -135,7 +134,7 @@ class DiffeoAgent(AgentInterface):
                                     filter=publisher.FILTER_SCALE,
                                     filter_params={})
 
-        a = 1; b = 3
+        # a = 1; b = 3
         a = 0; b = 1 # cam
         Da = self.Dn[a]
         Db = self.Dn[b]

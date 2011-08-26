@@ -1,22 +1,23 @@
-import numpy as np
-from boot_agents.utils import  Expectation, outer
-from contracts import contract
-from contracts import new_contract
-import scipy.linalg
-from numpy.linalg.linalg import LinAlgError
-from boot_agents.utils import MeanCovariance
+from ..utils import Expectation, outer, MeanCovariance
+from contracts import contract, new_contract
 from geometry.formatting import printm
+from numpy.linalg.linalg import LinAlgError
+import numpy as np
+import scipy.linalg
 
 @contract(M='array[KxNxN]', y='array[N]', u='array[K]')
 def bds_dynamics(M, y, u):
     y_dot = np.dot(u, np.dot(M, y))
     return y_dot
 
+# TODO: put in contracts
 @new_contract
 @contract(x='array')
 def array_finite(x):
     return np.isfinite(x).all()
     
+__all__ = ['BDSEstimator2', 'bds_dynamics']
+
 class BDSEstimator2:
     
     def __init__(self):
@@ -165,7 +166,7 @@ class BDSEstimator2:
         yy_inv = self.get_yy_inv(rcond)
         yy = self.get_yy()
         
-        Tortho, Q = orthogonalize(T)
+        Tortho, Q = orthogonalize(T) #@UnusedVariable
         Tortho_norm = normalize(Tortho, yy)
 
         y_dots_corr = self.y_dots_stats.get_correlation()
@@ -209,9 +210,9 @@ class BDSEstimator2:
         self.y_dots_stats.publish(pub, 'y_dots')
         self.Py_dots_stats.publish(pub, 'Py_dots')
         
-        pub.array_as_image(('stats', 'yy'), self.get_yy(), **params)
-        pub.array_as_image(('stats', 'yy_inv'), yy_inv, **params)
-        pub.array_as_image(('stats', 'uu'), self.get_uu(), **params)
+        pub.array_as_image('yy', self.get_yy(), **params)
+        pub.array_as_image('yy_inv', yy_inv, **params)
+        pub.array_as_image('uu', self.get_uu(), **params)
 
         with pub.plot('yy_svd') as pylab:
             u, s, v = np.linalg.svd(yy) #@UnusedVariable
@@ -228,11 +229,31 @@ class BDSEstimator2:
             pylab.plot(q, 'x')
         
         with pub.plot('last_values_Py_dot') as pylab:
-            pylab.plot(self.last_Py_dot, 'kx-')
-            pylab.plot(self.last_Py_dot_pred, 'go-')
+            pylab.plot(self.last_Py_dot, 'kx-', label='actual')
+            pylab.plot(self.last_Py_dot_pred, 'go-', label='pred')
 
+        with pub.plot('last_values_y_dot') as pylab:
+            pylab.plot(self.last_y_dot, 'kx-', label='actual')
+            pylab.plot(self.last_y_dot_pred, 'go-', label='pred')
+
+        with pub.plot('last_values_Py_dot_v') as pylab:
+            x = self.last_Py_dot
+            y = self.last_Py_dot_pred
+            pylab.plot(x, y, '.')
+            pylab.xlabel('observation')
+            pylab.ylabel('prediction')
+
+        with pub.plot('last_values_y_dot_v') as pylab:
+            x = self.last_y_dot
+            y = self.last_y_dot_pred
+            pylab.plot(x, y, '.')
+            pylab.xlabel('observation')
+            pylab.ylabel('prediction')
+
+        
 
 def normalize(T, P):
+    # XXX: again
     #R = cov2corr(P)
     # Tn, Q = normalize(T, yy)
     Tn = np.empty_like(T)

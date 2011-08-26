@@ -1,7 +1,7 @@
-from . import ExpSwitcher
-from ..utils import MeanCovariance
-from boot_agents.utils.statistics import cov2corr
-import numpy as np
+from . import ExpSwitcher, np
+from ..utils import MeanCovariance, cov2corr
+
+__all__ = ['EstStats']
 
 class EstStats(ExpSwitcher):
     ''' A simple agent that estimates the covariance of the observations. '''

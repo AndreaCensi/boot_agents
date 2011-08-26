@@ -1,4 +1,5 @@
 from . import contract, np
+
 @contract(D='valid_diffeomorphism')
 def diffeomorphism_to_rgb(D, nquads=15):
     ''' Displays a diffeomorphism as an RGB image. '''

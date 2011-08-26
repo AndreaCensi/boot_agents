@@ -1,4 +1,4 @@
-from boot_agents.diffeo.pure_commands import PureCommands
+from boot_agents.diffeo import PureCommands
 import numpy as np
 
 def pure_commands_test():
@@ -12,3 +12,4 @@ def pure_commands_test():
     assert pc.last() == None
     pc.update(0, u1, y)
     
+    # TODO: finish

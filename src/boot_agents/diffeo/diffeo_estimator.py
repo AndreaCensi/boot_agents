@@ -1,6 +1,5 @@
-from . import cmap, coords_iterate, Flattening, contract, np
-from boot_agents.diffeo.diffeo_display import diffeomorphism_to_rgb, \
-    diffeomorphism_to_rgb_cont
+from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
+    np)
 
 
 class Diffeomorphism2D:
@@ -9,7 +8,7 @@ class Diffeomorphism2D:
         ''' d[i,j] gives the index '''
         self.d = d
         if variance is None:
-            variance = np.ones(d.shape[0], d.shape[1])
+            variance = np.ones((d.shape[0], d.shape[1]))
         self.variance = variance
         
 class DiffeomorphismEstimator():
@@ -155,7 +154,10 @@ class DiffeomorphismEstimator():
                 M = Mc
                 continue
             ok = np.isfinite(Mc)
-            M[ok] = Mc[ok]
+            max = np.nanmax(Mc)
+            if max > 0:
+                M[ok] = Mc[ok] / max
+            
         pub.array_as_image('coords', M, filter='scale')
         
         if self.last_y0 is not None: 

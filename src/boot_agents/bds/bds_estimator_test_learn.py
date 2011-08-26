@@ -1,8 +1,9 @@
-import numpy as np
-from boot_agents.bds.bds_estimator import BDSEstimator2, bds_dynamics
-from bootstrapping_olympics.ros_scripts.log_learn.reprep_publisher import ReprepPublisher
-import sys
+from . import np
+from boot_agents.bds import BDSEstimator2, bds_dynamics
+from bootstrapping_olympics.ros_scripts.log_learn.reprep_publisher import (
+    ReprepPublisher)
 import itertools
+import sys
 
 def main():   
     N = 20
@@ -47,7 +48,7 @@ def main():
             Mest = bds.get_M()
             e = np.abs(M - Mest).mean()
             error_M.append(e)    
-            Mest2, M2info = bds.get_M2()
+            Mest2, M2info = bds.get_M2() #@UnusedVariable
             e2 = np.abs(M - Mest2).mean()
             error_M2.append(e2)    
             sys.stderr.write('%8d/%d %-10.5g %-10.5g  \n' % (t, T, e, e2))

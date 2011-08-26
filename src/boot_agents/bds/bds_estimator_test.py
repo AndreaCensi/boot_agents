@@ -1,6 +1,6 @@
-import numpy as np 
-from boot_agents.bds import BDSEstimator2
+from . import BDSEstimator2
 from unittest import TestCase
+import numpy as np
 
       
 m = lambda k: np.zeros(k) 

@@ -1,10 +1,10 @@
-from . import ExpSwitcher
-from ..utils import MeanCovariance
-import numpy as np
-from geometry import   inner_product_embedding
-from boot_agents.bds.bds_agent import DerivativeBox
-from ..utils import scale_score
+from . import np
+from ..simple_stats import ExpSwitcher
+from ..utils import DerivativeBox, MeanCovariance, scale_score
+# FIXME: dependency to remove
+from geometry import inner_product_embedding
 
+__all__ = ['Embed']
 
 class Embed(ExpSwitcher):
     ''' A simple agent that estimates the covariance of the observations. '''
@@ -28,13 +28,6 @@ class Embed(ExpSwitcher):
         if self.y_deriv.ready():
             y, y_dot = self.y_deriv.get_value()
             self.z_stats.update(np.abs(y_dot), obs.dt)
-        
-    state_vars = ['y_stats', 'z_stats', 'count', 'y_deriv']
-    def get_state(self):
-        return self.get_state_vars(Embed.state_vars)
-    
-    def set_state(self, state):
-        return self.set_state_vars(state, Embed.state_vars)
     
     def publish(self, pub):
         if self.count < 10: return
@@ -54,8 +47,7 @@ class Embed(ExpSwitcher):
         with pub.plot(name='S') as pylab:
             pylab.plot(S[0, :], S[1, :], '.')
         self.z_stats.publish(pub, 'z_stats')
-        
-
+    
 
 def discretize(M, w):
     X = np.zeros(M.shape, dtype='float32')

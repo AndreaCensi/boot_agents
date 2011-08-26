@@ -1,14 +1,10 @@
 from boot_agents.diffeo import (DiffeomorphismEstimator,
-    diffeomorphism_from_function, diffeomorphism_to_rgb)
-from bootstrapping_olympics.ros_scripts.log_learn.reprep_publisher import (
-    ReprepPublisher)
+    diffeomorphism_from_function, coords_iterate, diffeomorphism_to_rgb_cont)
+from boot_agents.diffeo.tests.diffeo_creation_test import diffeomorphisms
 from contracts import contract
 from reprep import Report
 import numpy as np
 import time
-from boot_agents.diffeo import coords_iterate
-from boot_agents.diffeo.tests.diffeo_creation_test import diffeomorphisms
-from boot_agents.diffeo.diffeo_display import diffeomorphism_to_rgb_cont
 
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]', y='array[MxN]', returns='array[MxN]')
 def apply_diffeomorphism(diffeo, y):

@@ -1,11 +1,10 @@
-import numpy as np
-from . import Expectation
+from boot_agents.utils import ExpectationSlow, ExpectationFast
 from numpy.testing.utils import assert_allclose
-from boot_agents.utils.statistics import ExpectationFast
+import numpy as np
 
 def test_efficient_exp():
     shape = (4, 4)
-    for exp_class in [Expectation, ExpectationFast]:
+    for exp_class in [ExpectationSlow, ExpectationFast]:
         yield check_expectation_one, exp_class
 
         sequence = (np.random.randn(*shape) for i in range(1))
