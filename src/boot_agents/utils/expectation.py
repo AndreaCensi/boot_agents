@@ -24,7 +24,8 @@ class ExpectationSlow:
         if self.value is None:
             self.value = value
         else:
-            self.value = weighted_average(self.value, float(self.num_samples), value, float(dt)) 
+            self.value = weighted_average(self.value, float(self.num_samples),
+                                          value, float(dt)) 
         self.num_samples += dt
         if self.max_window and self.num_samples > self.max_window:
             self.num_samples = self.max_window 
@@ -56,6 +57,9 @@ class ExpectationFast:
         self.accum_mass = cur_mass    
 
     def update(self, value, dt=1.0):
+        if not np.isfinite(value).all():
+            raise ValueError('Invalid values')
+        
         if self.accum is None:
             self.accum = value * dt
             self.accum_mass = dt
@@ -80,6 +84,8 @@ class ExpectationFast:
             self.accum_mass = self.max_window 
     
     def get_value(self):
+        if self.accum is None:
+            raise ValueError('No value given yet.')
         if self.needs_normalization:
             ratio = 1.0 / self.accum_mass
             if self.extremely_fast:
