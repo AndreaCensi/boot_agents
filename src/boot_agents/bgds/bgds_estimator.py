@@ -2,6 +2,7 @@ from . import (compute_gradient_information_matrix, contract,
     generalized_gradient, outer_first_dim, np)
 from ..utils import Expectation, outer
 import itertools
+from . import BGDS
 
 
 __all__ = ['BGDSEstimator']
@@ -28,6 +29,9 @@ Dimensions of Q:
         self.R_needs_update = True
         self.H = None
         self.H_needs_update = True
+
+    def get_model(self):
+        return BGDS(self.get_H())
 
     @contract(y='(array[M]|array[MxN]),shape(x)', y_dot='shape(x)', u='array[K]',
               dt='>0')
