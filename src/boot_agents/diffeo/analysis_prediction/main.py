@@ -52,7 +52,7 @@ def main():
                invertible=False, primitive=True, original_cmd=original_cmd)
         actions.append(a)
 
-    actions = [actions[1], actions[4]]
+    #actions = [actions[1], actions[4]]
 
     templates = list(load_templates(options.templates, shape=diffeo.d.shape))
 

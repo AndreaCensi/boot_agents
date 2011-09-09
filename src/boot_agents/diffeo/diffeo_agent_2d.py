@@ -81,7 +81,7 @@ class DiffeoAgent2Db(AgentInterface):
 #                                           last.commands, last.commands_index,
 #                                           last.queue_len))
         self.diffeo_dynamics.update(last.commands_index, last.y0, last.y1,
-                                    label="%s" % last.commands)
+                                    label="%s" % last.commands, u=last.commands)
 
         self.last_data = last
 

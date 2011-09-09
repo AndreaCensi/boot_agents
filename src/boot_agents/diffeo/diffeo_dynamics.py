@@ -8,13 +8,15 @@ class DiffeoDynamics():
         self.commands2dynamics = {}
         self.ratios = ratios
         self.commands2label = {}
+        self.commands2u = {}
         
-    def update(self, commands_index, y0, y1, label=None):
+    def update(self, commands_index, y0, y1, u, label=None):
         if not commands_index in self.commands2dynamics:
             self.commands2dynamics[commands_index] = \
                 DiffeomorphismEstimator(self.ratios, self.match_method)
             print('-initializing command %d (label: %s)' % (commands_index, label))
             self.commands2label[commands_index] = label
+            self.commands2u[commands_index] = u
         de = self.commands2dynamics[commands_index]
         de.update(y0, y1) 
     
