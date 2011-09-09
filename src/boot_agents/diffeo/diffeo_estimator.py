@@ -38,8 +38,12 @@ class DiffeomorphismEstimator():
         assert match_method in [MATCH_CONTINUOUS, MATCH_BINARY]
         self.match_method = match_method
         
+        self.num_samples = 0
+        
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
+        self.num_samples += 1
+        
         if self.shape is None:
             self.init_structures(y0)
             
