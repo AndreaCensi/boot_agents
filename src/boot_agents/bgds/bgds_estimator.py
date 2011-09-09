@@ -33,8 +33,8 @@ Dimensions of Q:
     def get_model(self):
         return BGDS(self.get_H())
 
-    @contract(y='(array[M]|array[MxN]),shape(x)', y_dot='shape(x)', u='array[K]',
-              dt='>0')
+    @contract(y='(array[M]|array[MxN]),shape(x)', 
+            y_dot='shape(x)', u='array[K]', dt='>0')
     def update(self, y, y_dot, u, dt):
         if not np.isfinite(y).all(): # XXX: this is wasteful
             raise ValueError('Invalid values in y.')

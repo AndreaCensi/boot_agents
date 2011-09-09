@@ -22,7 +22,7 @@ def imread(filename):
     return data 
 
 
-def resize(value, width=None, height=None):
+def resize(value, width=None, height=None, mode=Image.NEAREST):
     ''' 
         Resizes an image.
         
@@ -52,7 +52,7 @@ def resize(value, width=None, height=None):
         height = (width * image.size[1]) / image.size[0]
     
     # TODO: RGBA?
-    image = image.resize((width, height))
+    image = image.resize((width, height), mode)
     return numpy.asarray(image.convert("RGB"))    
     
 

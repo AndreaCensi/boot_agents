@@ -4,7 +4,9 @@ from collections import namedtuple
 def cmd2key(x):
     return "%s" % x.tolist()
     
-
+PureCommandsLast = namedtuple('PureCommandsLast',
+                              'y0 y1 delta commands commands_index queue_len') 
+    
 class PureCommands(object):
     def __init__(self, delta):
         self.delta = delta
@@ -27,7 +29,6 @@ class PureCommands(object):
         
         #print('Time: %s' % [x[0] for x in self.q])
         
-    Last = namedtuple('Last', 'y0 y1 delta commands commands_index queue_len') 
     def last(self):
         ''' Returns None if not ready; otherwise it returns a tuple 
             of type Last. '''
@@ -49,8 +50,8 @@ class PureCommands(object):
         # remove first
         self.q.pop(0) 
 
-        return PureCommands.Last(y0=y0, y1=y1,
-                    delta=length, commands=commands, commands_index=commands_index,
+        return PureCommandsLast(y0=y0, y1=y1, delta=length, commands=commands,
+                    commands_index=commands_index,
                     queue_len=(len(self.q) + 1))
         
     def cmd2index(self, commands):

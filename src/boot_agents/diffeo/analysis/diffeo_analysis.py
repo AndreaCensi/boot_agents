@@ -10,7 +10,6 @@ from boot_agents.diffeo.analysis.action_compress import actions_compress, \
     actions_commutators, actions_remove_similar_to_identity
 
 
-
 def main():
     usage = ""
     parser = OptionParser(usage=usage)

@@ -8,5 +8,6 @@ from .diffeo_basic import *
 from .diffeo_display import *
 from .cmap import *
 from .diffeo_estimator import *
+from .diffeo_dynamics import *
 from .diffeo_agent_2d import *
 

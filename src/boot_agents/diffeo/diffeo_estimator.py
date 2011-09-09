@@ -1,5 +1,5 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
-    np)
+    np, diffeo_stats, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend)
 
 
 class Diffeomorphism2D:
@@ -9,17 +9,34 @@ class Diffeomorphism2D:
         self.d = d
         if variance is None:
             variance = np.ones((d.shape[0], d.shape[1]))
+        else:
+            assert variance.shape == d.shape[:2]
+            assert np.isfinite(variance).all()
         self.variance = variance
         
+MATCH_CONTINUOUS = 'continuous'
+MATCH_BINARY = 'binary'
+
+# TODO: remove "print" statements
+def sim_continuous(a, b):
+            diff = np.abs(a - b)
+            return -diff
+    
+def sim_binary(a, b): # good for 0-1
+    return a * b
+
 class DiffeomorphismEstimator():
     ''' Learns a diffeomorphism between two 2D fields. '''
     
-    @contract(max_displ='seq[2](>0,<1)')
-    def __init__(self, max_displ):
+    @contract(max_displ='seq[2](>0,<1)', match_method='str')
+    def __init__(self, max_displ, match_method):
         self.shape = None
         self.max_displ = np.array(max_displ)
         self.last_y0 = None
         self.last_y1 = None
+        
+        assert match_method in [MATCH_CONTINUOUS, MATCH_BINARY]
+        self.match_method = match_method
         
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
@@ -32,14 +49,12 @@ class DiffeomorphismEstimator():
         
         self.last_y0 = y0
         self.last_y1 = y1
-        
-        
-#       Good for continuous
-#        def sim1(a, b):
-#            diff = np.abs(a - b)
-#            return -diff
-        def sim2(a, b): # food for 0-1
-            return a * b
+
+        if self.match_method == MATCH_CONTINUOUS:
+            similarity = sim_continuous
+        elif self.match_method == MATCH_BINARY:
+            similarity = sim_binary
+        else: assert False
         
         y0_flat = y0.flat
         y1_flat = y1.flat
@@ -48,7 +63,7 @@ class DiffeomorphismEstimator():
             a = y1_flat[k]
             # Look which originally was closer
             b = y0_flat[self.neighbor_indices_flat[k]]
-            self.neighbor_similarity_flat[k] += sim2(a, b)
+            self.neighbor_similarity_flat[k] += similarity(a, b)
             
     def init_structures(self, y):
         self.shape = y.shape
@@ -96,15 +111,100 @@ class DiffeomorphismEstimator():
             sim = self.neighbor_similarity_flat[k]
             if (sim == 0).all():
                 best_index = 0 
-                variance[c] = np.inf
+                variance[c] = 0
             else:
                 best = np.argmax(sim) 
                 best_index = self.neighbor_indices_flat[k][best]
-                variance[c] = float(sim[best]) / sim.mean() 
+                
+                sim = sim.astype('float')
+#                variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
+#                variance[c] = (sim[best] - sim.min())
+                variance[c] = sim[best] 
             maximum_likelihood_index[c] = best_index
         d = self.flattening.flat2coords(maximum_likelihood_index)
+        
+        # TODO: check conditions
+        variance = variance - variance.min()
+        variance = variance / variance.max() 
         return Diffeomorphism2D(d, variance)
+#    
+#    def summarize_smooth(self):
+#        ''' Provides fractional estimate of diffeomorphism by looking at the 
+#            9 best cells
+#        '''
+#        maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
+#        variance = np.zeros(self.shape, dtype='float32')
+#        for c in coords_iterate(self.shape):
+#            k = self.flattening.cell2index[c]
+#            sim = self.neighbor_similarity_flat[k]
+#            if (sim == 0).all():
+#                best_index = 0 
+#                variance[c] = np.inf
+#            else:
+#                best = np.argmax(sim) 
+#                best_index = self.neighbor_indices_flat[k][best]
+##                variance[c] = float(sim[best]) / sim.mean()
+#                variance[c] = sim[best] 
+#            maximum_likelihood_index[c] = best_index
+#        d = self.flattening.flat2coords(maximum_likelihood_index)
+#        return Diffeomorphism2D(d, variance)
     
+    
+#    @contract(coords='tuple(int,int)') # XXX: int32 not accepted
+    def get_similarity(self, coords):
+        ''' Returns the similarity field for one cell. (outside are NaN) '''
+        k = self.flattening.cell2index[coords]
+        M = np.zeros(self.shape)
+        M.fill(np.nan)
+        neighbors = self.neighbor_indices_flat[k]
+        sim = self.neighbor_similarity_flat[k]
+        M.flat[neighbors] = sim
+        
+        best = np.argmax(sim)
+        M.flat[neighbors[best]] = np.NaN
+        return M
+    
+    def publish(self, pub):
+        diffeo = self.summarize()
+        
+        pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))
+#        pub.array_as_image('inc', diffeo_to_rgb_inc(diffeo.d))
+        pub.array_as_image('norm', diffeo_to_rgb_norm(diffeo.d))
+        pub.array_as_image('angle', diffeo_to_rgb_angle(diffeo.d))
+        pub.array_as_image('legend', angle_legend((50, 50)))
+        
+        pub.array_as_image('variance', diffeo.variance, filter='scale')
+
+        pub.text('statistics', diffeo_stats(diffeo.d))
+        
+        n = 20
+        M = None
+        for i in range(n): #@UnusedVariable
+            c = self.flattening.random_coords()
+            Mc = self.get_similarity(c)
+            if M is None:
+                M = np.zeros(Mc.shape)
+                M.fill(np.nan)
+
+            ok = np.isfinite(Mc)
+            Mmax = np.nanmax(Mc)
+            if Mmax < 0:
+                Mc = -Mc
+                Mmax = -Mmax
+            if Mmax > 0:
+                M[ok] = Mc[ok] / Mmax
+            
+        pub.array_as_image('coords', M, filter='scale')
+        
+        if self.last_y0 is not None: 
+            y0 = self.last_y0
+            y1 = self.last_y1           
+            none = np.logical_and(y0 == 0, y1 == 0)
+            x = y0 - y1
+            x[none] = np.nan 
+            pub.array_as_image('motion', x, filter='posneg')
+
+
 #    def summarize_smooth(self):
 #        ''' Tries to enforce a smoothness constraint '''
 #        maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
@@ -122,49 +222,3 @@ class DiffeomorphismEstimator():
 #            maximum_likelihood_index[c] = best_index
 #        d = self.flattening.flat2coords(maximum_likelihood_index)
 #        return Diffeomorphism2D(d, variance)
-
-#    @contract(coords='tuple(int,int)')
-    def get_similarity(self, coords):
-        ''' Returns the similarity field for one cell. (outside are NaN) '''
-        k = self.flattening.cell2index[coords]
-        M = np.zeros(self.shape)
-        M.fill(np.nan)
-        neighbors = self.neighbor_indices_flat[k]
-        sim = self.neighbor_similarity_flat[k]
-        M.flat[neighbors] = sim
-        
-        best = np.argmax(sim)
-        M.flat[neighbors[best]] = np.NaN
-        return M
-    
-    def publish(self, pub):
-        diffeo = self.summarize()
-        rgb = diffeomorphism_to_rgb(diffeo.d)
-        # rgb = diffeomorphism_to_rgb_cont(diffeo.d)
-
-        pub.array_as_image('mle', rgb, filter='scale')
-        pub.array_as_image('variance', diffeo.variance, filter='scale')
-            
-        n = 20
-        M = None
-        for i in range(n): #@UnusedVariable
-            c = self.flattening.random_coords()
-            Mc = self.get_similarity(c)
-            if M is None:
-                M = Mc
-                continue
-            ok = np.isfinite(Mc)
-            max = np.nanmax(Mc)
-            if max > 0:
-                M[ok] = Mc[ok] / max
-            
-        pub.array_as_image('coords', M, filter='scale')
-        
-        if self.last_y0 is not None: 
-            y0 = self.last_y0
-            y1 = self.last_y1           
-            none = np.logical_and(y0 == 0, y1 == 0)
-            x = y0 - y1
-            x[none] = np.nan 
-            pub.array_as_image('motion', x, filter='posneg')
-

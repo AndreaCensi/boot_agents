@@ -1,6 +1,6 @@
 from . import np
 from ..utils import RandomCanonicalCommand
-from bootstrapping_olympics.interfaces import AgentInterface, random_commands
+from bootstrapping_olympics import AgentInterface, random_commands
 
 __all__ = ['RandomSwitcher', 'ExpSwitcher', 'ExpSwitcherCanonical']
 
@@ -45,7 +45,13 @@ class ExpSwitcher(AgentInterface):
         return self.switcher.get_value(self.dt)
 
 
-
+class RandomExponential():
+    ''' Wrapper for easy pickling. '''
+    def __init__(self, beta):
+        self.beta = beta
+    def __call__(self):
+        return np.random.exponential(self.beta, 1)
+    
 class ExpSwitcherCanonical(AgentInterface):
     ''' Only canonical commands are chosen. '''
 
@@ -53,8 +59,8 @@ class ExpSwitcherCanonical(AgentInterface):
         self.beta = beta 
         
     def init(self, sensels_shape, commands_spec):
-        interval = lambda: np.random.exponential(self.beta, 1)
-        value = RandomCanonicalCommand(commands_spec).sample
+        interval = RandomExponential(self.beta)
+        value = RandomCanonicalCommand(commands_spec)
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
         
