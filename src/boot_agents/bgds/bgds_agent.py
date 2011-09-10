@@ -6,6 +6,7 @@ from . import np, contract
 from boot_agents.utils.expectation import Expectation
 from collections import namedtuple
 from reprep.interface import MIME_PDF
+from boot_agents.utils.remove_doubles import RemoveDoubles
 
 __all__ = ['BGDSAgent']
 
@@ -39,6 +40,8 @@ class BGDSAgent(ExpSwitcher):
         self.last_y0 = None
         self.last_y = None
 
+        self.rd = RemoveDoubles(0.5)
+
     def process_observations(self, obs):
         self.count += 1 
         if self.count % self.skip != 0:
@@ -52,6 +55,10 @@ class BGDSAgent(ExpSwitcher):
             
         u = obs.commands
         y0 = obs.sensel_values
+        
+        self.rd.update(y0)
+        if not self.rd.ready():
+            return
         
         y = create_scales(y0, self.scales)
             

@@ -37,11 +37,17 @@ def main():
     cmds = []
     
     for cmd_index, de in dd.commands2dynamics.items():
-        original_cmd = dd.commands2label[cmd_index]
+        original_cmd = dd.commands2u[cmd_index]
         diffeo = de.summarize()
         a = Action(diffeo=diffeo, label="u%s" % cmd_index, #index=cmd_index,
                invertible=False, primitive=True, original_cmd=original_cmd)
         cmds.append(a)
+
+    actions_filename = os.path.join(os.path.dirname(options.pickle),
+                        '%s-%s.actions.pickle' % (data.id_robot, data.id_agent)) 
+    print('Saving actions to %r.' % actions_filename)
+    with open(actions_filename, 'wb') as f:
+        pickle.dump(cmds, f)
     
     print('Compressing %d actions' % len(cmds))
     cmds2, info = actions_compress(cmds, threshold=0.9974) #@UnusedVariable

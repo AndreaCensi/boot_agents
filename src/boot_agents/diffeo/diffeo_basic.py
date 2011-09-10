@@ -1,7 +1,8 @@
 from . import np, coords_iterate, new_contract, contract
 
 @new_contract
-@contract(x='array[MxNx2](int32)')
+#@contract(x='array[MxNx2](int32|float32)')
+@contract(x='array[MxNx2]')
 def valid_diffeomorphism(x):
     M, N = x.shape[0], x.shape[1]
     assert (0 <= x[:, :, 0]).all()

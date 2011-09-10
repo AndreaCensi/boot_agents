@@ -1,5 +1,6 @@
 from . import contract, np, diffeo_identity
-from reprep import scale
+from collections import namedtuple
+from reprep import posneg, scale
 import itertools
 
 @contract(D='valid_diffeomorphism')
@@ -29,14 +30,19 @@ def diffeomorphism_to_rgb_cont(D):
     
 
 @contract(D='valid_diffeomorphism')
-def diffeo_to_rgb_norm(D):
-    norm, angle, dx, dy = diffeo_to_delta(D)
-    return scale(norm)
+def diffeo_to_rgb_norm(D, max_value=None):
+    stats = diffeo_stats(D)
+    return scale(stats.norm, min_value=0, max_value=max_value)
 
 @contract(D='valid_diffeomorphism', returns='array[HxWx3](uint8)')
 def diffeo_to_rgb_angle(D):
-    norm, angle, dx, dy = diffeo_to_delta(D)
-    return angle2rgb(angle)
+    stats = diffeo_stats(D)
+    return angle2rgb(stats.angle)
+
+@contract(D='valid_diffeomorphism', returns='array[HxWx3](uint8)')
+def diffeo_to_rgb_curv(D):
+    stats = diffeo_stats(D)
+    return posneg(stats.curv)
 
 # TODO: add -pi, pi in contract
 @contract(angle='array[HxW]', returns='array[HxWx3](uint8)')
@@ -57,21 +63,22 @@ def angle2rgb(angle, nan_color=[0, 0, 0]):
     return rgb
 
 @contract(shape='tuple(int,int)', returns='array[HxWx3](uint8)')
-def angle_legend(shape, center=2.0):
+def angle_legend(shape, center=0):
     a = np.zeros(shape)
     H, W = shape
     for i, j in itertools.product(range(H), range(W)):
         x = i - H / 2.0
         y = j - W / 2.0
         r = np.hypot(x, y)
-        if r > center:
-            a[i, j] = np.arctan2(y, x)
-        else:
+        if r <= center:
             a[i, j] = np.nan
+        else:
+            a[i, j] = np.arctan2(y, x)
+            
     return angle2rgb(a)
         
-        
-def diffeo_to_delta(D):
+DiffeoStats = namedtuple('DiffeoStats', 'norm angle dx dy curv')
+def diffeo_stats(D):
     ''' Returns norm, angle representation. '''
     identity = diffeo_identity(D.shape[0:2])
     dx = (D - identity)[:, :, 0]
@@ -79,26 +86,35 @@ def diffeo_to_delta(D):
     angle = np.arctan2(dy, dx) 
     norm = np.hypot(dx, dy)
     angle[norm == 0] = np.nan
-    return norm, angle, dx, dy
+    dxdx, dxdy = np.gradient(dx)
+    dydx, dydy = np.gradient(dy)
+    curv = (dxdx * dydy - dxdy * dydx) / 4.0
+    return DiffeoStats(norm=norm, angle=angle, dx=dx, dy=dy, curv=curv)
 
 @contract(D='valid_diffeomorphism')
-def diffeo_stats(D):
-    norm, angle, dx, dy = diffeo_to_delta(D)
+def diffeo_text_stats(D):
+    stats = diffeo_stats(D)
     s = ''
-    s += 'Maximum norm: %f\n' % norm.max()
-    s += 'Mean norm: %f\n' % np.mean(norm)
-    s += 'Mean  d0: %f\n' % np.mean(dx)
-    s += 'Mean  d0: %f\n' % np.mean(dy)
-    s += 'Mean |d0|: %f\n' % np.mean(np.abs(dx))
-    s += 'Mean |d1|: %f\n' % np.mean(np.abs(dy))
+    s += 'Maximum norm: %f\n' % stats.norm.max()
+    s += 'Mean norm: %f\n' % np.mean(stats.norm)
+    s += 'Mean  d0: %f\n' % np.mean(stats.dx)
+    s += 'Mean  d0: %f\n' % np.mean(stats.dy)
+    s += 'Mean |d0|: %f\n' % np.mean(np.abs(stats.dx))
+    s += 'Mean |d1|: %f\n' % np.mean(np.abs(stats.dy))
+    
+    s += 'Mean curv: %f\n' % np.mean(stats.curv)
+    s += 'Min, max curv: %f %f\n' % (np.min(stats.curv), np.max(stats.curv)) 
     return s
 
 @contract(D='valid_diffeomorphism')
 def diffeo_to_rgb_inc(D):
-    norm, angle, dx, dy = diffeo_to_delta(D)
-    angle_int = ((angle + np.pi) * 255 / (np.pi * 2)).astype('int') 
-    if norm.max() > 0:
-        norm = norm * 255 / norm.max() 
+    s = diffeo_stats(D)
+    
+    angle_int = ((s.angle + np.pi) * 255 / (np.pi * 2)).astype('int') 
+    if s.norm.max() > 0:
+        norm = s.norm * 255 / s.norm.max()
+    else:
+        norm = s.norm 
     M, N = D.shape[0], D.shape[1]
     rgb = np.zeros((M, N, 3), 'uint8')
     rgb[:, :, 0] = angle_int

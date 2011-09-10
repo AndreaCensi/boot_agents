@@ -9,7 +9,17 @@ __all__ = ['DiffeoAgent2Db']
         
                 
 class DiffeoAgent2Db(AgentInterface):
+    ''''
     
+    match_method:
+    
+        binary
+        
+    resize_method:
+        PIL
+        PIL_both
+        raw
+    '''
     def __init__(self, rate, delta=1.0, ratios=[0.2, 0.05], target_resolution=None,
                  switching_scale=1, match_method='binary', resize_method='PIL'):
         self.beta = 1.0 / rate
@@ -52,6 +62,7 @@ class DiffeoAgent2Db(AgentInterface):
             y = np.maximum(0, y)
             y = np.minimum(1, y)
             y = popcode(y, self.target_resolution[1])
+#        self.info('Now resolution is %s' % str(y.shape))
         
         if self.target_resolution is not None: 
             target_h = self.target_resolution[0]
@@ -61,12 +72,18 @@ class DiffeoAgent2Db(AgentInterface):
                     fraction = float(target_h) / y.shape[0]
                     y = imresize(y, fraction)
                     y = np.array(y, dtype='float32')
+#                    self.info('Resized to %s' % str(y.shape))
+                elif self.resize_method == 'PIL_both':
+                    from scipy.misc import imresize #@UnresolvedImport
+                    y = imresize(y, self.target_resolution)
+                    y = np.array(y, dtype='float32')
+#                    self.info('Resized to %s' % str(y.shape))
                 elif self.resize_method == 'raw':
                     ratio = y.shape[0] * 1.0 / target_h
                     ratio_round = int(np.round(ratio))
                     y = y[::ratio_round, :]
                 else:
-                    msg = 'Wrong resize method %r' % self.resize_method
+                    msg = 'Unknown resize method %r' % self.resize_method
                     raise Exception(msg)
                  
         self.pure_commands.update(obs.time, obs.commands, y)

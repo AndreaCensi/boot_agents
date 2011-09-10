@@ -35,7 +35,7 @@ setup(name='BootAgents',
       
       package_dir={'':'src'},
       packages=find_packages('src'),
-      install_requires=[ ],
+      install_requires=[ 'scikits.image', 'BootstrappingOlympics'],
       tests_require=['nose'],
       entry_points={},
 )

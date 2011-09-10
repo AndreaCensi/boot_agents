@@ -52,7 +52,7 @@ def main():
                invertible=False, primitive=True, original_cmd=original_cmd)
         actions.append(a)
 
-    #actions = [actions[1], actions[4]]
+#    actions = [actions[1], actions[4]]
 
     templates = list(load_templates(options.templates, shape=diffeo.d.shape))
 
@@ -90,7 +90,9 @@ def compute_effects(pub, action, image):
         res = diffeo_apply(d, image)
         gray = np.empty_like(res)
         gray.fill(128)
-        return blend_alpha(res, gray, c)
+        alpha = c
+        #alpha = np.sqrt(np.sqrt(alpha))
+        return blend_alpha(res, gray, alpha)
         
     
     b1 = with_uncertainty(d1, C1, image)

@@ -1,5 +1,7 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
-    np, diffeo_stats, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend)
+    np, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend)
+from boot_agents.diffeo.diffeo_display import diffeo_to_rgb_curv, \
+    diffeo_text_stats
 
 
 class Diffeomorphism2D:
@@ -113,17 +115,17 @@ class DiffeomorphismEstimator():
         for c in coords_iterate(self.shape):
             k = self.flattening.cell2index[c]
             sim = self.neighbor_similarity_flat[k]
-            if (sim == 0).all():
+            sim_min = sim.min()
+            sim_max = sim.max()
+            if sim_max == sim_min:
                 best_index = 0 
                 variance[c] = 0
             else:
                 best = np.argmax(sim) 
                 best_index = self.neighbor_indices_flat[k][best]
-                
-                sim = sim.astype('float')
-#                variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
-#                variance[c] = (sim[best] - sim.min())
-                variance[c] = sim[best] 
+                variance[c] = sim[best]                 
+                    #  variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
+                    #  variance[c] = (sim[best] - sim.min())
             maximum_likelihood_index[c] = best_index
         d = self.flattening.flat2coords(maximum_likelihood_index)
         
@@ -131,30 +133,36 @@ class DiffeomorphismEstimator():
         variance = variance - variance.min()
         variance = variance / variance.max() 
         return Diffeomorphism2D(d, variance)
-#    
-#    def summarize_smooth(self):
-#        ''' Provides fractional estimate of diffeomorphism by looking at the 
-#            9 best cells
-#        '''
-#        maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
-#        variance = np.zeros(self.shape, dtype='float32')
-#        for c in coords_iterate(self.shape):
-#            k = self.flattening.cell2index[c]
-#            sim = self.neighbor_similarity_flat[k]
-#            if (sim == 0).all():
-#                best_index = 0 
-#                variance[c] = np.inf
-#            else:
-#                best = np.argmax(sim) 
-#                best_index = self.neighbor_indices_flat[k][best]
-##                variance[c] = float(sim[best]) / sim.mean()
-#                variance[c] = sim[best] 
-#            maximum_likelihood_index[c] = best_index
-#        d = self.flattening.flat2coords(maximum_likelihood_index)
-#        return Diffeomorphism2D(d, variance)
     
+    def summarize_smooth(self, noise=0.1):
+        ''' Find best estimate for diffeomorphism looking at each singularly. '''
+        maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
+        variance = np.zeros(self.shape, dtype='float32')
+        epsilon = None
+        for c in coords_iterate(self.shape):
+            k = self.flattening.cell2index[c]
+            sim = self.neighbor_similarity_flat[k]
+            if epsilon is None:
+                epsilon = np.random.randn(*sim.shape) 
+            sim_min = sim.min()
+            sim_max = sim.max()
+            if sim_max == sim_min:
+                best_index = 0 
+                variance[c] = 0
+            else:
+                std = noise * (sim_max - sim_min)
+                best = np.argmax(sim + epsilon * std) 
+                best_index = self.neighbor_indices_flat[k][best]
+                variance[c] = sim[best]             
+            maximum_likelihood_index[c] = best_index
+        d = self.flattening.flat2coords(maximum_likelihood_index)
+        
+        # TODO: check conditions
+        variance = variance - variance.min()
+        variance = variance / variance.max() 
+        return Diffeomorphism2D(d, variance) 
     
-#    @contract(coords='tuple(int,int)') # XXX: int32 not accepted
+    #    @contract(coords='tuple(int,int)') # XXX: int32 not accepted
     def get_similarity(self, coords):
         ''' Returns the similarity field for one cell. (outside are NaN) '''
         k = self.flattening.cell2index[coords]
@@ -167,19 +175,33 @@ class DiffeomorphismEstimator():
         best = np.argmax(sim)
         M.flat[neighbors[best]] = np.NaN
         return M
+
+    def summarize_averaged(self, n=10, noise=0.1):
+        d = []
+        for _ in range(n): 
+            diff = self.summarize_smooth(noise)
+            d.append(diff.d)
+            print('.')
+        ds = np.array(d, 'float')
+        avg = ds.mean(axis=0)
+        #var  = diff.variance
+        var = ds[:, :, :, 0].var(axis=0) + ds[:, :, :, 1].var(axis=0)
+        print var.shape
+        assert avg.shape == diff.d.shape
+        return Diffeomorphism2D(avg, var)
     
     def publish(self, pub):
         diffeo = self.summarize()
+#        diffeo = self.summarize_averaged(10, 0.02)
         
         pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))
-#        pub.array_as_image('inc', diffeo_to_rgb_inc(diffeo.d))
-        pub.array_as_image('norm', diffeo_to_rgb_norm(diffeo.d))
         pub.array_as_image('angle', diffeo_to_rgb_angle(diffeo.d))
-        pub.array_as_image('legend', angle_legend((50, 50)))
-        
+        pub.array_as_image('norm', diffeo_to_rgb_norm(diffeo.d, max_value=10))
+        pub.array_as_image('curv', diffeo_to_rgb_curv(diffeo.d))
         pub.array_as_image('variance', diffeo.variance, filter='scale')
 
-        pub.text('statistics', diffeo_stats(diffeo.d))
+        pub.text('statistics', diffeo_text_stats(diffeo.d))
+        pub.array_as_image('legend', angle_legend((50, 50)))
         
         n = 20
         M = None
@@ -207,22 +229,3 @@ class DiffeomorphismEstimator():
             x = y0 - y1
             x[none] = np.nan 
             pub.array_as_image('motion', x, filter='posneg')
-
-
-#    def summarize_smooth(self):
-#        ''' Tries to enforce a smoothness constraint '''
-#        maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
-#        variance = np.zeros(self.shape, dtype='float32')
-#        for c in coords_iterate(self.shape):
-#            k = self.flattening.cell2index[c]
-#            sim = self.neighbor_similarity_flat[k]
-#            if (sim == 0).all():
-#                best_index = 0 
-#                variance[c] = np.inf
-#            else:
-#                best = np.argmax(sim) 
-#                best_index = self.neighbor_indices_flat[k][best]
-#                variance[c] = float(sim[best]) / sim.mean() 
-#            maximum_likelihood_index[c] = best_index
-#        d = self.flattening.flat2coords(maximum_likelihood_index)
-#        return Diffeomorphism2D(d, variance)

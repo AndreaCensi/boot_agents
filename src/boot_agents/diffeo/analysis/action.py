@@ -1,6 +1,5 @@
-from boot_agents.diffeo.diffeo_basic import diffeo_inverse, diffeo_distance_L2, \
-    diffeo_compose
-from boot_agents.diffeo.diffeo_estimator import Diffeomorphism2D
+from boot_agents.diffeo import (Diffeomorphism2D, diffeo_inverse,
+    diffeo_distance_L2, diffeo_compose)
 from contracts import contract
 import numpy as np
 
