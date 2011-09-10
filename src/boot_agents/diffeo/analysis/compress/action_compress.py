@@ -20,6 +20,24 @@ def actions_compress(actions, threshold):
         print('- %s %s %s' % (a1, a2, sim))
 #    baseline = np.abs(M).min()
     printm('M', M)
+#    m0 = M / M.mean()
+    
+    for i in range(n):
+        print('action[%d] = %s' % (i, actions[i]))
+        
+    Distance = np.zeros((n, n))
+    for i, j in itertools.product(range(n), range(n)):
+        Distance[i, j] = Action.distance(actions[i], actions[j])
+    Distance = Distance / Distance.mean()
+    printm('Distance', Distance)
+    
+    Distance_to_inverse = np.zeros((n, n))
+    for i, j in itertools.product(range(n), range(n)):
+        Distance_to_inverse[i, j] = Action.distance_to_inverse(actions[i], actions[j])
+    Distance_to_inverse = Distance_to_inverse / Distance.mean()
+    printm('DistToInv', Distance_to_inverse)
+    
+    
 #    print('Baseline similarity is %g' % baseline)
     # subtract, normalize
 #    M2 = np.abs(M) - baseline
@@ -74,6 +92,10 @@ def actions_compress(actions, threshold):
         if i in necessary:
             compressed.append(actions[i]) 
     info = dict()
+    
+    info['Distance'] = Distance
+    info['Distance_to_inverse'] = Distance_to_inverse
+    
     return (compressed, info)
 
 

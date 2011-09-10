@@ -94,9 +94,9 @@ class DiffeoAgent2Db(AgentInterface):
             return
         
 
-#        self.info('pure delta=%s %s cmd # %s  (q: %s)' % (last.delta,
-#                                           last.commands, last.commands_index,
-#                                           last.queue_len))
+        self.info('pure delta=%s %s cmd # %s  (q: %s)' % (last.delta,
+                                           last.commands, last.commands_index,
+                                           last.queue_len))
         self.diffeo_dynamics.update(last.commands_index, last.y0, last.y1,
                                     label="%s" % last.commands, u=last.commands)
 
@@ -133,7 +133,7 @@ def popcode(y, M, soft=True):
     N = y.shape[0]
     pc = np.zeros((N, M), 'float32')
     for i in range(N):
-        assert 0 <= y[i] <= 1
+        assert 0 <= y[i] <= 1, 'Strange value of y[%d] = %s' % (i, y[i])
         j = int(np.round(y[i] * (M - 1)))
         assert 0 <= j < M
         pc[i, j] = 1

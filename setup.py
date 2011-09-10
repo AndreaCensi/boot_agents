@@ -37,6 +37,11 @@ setup(name='BootAgents',
       packages=find_packages('src'),
       install_requires=[ 'scikits.image', 'BootstrappingOlympics'],
       tests_require=['nose'],
-      entry_points={},
+       entry_points={
+         'console_scripts': [
+           'boot_agents_diff_actions = '
+                'boot_agents.diffeo.analysis.main:main',
+            ]
+    }
 )
 

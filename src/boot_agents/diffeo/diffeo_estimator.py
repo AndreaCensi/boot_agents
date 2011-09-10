@@ -112,6 +112,7 @@ class DiffeomorphismEstimator():
         ''' Find best estimate for diffeomorphism looking at each singularly. '''
         maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
         variance = np.zeros(self.shape, dtype='float32')
+        num_problems = 0
         for c in coords_iterate(self.shape):
             k = self.flattening.cell2index[c]
             sim = self.neighbor_similarity_flat[k]
@@ -120,15 +121,28 @@ class DiffeomorphismEstimator():
             if sim_max == sim_min:
                 best_index = 0 
                 variance[c] = 0
+                maximum_likelihood_index[c] = best_index
             else:
-                best = np.argmax(sim) 
-                best_index = self.neighbor_indices_flat[k][best]
-                variance[c] = sim[best]                 
+                sim_sort = sorted(sim)
+                if sim_sort[-2] == sim_sort[-1]:
+                    num_problems += 1
+                    # not informative; use self
+#                    print('Warning: %s' % sim_sort)
+                    variance[c] = 1
+                    maximum_likelihood_index[c] = self.flattening.cell2index[c]
+                else:
+                    best = np.argmax(sim) 
+                    best_index = self.neighbor_indices_flat[k][best]
+                    variance[c] = sim[best]
+                    variance[c] = 0.5        
+                    maximum_likelihood_index[c] = best_index
+        d = self.flattening.flat2coords(maximum_likelihood_index)
+                 
+        if num_problems > 0:
+            print('Warning, %d were not informative.' % num_problems)
+            pass
                     #  variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
                     #  variance[c] = (sim[best] - sim.min())
-            maximum_likelihood_index[c] = best_index
-        d = self.flattening.flat2coords(maximum_likelihood_index)
-        
         # TODO: check conditions
         variance = variance - variance.min()
         variance = variance / variance.max() 
@@ -192,7 +206,8 @@ class DiffeomorphismEstimator():
     
     def publish(self, pub):
         diffeo = self.summarize()
-#        diffeo = self.summarize_averaged(10, 0.02)
+        #diffeo = self.summarize_averaged(10, 0.02) # good for camera
+#        diffeo = self.summarize_averaged(2, 0.1)
         
         pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))
         pub.array_as_image('angle', diffeo_to_rgb_angle(diffeo.d))
@@ -200,6 +215,7 @@ class DiffeomorphismEstimator():
         pub.array_as_image('curv', diffeo_to_rgb_curv(diffeo.d))
         pub.array_as_image('variance', diffeo.variance, filter='scale')
 
+        pub.text('num_samples', self.num_samples)
         pub.text('statistics', diffeo_text_stats(diffeo.d))
         pub.array_as_image('legend', angle_legend((50, 50)))
         

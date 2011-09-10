@@ -40,6 +40,16 @@ class Action:
             return np.cos(same_d)
         else:
             return -np.cos(oppo_d)
+#        
+    @staticmethod
+    def distance(a1, a2):
+        return diffeo_distance_L2(a1.d, a2.d)
+    @staticmethod
+    def distance_to_inverse(a1, a2):
+        oppo_d = 0.5 * (diffeo_distance_L2(a1.d, a2.d_inv) + 
+                        diffeo_distance_L2(a2.d, a1.d_inv))
+        return oppo_d
+    
         
     @staticmethod
     def commutator(a1, a2):
