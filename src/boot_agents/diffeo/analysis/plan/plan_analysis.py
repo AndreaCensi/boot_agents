@@ -1,17 +1,22 @@
-from optparse import OptionParser
-
-from vehicles import instance_vehicle, instance_world
-from vehicles import VehicleSimulation
-from geometry.yaml import from_yaml
-from geometry.poses import SE2_from_SE3, translation_angle_from_SE2
-from geometry.manifolds import SE2, SE3
-import numpy as np
-import contracts
+from boot_agents.diffeo import diffeo_apply
 from boot_agents.diffeo.diffeo_agent_2d import popcode
 from contracts import contract
-from boot_agents.diffeo.diffeo_basic import diffeo_apply
+from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
+from geometry.yaml import from_yaml
+from optparse import OptionParser
+from reprep import MIME_PDF
+from vehicles import VehicleSimulation, instance_vehicle, instance_world
+import contracts
+import numpy as np
+
 
 def plan_analysis(global_options, data, args):
+    
+    np.random.seed(12345226)
+    from matplotlib import rc
+    rc('font', **{'family':'serif', 'serif':['Times', 'Times New Roman', 'Palatino'],
+                       'size': 9.0})
+        
     contracts.disable_all()
     usage = ""
     parser = OptionParser(usage=usage)
@@ -83,7 +88,7 @@ def plan_analysis(global_options, data, args):
     }
     
         
-    
+#    examples = {}
     
     for name, scenario in examples.items():
         while True:
@@ -108,7 +113,10 @@ def scenario_solve(scenario, actions):
     for action in actions:
         code = '%s' % action
         res = diffeo_apply(action.diffeo.d, M0)
-        exploration[code] = res# {'actions' = }
+        res2 = diffeo_apply(action.diffeo.d, res)
+        res3 = diffeo_apply(action.diffeo.d, res2)
+        res4 = diffeo_apply(action.diffeo.d, res3)
+        exploration[code] = res4# {'actions' = }
     scenario['exploration'] = exploration
     
     
@@ -120,6 +128,14 @@ def sensels2map(y0):
     from scipy.misc import imresize #@UnresolvedImport
     y = imresize(y, (90, 90))
     y = np.array(y, dtype='float32')
+    return y
+
+@contract(Y='array[NxP]', returns='array[N]')
+def map2sensels(Y):
+    N, _ = Y.shape
+    y = np.zeros(N)
+    for i in range(N):
+        y[i] = np.argmax(Y[i, :])
     return y
 
 def scenario_display(scenario, S, sim):
@@ -150,6 +166,47 @@ def scenario_display(scenario, S, sim):
     S.array_as_image('M0', scenario['M0'])
     S.array_as_image('M1', scenario['M1'])
     
+    pdfparams = dict(figsize=(4, 4), mime=MIME_PDF)
+    def display_all(S, name, sensels, mapp):
+        x = scenario['sim0']['vehicle']['sensors'][0]['sensor']
+        theta = x['directions']
+        theta = np.array(theta)
+        if len(theta) > len(sensels): # XXX: hack
+            theta = theta[::2]
+        theta_rad = theta
+        theta = np.rad2deg(theta)
+        sensels = sensels.copy()
+        sensels = sensels / sensels.max()
+        sec = S.section(name)
+        with sec.plot('readings', **pdfparams) as pylab:
+            pylab.plot(theta, sensels, 'b.')
+            pylab.plot([theta[0], theta[-1]], [0, 0], 'k--')
+            pylab.plot([theta[0], theta[-1]], [1, 1], 'k--')
+            pylab.axis((theta[0], theta[-1], -0.05 , 1.01))
+            
+        with sec.plot('minimap', **pdfparams) as pylab:
+            xs = np.cos(theta_rad) * sensels
+            ys = np.sin(theta_rad) * sensels
+            pylab.plot(xs, ys, 'k.')
+            
+            L = 0.2
+            parms = dict(linewidth=2)
+            pylab.plot([0, L], [0, 0], 'r-', **parms)
+            pylab.plot([0, 0], [0, L], 'g-', **parms)
+                       
+            pylab.axis('equal')
+            R = 1.05
+            pylab.axis((-R, R, -R, R))
+            
+        if mapp is not None:
+            sec.array_as_image('field', mapp, 'scale')
+        
+    
+    display_all(S, 'y0', y0, None)
+    display_all(S, 'm0y', map2sensels(scenario['M0']), scenario['M0'])
+    display_all(S, 'm1y', map2sensels(scenario['M1']), scenario['M1'])
+
+        
     with S.plot('poses') as pylab:
 #        for pose in scenario['poses']:
 ##            print pose
@@ -172,9 +229,12 @@ def scenario_display(scenario, S, sim):
     Se = S.section('exploration')
     for name, M1est in scenario['exploration'].items():
         Si = Se.section(name)
-        Si.array_as_image('M1est', M1est)
+#        Si.array_as_image('M1est', M1est)
         Si.array_as_image('diff', M1est - scenario['M1'])
-        
+    
+        display_all(Si, 'M1est', map2sensels(M1est), M1est)
+    
+    
         
 def draw_axes(pylab, pose, cx='r', cy='g', size=1, L=0.3):
     t, th = translation_angle_from_SE2(pose)

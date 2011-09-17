@@ -28,13 +28,15 @@ def actions_compress(actions, threshold):
     Distance = np.zeros((n, n))
     for i, j in itertools.product(range(n), range(n)):
         Distance[i, j] = Action.distance(actions[i], actions[j])
-    Distance = Distance / Distance.mean()
+        
+    scale = Distance.mean()
+    Distance = Distance / scale
     printm('Distance', Distance)
     
     Distance_to_inverse = np.zeros((n, n))
     for i, j in itertools.product(range(n), range(n)):
         Distance_to_inverse[i, j] = Action.distance_to_inverse(actions[i], actions[j])
-    Distance_to_inverse = Distance_to_inverse / Distance.mean()
+    Distance_to_inverse = Distance_to_inverse / scale
     printm('DistToInv', Distance_to_inverse)
     
     

@@ -123,19 +123,19 @@ class DiffeomorphismEstimator():
                 variance[c] = 0
                 maximum_likelihood_index[c] = best_index
             else:
-                sim_sort = sorted(sim)
-                if sim_sort[-2] == sim_sort[-1]:
-                    num_problems += 1
-                    # not informative; use self
-#                    print('Warning: %s' % sim_sort)
-                    variance[c] = 1
-                    maximum_likelihood_index[c] = self.flattening.cell2index[c]
-                else:
-                    best = np.argmax(sim) 
-                    best_index = self.neighbor_indices_flat[k][best]
-                    variance[c] = sim[best]
-                    variance[c] = 0.5        
-                    maximum_likelihood_index[c] = best_index
+#                sim_sort = sorted(sim)
+#                if sim_sort[-2] == sim_sort[-1]:
+#                    num_problems += 1
+#                    # not informative; use self
+##                    print('Warning: %s' % sim_sort)
+#                    variance[c] = 1
+#                    maximum_likelihood_index[c] = self.flattening.cell2index[c]
+#                else:
+                best = np.argmax(sim) 
+                best_index = self.neighbor_indices_flat[k][best]
+                variance[c] = sim[best]
+#                variance[c] = 0.5        
+                maximum_likelihood_index[c] = best_index
         d = self.flattening.flat2coords(maximum_likelihood_index)
                  
         if num_problems > 0:
@@ -145,7 +145,10 @@ class DiffeomorphismEstimator():
                     #  variance[c] = (sim[best] - sim.min())
         # TODO: check conditions
         variance = variance - variance.min()
-        variance = variance / variance.max() 
+        vmax = variance.max()
+        if vmax > 0:
+            variance *= (1 / vmax) 
+ 
         return Diffeomorphism2D(d, variance)
     
     def summarize_smooth(self, noise=0.1):
@@ -170,10 +173,11 @@ class DiffeomorphismEstimator():
                 variance[c] = sim[best]             
             maximum_likelihood_index[c] = best_index
         d = self.flattening.flat2coords(maximum_likelihood_index)
-        
-        # TODO: check conditions
+  
         variance = variance - variance.min()
-        variance = variance / variance.max() 
+        vmax = variance.max()
+        if vmax > 0:
+            variance *= (1 / vmax) 
         return Diffeomorphism2D(d, variance) 
     
     #    @contract(coords='tuple(int,int)') # XXX: int32 not accepted
@@ -206,7 +210,7 @@ class DiffeomorphismEstimator():
     
     def publish(self, pub):
         diffeo = self.summarize()
-        #diffeo = self.summarize_averaged(10, 0.02) # good for camera
+#        diffeo = self.summarize_averaged(10, 0.02) # good for camera
 #        diffeo = self.summarize_averaged(2, 0.1)
         
         pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))

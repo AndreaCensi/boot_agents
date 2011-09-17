@@ -1,13 +1,7 @@
-from boot_agents.diffeo.analysis.action import Action
-from boot_agents.diffeo.analysis.pil_utils import imread, resize
-from boot_agents.diffeo.diffeo_basic import (diffeo_compose, diffeo_apply,
-    diffeo_inverse)
-from bootstrapping_olympics.ros_scripts.log_learn import ReprepPublisher
+from boot_agents.diffeo.analysis import Action
 from optparse import OptionParser
 import cPickle as pickle
 import os
-from boot_agents.diffeo.analysis.action_compress import actions_compress, \
-    actions_commutators, actions_remove_similar_to_identity
 
 def main():
     usage = ""

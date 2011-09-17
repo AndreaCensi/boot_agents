@@ -14,9 +14,12 @@ def zoom(M, factor=10):
 def describe_info(sec, actions, info):
     Distance = info['Distance']
     Distance_to_inverse = info['Distance_to_inverse']
-    max_value = max(Distance.max(), Distance_to_inverse.max())
-    params = dict(filter='scale', filter_params={'min_value': 0,
-                                            #'max_value': max_value
+    np.fill_diagonal(Distance, np.nan)
+    np.fill_diagonal(Distance_to_inverse, np.nan)
+    max_value = max(np.nanmax(Distance), np.nanmax(Distance_to_inverse))
+    min_value = max(np.nanmin(Distance), np.nanmin(Distance_to_inverse))
+    params = dict(filter='scale', filter_params={'min_value': min_value / 1.5,
+                                            'max_value': max_value
                                             })
     
     sec.array_as_image('Distance', zoom(Distance), **params)
