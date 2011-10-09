@@ -1,14 +1,15 @@
 from . import Queue
+from contracts import contract
 
 class DerivativeBox():
-    
+    # TODO: do not use dt
     def __init__(self):
         self.q_y = Queue(3)
         self.q_dt = Queue(3)
         
+    @contract(y='array', dt='>=0')
     def update(self, y, dt):
-        ''' returns y, y_dot or None, None if the queue is not full '''
-        assert dt > 0 
+        if dt == 0: return # XXX
         self.q_y.update(y)
         self.q_dt.update(dt)
 

@@ -1,23 +1,23 @@
 from . import ExpSwitcher, np
 from ..utils import MeanCovariance, cov2corr
+from bootstrapping_olympics import UnsupportedSpec
 
 __all__ = ['EstStats']
 
 class EstStats(ExpSwitcher):
-    ''' A simple agent that estimates the covariance of the observations. '''
+    ''' A simple agent that estimates various statistics of the observations. '''
     
-    def init(self, sensels_shape, commands_spec):
-        ExpSwitcher.init(self, sensels_shape, commands_spec)
-        if len(sensels_shape) != 1:
-            raise ValueError('I assume 1D signals.')
+    def init(self, boot_spec):
+        ExpSwitcher.init(self, boot_spec)
+        if len(boot_spec.get_observations().shape()) != 1:
+            raise UnsupportedSpec('I assume 1D signals.')
             
-        #self.num_sensels = sensels_shape[0]
         self.y_stats = MeanCovariance()
         
         self.info('Agent %s initialized.' % self)
 
     def process_observations(self, obs):
-        self.y_stats.update(value=obs.sensel_values, dt=obs.dt)
+        self.y_stats.update(value=obs['observations'], dt=float(obs['dt']))
         
     def get_state(self):
         return dict(y_stats=self.y_stats)
@@ -33,7 +33,8 @@ class EstStats(ExpSwitcher):
         y_max = self.y_stats.get_maximum()
         y_min = self.y_stats.get_minimum()
         
-        pub.text('stats', 'Num samples: %s' % self.y_stats.mean_accum.num_samples)
+        pub.text('stats', 'Num samples: %s' % 
+                          self.y_stats.mean_accum.num_samples)
         pub.array_as_image('Py', Py)
         Ry0 = Ry.copy()
         np.fill_diagonal(Ry0, np.NaN)

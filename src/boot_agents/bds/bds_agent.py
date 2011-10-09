@@ -14,8 +14,7 @@ class BDSAgent(ExpSwitcher):
         self.skip = skip
         self.change_fraction = change_fraction
                
-    def init(self, sensels_shape, commands_spec):
-        #ExpSwitcher.init(self, sensels_shape, commands_spec)
+    def init(self, boot_spec):
         # FIXME: fix problem with serialization
         self.count = 0
         self.rd = RemoveDoubles(self.change_fraction)
@@ -29,15 +28,17 @@ class BDSAgent(ExpSwitcher):
         self.u_stats = MeanCovariance()
         self.dt_stats = MeanCovariance()
         
+        ExpSwitcher.init(self, boot_spec)
+        
     def process_observations(self, obs):
+        ExpSwitcher.process_observations(self, obs)
+        
         self.count += 1 
         if self.count % self.skip != 0:
             return
-        dt = obs.dt 
-        y = obs.sensel_values
-        u = obs.commands
-
-        # TMP hack y = np.minimum(2.0, y)
+        dt = float(obs['dt']) 
+        y = obs['observations']
+        u = obs['commands']
         
         self.rd.update(y)
         if not self.rd.ready():
@@ -46,8 +47,8 @@ class BDSAgent(ExpSwitcher):
         # XXX: this is not `dt` anymore FiXME:
         self.y_stats.update(y, dt)
         
-        if obs.episode_changed:
-            self.info('episode_changed: %s' % obs.id_episode)
+        if obs['episode_start']:
+            self.info('episode_changed: %s' % obs['id_episode'])
             self.y_deriv.reset()
             return        
 

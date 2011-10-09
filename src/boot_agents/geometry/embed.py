@@ -3,16 +3,16 @@ from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, MeanCovariance, scale_score
 # FIXME: dependency to remove
 from geometry import inner_product_embedding
+from bootstrapping_olympics import UnsupportedSpec
 
 __all__ = ['Embed']
 
 class Embed(ExpSwitcher):
-    ''' A simple agent that estimates the covariance of the observations. '''
-    
-    def init(self, sensels_shape, commands_spec):
-        ExpSwitcher.init(self, sensels_shape, commands_spec)
-        if len(sensels_shape) != 1:
-            raise ValueError('I assume 1D signals.')
+     
+    def init(self, boot_spec):
+        ExpSwitcher.init(self, boot_spec)
+        if len(boot_spec.get_observations().shape()) != 1:
+            raise UnsupportedSpec('I assume 1D signals.')
             
         self.y_stats = MeanCovariance()
         self.z_stats = MeanCovariance()
@@ -20,14 +20,15 @@ class Embed(ExpSwitcher):
         self.y_deriv = DerivativeBox()
         
     def process_observations(self, obs):
-        y = obs.sensel_values
-        self.y_stats.update(obs.sensel_values, obs.dt)
+        y = obs['observations']
+        dt = float(obs['dt'])
+        self.y_stats.update(y, dt)
         self.count += 1
         
-        self.y_deriv.update(y, obs.dt)
+        self.y_deriv.update(y, dt)
         if self.y_deriv.ready():
             y, y_dot = self.y_deriv.get_value()
-            self.z_stats.update(np.abs(y_dot), obs.dt)
+            self.z_stats.update(np.abs(y_dot), dt)
     
     def publish(self, pub):
         if self.count < 10: return

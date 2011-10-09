@@ -19,7 +19,8 @@ class ExpectationSlow:
         self.num_samples = 0
         self.value = None
         self.max_window = max_window
-        
+    
+    @contract(value='array', dt='>0')
     def update(self, value, dt=1.0):
         if self.value is None:
             self.value = value
@@ -44,7 +45,8 @@ class ExpectationFast:
             If max_window is given, the covariance is computed
             over a certain interval. 
             
-            extremely_fast: save memory; might crash on some pythons
+            extremely_fast: save memory; might crash on some python interpreters
+            TODO: put automatic tests to detect this
         '''
         self.max_window = max_window
         self.accum_mass = 0
@@ -56,6 +58,7 @@ class ExpectationFast:
         self.accum = self.get_value()
         self.accum_mass = cur_mass    
 
+    @contract(value='array', dt='>=0')
     def update(self, value, dt=1.0):
         if not np.isfinite(value).all():
             raise ValueError('Invalid values')
@@ -87,7 +90,11 @@ class ExpectationFast:
         if self.accum is None:
             raise ValueError('No value given yet.')
         if self.needs_normalization:
-            ratio = 1.0 / self.accum_mass
+            # In the case dt=0 for the first sample
+            if self.accum_mass > 0:
+                ratio = 1.0 / self.accum_mass
+            else:
+                ratio = 1.0
             if self.extremely_fast:
                 np.multiply(ratio, self.accum, self.result)
             else:

@@ -1,6 +1,6 @@
 from . import np
 from ..utils import RandomCanonicalCommand
-from bootstrapping_olympics import AgentInterface, random_commands
+from bootstrapping_olympics import AgentInterface
 
 __all__ = ['RandomSwitcher', 'ExpSwitcher', 'ExpSwitcherCanonical']
 
@@ -30,16 +30,17 @@ class ExpSwitcher(AgentInterface):
     def __init__(self, beta):
         self.beta = beta 
         
-    def init(self, sensels_shape, commands_spec):
+    def init(self, boot_spec):
+        
         def interval():
             return np.random.exponential(self.beta, 1)
         def value():
-            return random_commands(commands_spec)
+            return boot_spec.get_commands().get_random_value()
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
         
     def process_observations(self, observations):
-        self.dt = observations.dt
+        self.dt = float(observations['dt'])
 
     def choose_commands(self):
         return self.switcher.get_value(self.dt)
@@ -58,14 +59,14 @@ class ExpSwitcherCanonical(AgentInterface):
     def __init__(self, beta):
         self.beta = beta 
         
-    def init(self, sensels_shape, commands_spec):
+    def init(self, boot_spec):
         interval = RandomExponential(self.beta)
-        value = RandomCanonicalCommand(commands_spec)
+        value = RandomCanonicalCommand(boot_spec.get_commands()) 
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
         
     def process_observations(self, observations):
-        self.dt = observations.dt
+        self.dt = float(observations['dt'])
 
     def choose_commands(self):
         return self.switcher.get_value(self.dt)

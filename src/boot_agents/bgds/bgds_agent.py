@@ -1,16 +1,15 @@
-from . import BGDSEstimator, smooth2d
+from . import BGDSEstimator, smooth2d, np, contract
 from ..simple_stats import ExpSwitcher
-from ..utils import DerivativeBox
-
-from . import np, contract
-from boot_agents.utils.expectation import Expectation
+from ..utils import DerivativeBox, Expectation, RemoveDoubles
 from collections import namedtuple
-from reprep.interface import MIME_PDF
-from boot_agents.utils.remove_doubles import RemoveDoubles
+from reprep import MIME_PDF
+import scipy.signal
+from bootstrapping_olympics import UnsupportedSpec
+
 
 __all__ = ['BGDSAgent']
 
-MINIMUM_FOR_PREDICTION = 200
+MINIMUM_FOR_PREDICTION = 200 # XXX
 
 class BGDSAgent(ExpSwitcher):
     '''
@@ -26,13 +25,16 @@ class BGDSAgent(ExpSwitcher):
         self.scales = scales
         self.fixed_dt = fixed_dt
                
-    def init(self, sensels_shape, commands_spec):
-        #ExpSwitcher.init(self, sensels_shape, commands_spec)
+    def init(self, boot_spec):
+        # TODO: do the 1D version
+        if len(boot_spec.get_observations().shape()) != 2:
+            raise UnsupportedSpec('Can only work with 2D signals.')
+
+        ExpSwitcher.init(self, boot_spec)
         self.count = 0
         self.y_deriv = DerivativeBox()
         self.bgds_estimator = BGDSEstimator()  
         
-        # 
         self.model = None
         self.y_disag = Expectation()
         self.y_disag_s = Expectation()
@@ -43,18 +45,20 @@ class BGDSAgent(ExpSwitcher):
         self.rd = RemoveDoubles(0.5)
 
     def process_observations(self, obs):
+        dt = float(obs['dt']) 
+        u = obs['commands']
+        y0 = obs['observations']
+        episode_start = obs['episode_start']
+
         self.count += 1 
         if self.count % self.skip != 0:
             return
         
-        dt = obs.dt 
         if self.fixed_dt: 
             # dt is not reliable sometime
             # you don't want to give high weight to higher dt samples.
             dt = 1 
             
-        u = obs.commands
-        y0 = obs.sensel_values
         
         self.rd.update(y0)
         if not self.rd.ready():
@@ -62,7 +66,7 @@ class BGDSAgent(ExpSwitcher):
         
         y = create_scales(y0, self.scales)
             
-        if obs.episode_changed:
+        if episode_start:
             self.y_deriv.reset()
             return        
 
@@ -295,8 +299,7 @@ def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start, cmd2col
         pylab.plot(xs, ys, '%s-' % cmd2color[k])
                
 
-import scipy.signal
-
+# TODO: remove all of this
 Fault = namedtuple('Fault', 'index,num_episode,timestamp,detect,detect_smooth')
 def detect_faults(episode, timestamp, signal, scale, threshold, minimum_spacing):
     x = scipy.signal.convolve(signal, np.ones(scale) / scale, mode='same')

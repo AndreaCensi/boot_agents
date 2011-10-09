@@ -88,15 +88,12 @@ def outer_first_dim(x):
         result[i, j, ...] = x[i, ...] * x[j, ...]
     return result
 
-#from scipy.signal import convolve2d
-
 from scipy.ndimage import gaussian_filter
 
 @contract(y='array[HxW]', scale='>0', returns='array[HxW]')
 def smooth2d(y, scale):
     ''' Smooths the 2D array y with a kernel of the given scale (sigma in sensels). '''
     return gaussian_filter(y, sigma=scale)
-#    k = np.ones((scale, scale))
-#    return convolve2d(y, k, mode='same', boundary='symm')
+
 
     

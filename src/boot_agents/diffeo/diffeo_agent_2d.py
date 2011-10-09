@@ -3,10 +3,10 @@ from ..simple_stats import ExpSwitcherCanonical
 from bootstrapping_olympics import AgentInterface
 from contracts import contract
 import numpy as np
+from bootstrapping_olympics import UnsupportedSpec
 
 __all__ = ['DiffeoAgent2Db']
 
-        
                 
 class DiffeoAgent2Db(AgentInterface):
     ''''
@@ -32,17 +32,22 @@ class DiffeoAgent2Db(AgentInterface):
         self.switching_scale = switching_scale
         self.resize_method = resize_method
         
-    def init(self, sensels_shape, commands_spec):
+    def init(self, boot_spec):
         self.switcher = ExpSwitcherCanonical(self.beta)
-        self.switcher.init(sensels_shape, commands_spec)
+        # TODO: do the 1D version
+        if len(boot_spec.get_observations().shape()) != 2:
+            raise UnsupportedSpec('Can only work with 2D signals.')
+        
+        self.switcher.init(boot_spec)
         
     def process_observations(self, obs):
-        self.dt = obs.dt
 
-        if obs.episode_changed:
+        self.dt = float(obs['dt'])
+
+        if obs['episode_start']:
             self.pure_commands.reset()
 
-        y = obs.sensel_values
+        y = obs['observations']
         
         # Temporary HACK
 #        if False:
@@ -72,12 +77,10 @@ class DiffeoAgent2Db(AgentInterface):
                     fraction = float(target_h) / y.shape[0]
                     y = imresize(y, fraction)
                     y = np.array(y, dtype='float32')
-#                    self.info('Resized to %s' % str(y.shape))
                 elif self.resize_method == 'PIL_both':
-                    from scipy.misc import imresize #@UnresolvedImport
+                    from scipy.misc import imresize #@UnresolvedImport @Reimport
                     y = imresize(y, self.target_resolution)
                     y = np.array(y, dtype='float32')
-#                    self.info('Resized to %s' % str(y.shape))
                 elif self.resize_method == 'raw':
                     ratio = y.shape[0] * 1.0 / target_h
                     ratio_round = int(np.round(ratio))
@@ -86,7 +89,7 @@ class DiffeoAgent2Db(AgentInterface):
                     msg = 'Unknown resize method %r' % self.resize_method
                     raise Exception(msg)
                  
-        self.pure_commands.update(obs.time, obs.commands, y)
+        self.pure_commands.update(obs['timestamp'], obs['commands'], y)
             
         last = self.pure_commands.last()
         
@@ -104,8 +107,7 @@ class DiffeoAgent2Db(AgentInterface):
 
 
     def choose_commands(self):
-        return self.switcher.get_value(dt=self.dt) 
-
+        return self.switcher.choose_commands() 
                     
     def publish(self, pub):
 

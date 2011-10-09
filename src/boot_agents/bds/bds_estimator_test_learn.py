@@ -1,7 +1,6 @@
 from . import np
 from boot_agents.bds import BDSEstimator2, bds_dynamics
-from bootstrapping_olympics.ros_scripts.log_learn.reprep_publisher import (
-    ReprepPublisher)
+from bootstrapping_olympics.display import (ReprepPublisher)
 import itertools
 import sys
 

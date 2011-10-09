@@ -118,10 +118,10 @@ class BDSEstimator2:
                 yy = self.get_yy()
                 Tk = T[k, :, :]
                 try:
-                    Mk = scipy.linalg.solve(yy, Tk)
+                    Mk = scipy.linalg.solve(yy, Tk) #@UndefinedVariable
                 except LinAlgError:
                     # yy is singular  
-                    print('Using pseudoinverse, rcond=%s' % rcond)
+                    # print('Using pseudoinverse, rcond=%s' % rcond)
                     #yy_pinv = self.get_yy_inv(rcond)
                     yy_pinv = np.linalg.inv(np.eye(yy.shape[0]) * rcond + yy)
                     Mk = np.dot(yy_pinv, Tk)
