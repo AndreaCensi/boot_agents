@@ -1,7 +1,7 @@
 import os
 from setuptools import setup, find_packages
 
-version = "0.1"
+version = "1.0"
 
 description = """""" 
 
@@ -14,7 +14,7 @@ long_description = read('README.rst')
 setup(name='BootAgents',
       author="Andrea Censi",
       author_email="andrea@cds.caltech.edu",
-      url='http://www.cds.caltech.edu/~andrea/',
+      url='http://github.com/AndreaCensi/boot_agents',
       
       description=description,
       long_description=long_description,
@@ -22,20 +22,17 @@ setup(name='BootAgents',
       license="",
       
       classifiers=[
-        'Development Status :: 4 - Beta',
-        # 'Intended Audience :: Developers',
-        # 'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
-        # 'Topic :: Software Development :: Quality Assurance',
-        # 'Topic :: Software Development :: Documentation',
-        # 'Topic :: Software Development :: Testing'
+        'Development Status :: 4 - Beta', 
       ],
 
-	  version=version,
+	    version=version,
       download_url='http://github.com/AndreaCensi/boot_agents/tarball/%s' % version,
       
       package_dir={'':'src'},
       packages=find_packages('src'),
-      install_requires=[ 'scikits.image', 'BootstrappingOlympics'],
+      install_requires=[ 
+        'scikits.image', 
+        'BootOlympics>=1.0,<2'],
       tests_require=['nose'],
        entry_points={
          'console_scripts': [

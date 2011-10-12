@@ -1,9 +1,9 @@
-__version__ = '0.1'
+__version__ = '1.0'
 
 import logging
 
 logging.basicConfig();
-logger = logging.getLogger("boot_agents")
+logger = logging.getLogger("BootAgents")
 logger.setLevel(logging.DEBUG)
 
 import numpy as np
