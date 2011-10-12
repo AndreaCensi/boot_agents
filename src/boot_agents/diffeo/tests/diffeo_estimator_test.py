@@ -5,6 +5,7 @@ from contracts import contract
 from reprep import Report
 import numpy as np
 import time
+from boot_agents.diffeo.diffeo_estimator import MATCH_CONTINUOUS
 
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]', y='array[MxN]', returns='array[MxN]')
 def apply_diffeomorphism(diffeo, y):
@@ -37,7 +38,7 @@ def diffeo_estimation_suite(f):
     
     K = 50
     epsilon = 1
-    de = DiffeomorphismEstimator([0.2, 0.2])
+    de = DiffeomorphismEstimator([0.2, 0.2], MATCH_CONTINUOUS)
     for y0, y1 in generate_input(shape, K, diffeo, epsilon=epsilon):
         de.update(y0, y1)
         

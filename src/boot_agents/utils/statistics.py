@@ -13,6 +13,8 @@ from numpy.linalg.linalg import pinv, LinAlgError
 from numpy import  multiply 
 
 from . import logger, Expectation
+from contracts import contract
+from bootstrapping_olympics.interfaces import Publisher
 
 
 outer = multiply.outer
@@ -54,6 +56,9 @@ class MeanCovariance:
         self.maximum = None
         self.num_samples = 0
         
+    def get_num_samples(self):
+        return self.num_samples
+    
     def update(self, value, dt=1.0):
         self.num_samples += dt
         
@@ -114,33 +119,36 @@ class MeanCovariance:
                 pickle.dump(self, f)
             logger.error('Did not converge; saved on %s' % filename)
             
-            
-    def publish(self, pub, name, publish_information=False):
+        
+    @contract(pub=Publisher, publish_information='bool')    
+    def publish(self, pub, publish_information=False):
+        if self.num_samples == 0:
+            pub.text('warning', 'Cannot publish anything as I was never updated.')
+            return
+
         P = self.get_covariance()
         R = self.get_correlation()
         Ey = self.get_mean()
         y_max = self.get_maximum()
-        y_min = self.get_minimum()
+        y_min = self.get_minimum() 
         
-        def n(x): return (name, x)
+        pub.text('stats', 'Num samples: %s' % self.mean_accum.get_mass())
         
-        pub.text(n('stats'), 'Num samples: %s' % self.mean_accum.get_mass())
-        
-        pub.array_as_image(n('covariance'), P)
-        pub.array_as_image(n('correlation'), R)
+        pub.array_as_image('covariance', P)
+        pub.array_as_image('correlation', R)
         if publish_information:
             P_inv = self.get_information()
-            pub.array_as_image(n('information'), P_inv)
+            pub.array_as_image('information', P_inv)
         
-        with pub.plot(n('y_stats')) as pylab:
+        with pub.plot('y_stats') as pylab:
             pylab.plot(Ey, label='expectation')
             pylab.plot(y_max, label='max')
             pylab.plot(y_min, label='min')
             pylab.legend()
  
-        with pub.plot(n('P_diagonal')) as pylab:
+        with pub.plot('P_diagonal') as pylab:
             pylab.plot(P.diagonal(), 'x-')
 
-        with pub.plot(n('P_diagonal_sqrt')) as pylab:
+        with pub.plot('P_diagonal_sqrt') as pylab:
             pylab.plot(np.sqrt(P.diagonal()), 'x-')
     

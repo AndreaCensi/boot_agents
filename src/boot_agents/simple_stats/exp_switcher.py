@@ -1,5 +1,5 @@
 from . import np
-from ..utils import RandomCanonicalCommand
+from ..utils import RandomCanonicalCommand, RandomCommand
 from bootstrapping_olympics import AgentInterface
 
 __all__ = ['RandomSwitcher', 'ExpSwitcher', 'ExpSwitcherCanonical']
@@ -31,11 +31,8 @@ class ExpSwitcher(AgentInterface):
         self.beta = beta 
         
     def init(self, boot_spec):
-        
-        def interval():
-            return np.random.exponential(self.beta, 1)
-        def value():
-            return boot_spec.get_commands().get_random_value()
+        interval = RandomExponential(self.beta)
+        value = RandomCommand(boot_spec.get_commands()) 
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
         

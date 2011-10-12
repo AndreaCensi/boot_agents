@@ -1,5 +1,4 @@
 from . import generalized_gradient, np, contract
-import itertools
 
 class BGDS(object):
     """

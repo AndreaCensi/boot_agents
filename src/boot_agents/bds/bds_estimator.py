@@ -166,8 +166,6 @@ class BDSEstimator2:
         yy_inv = self.get_yy_inv(rcond)
         yy = self.get_yy()
         
-        Tortho, Q = orthogonalize(T) #@UnusedVariable
-        Tortho_norm = normalize(Tortho, yy)
 
         y_dots_corr = self.y_dots_stats.get_correlation()
         n = T.shape[2]
@@ -190,13 +188,19 @@ class BDSEstimator2:
             pass # XXX: 
                     
         def pub_tensor(name, V):
+            section = pub.section(name)
             for i in range(V.shape[0]):
-                pub.array_as_image((name, '%s%d' % (name, i)), V[i, :, :], **params)
+                section.array_as_image('%s%d' % (name, i), V[i, :, :], **params)
 
         pub_tensor('T', T)
         pub_tensor('M', M)
-        pub_tensor('Tortho', Tortho)
-        pub_tensor('Tortho_norm', Tortho_norm)
+
+        if T.shape[0] == 2:
+            # Only for 2 commands so far
+            Tortho, Q = orthogonalize(T) #@UnusedVariable
+            Tortho_norm = normalize(Tortho, yy)
+            pub_tensor('Tortho', Tortho)
+            pub_tensor('Tortho_norm', Tortho_norm)
 
         if False:
             M2, M2info = self.get_M2()
@@ -204,11 +208,11 @@ class BDSEstimator2:
             pub_tensor('M2info', M2info)
 
         try:
-            self.y_dot_noise.publish(pub, 'y_dot_noise')
+            self.y_dot_noise.publish(pub.section('y_dot_noise'))
         except:
             pass
-        self.y_dots_stats.publish(pub, 'y_dots')
-        self.Py_dots_stats.publish(pub, 'Py_dots')
+        self.y_dots_stats.publish(pub.section('y_dots'))
+        self.Py_dots_stats.publish(pub.section('Py_dots'))
         
         pub.array_as_image('yy', self.get_yy(), **params)
         pub.array_as_image('yy_inv', yy_inv, **params)

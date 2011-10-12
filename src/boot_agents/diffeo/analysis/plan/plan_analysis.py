@@ -5,9 +5,10 @@ from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
 from geometry.yaml import from_yaml
 from optparse import OptionParser
 from reprep import MIME_PDF
-from vehicles import VehicleSimulation, instance_vehicle, instance_world
+from vehicles import VehicleSimulation
 import contracts
 import numpy as np
+from vehicles import VehiclesConfig
 
 
 def plan_analysis(global_options, data, args):
@@ -31,8 +32,8 @@ def plan_analysis(global_options, data, args):
 #    id_agent = data['id_agent']
     pub = data['publisher']
         
-    vehicle = instance_vehicle(id_robot)
-    world = instance_world(options.id_world)
+    vehicle = VehiclesConfig.vehicles.instance(id_robot) #@UndefinedVariable
+    world = VehiclesConfig.worlds.instance(options.id_world) #@UndefinedVariable
     
     sim = VehicleSimulation(vehicle, world)
     

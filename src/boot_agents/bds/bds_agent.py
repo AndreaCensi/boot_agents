@@ -1,6 +1,7 @@
 from . import BDSEstimator2, np
 from ..simple_stats import ExpSwitcher
 from ..utils import MeanCovariance, DerivativeBox, RemoveDoubles
+from bootstrapping_olympics import UnsupportedSpec
 
 
 __all__ = ['BDSAgent']
@@ -15,7 +16,9 @@ class BDSAgent(ExpSwitcher):
         self.change_fraction = change_fraction
                
     def init(self, boot_spec):
-        # FIXME: fix problem with serialization
+        if len(boot_spec.get_observations().shape()) != 1:
+            raise UnsupportedSpec('This agent can only work with 1D signals.')
+
         self.count = 0
         self.rd = RemoveDoubles(self.change_fraction)
         self.y_deriv = DerivativeBox()
@@ -100,10 +103,10 @@ class BDSAgent(ExpSwitcher):
              
 #        publisher.array('rand', np.random.rand(10))
         
-        self.y_stats.publish(publisher, 'y_stats')
-        self.u_stats.publish(publisher, 'u_stats')
-        self.y_dot_stats.publish(publisher, 'y_dot_stats')
-        self.y_dot_abs_stats.publish(publisher, 'y_dot_abs_stats')
+        self.y_stats.publish(publisher.section('y_stats'))
+        self.u_stats.publish(publisher.section('u_stats'))
+        self.y_dot_stats.publish(publisher.section('y_dot_stats'))
+        self.y_dot_abs_stats.publish(publisher.section('y_dot_abs_stats'))
 #        self.dt_stats.publish(publisher, 'dt')
         
     

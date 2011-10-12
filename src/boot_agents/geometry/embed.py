@@ -23,15 +23,18 @@ class Embed(ExpSwitcher):
         y = obs['observations']
         dt = float(obs['dt'])
         self.y_stats.update(y, dt)
-        self.count += 1
-        
+
         self.y_deriv.update(y, dt)
         if self.y_deriv.ready():
             y, y_dot = self.y_deriv.get_value()
             self.z_stats.update(np.abs(y_dot), dt)
+            self.count += 1
     
     def publish(self, pub):
-        if self.count < 10: return
+        if self.count < 10:
+            pub.text('warning', 'Too early to publish anything.') 
+            return
+        
         R = self.z_stats.get_correlation()
         Dis = discretize(-R, 2)
         np.fill_diagonal(Dis, 0)
@@ -47,7 +50,7 @@ class Embed(ExpSwitcher):
         pub.array_as_image('C', C)
         with pub.plot(name='S') as pylab:
             pylab.plot(S[0, :], S[1, :], '.')
-        self.z_stats.publish(pub, 'z_stats')
+        self.z_stats.publish(pub.section('z_stats'))
     
 
 def discretize(M, w):

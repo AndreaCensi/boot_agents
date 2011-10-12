@@ -19,6 +19,18 @@ class RandomCanonicalCommand:
     def __call__(self):
         return self.sample()
 
+class RandomCommand:
+    ''' Returns a random command. '''
+    def __init__(self, commands_spec): 
+        self.commands_spec = commands_spec
+        
+    def sample(self): 
+        return self.commands_spec.get_random_value()
+    
+    def __call__(self):
+        return self.sample()
+
+
 @contract(commands_spec=StreamSpec)
 def get_canonical_commands(commands_spec):
     assert len(commands_spec.shape()) == 1 # XXX: proper exception

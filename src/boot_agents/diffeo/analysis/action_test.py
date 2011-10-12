@@ -1,9 +1,10 @@
-from boot_agents.diffeo import diffeo_from_function, diffeo_inverse
+from .. import diffeo_from_function, diffeo_inverse
 from boot_agents.diffeo.tests.diffeo_creation_test import f_rotx
-from boot_agents.diffeo import Diffeomorphism2D
-from boot_agents.diffeo.analysis.action import Action
+from .. import Diffeomorphism2D
+from .  import Action
 from numpy.testing.utils import assert_allclose
-from boot_agents.diffeo.analysis.action_compress import actions_compress
+from boot_agents.diffeo.analysis.compress.action_compress import actions_compress
+
 
 def action_test_1():
     shape = (20, 20)

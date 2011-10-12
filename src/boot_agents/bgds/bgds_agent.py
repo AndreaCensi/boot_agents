@@ -57,7 +57,7 @@ class BGDSAgent(ExpSwitcher):
         if self.fixed_dt: 
             # dt is not reliable sometime
             # you don't want to give high weight to higher dt samples.
-            dt = 1 
+            dt = 1 # XXX: add in constants
             
         
         self.rd.update(y0)
@@ -312,7 +312,7 @@ def detect_faults(episode, timestamp, signal, scale, threshold, minimum_spacing)
     for index in order:
         l = locations[index]
         cur_time = timestamp[l]
-        for l2, _, other_time, _, _ in faults:
+        for _, _, other_time, _, _ in faults:
             spacing = np.abs(other_time - cur_time) 
             if spacing < minimum_spacing:
                 #print('Skipping %d because %d is close  (%f)' % 

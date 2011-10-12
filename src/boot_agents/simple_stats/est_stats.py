@@ -17,7 +17,9 @@ class EstStats(ExpSwitcher):
         self.info('Agent %s initialized.' % self)
 
     def process_observations(self, obs):
-        self.y_stats.update(value=obs['observations'], dt=float(obs['dt']))
+        y = obs['observations']
+        dt = obs['dt'].item()
+        self.y_stats.update(y, dt)
         
     def get_state(self):
         return dict(y_stats=self.y_stats)
@@ -26,6 +28,9 @@ class EstStats(ExpSwitcher):
         self.y_stats = state['y_stats']
     
     def publish(self, pub):
+        if self.y_stats.get_num_samples() == 0:
+            pub.text('warning', 'Too early to publish anything.')
+            return
         Py = self.y_stats.get_covariance()
         Ry = self.y_stats.get_correlation()
         Py_inv = self.y_stats.get_information()
@@ -33,8 +38,7 @@ class EstStats(ExpSwitcher):
         y_max = self.y_stats.get_maximum()
         y_min = self.y_stats.get_minimum()
         
-        pub.text('stats', 'Num samples: %s' % 
-                          self.y_stats.mean_accum.num_samples)
+        pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
         pub.array_as_image('Py', Py)
         Ry0 = Ry.copy()
         np.fill_diagonal(Ry0, np.NaN)
