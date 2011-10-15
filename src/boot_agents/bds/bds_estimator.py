@@ -156,7 +156,11 @@ class BDSEstimator2:
     def get_uu(self):
         return self.uu.get_value()
         
-    def publish(self, pub):        
+    def publish(self, pub):
+        if self.T.get_mass() == 0:
+            pub.text('warning',
+                     'No samples obtained yet -- not publishing anything.')
+            return        
         #params = dict(filter=pub.FILTER_POSNEG, filter_params={'skim':2})
         params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 

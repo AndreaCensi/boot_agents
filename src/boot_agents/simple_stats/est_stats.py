@@ -38,12 +38,19 @@ class EstStats(ExpSwitcher):
         y_max = self.y_stats.get_maximum()
         y_min = self.y_stats.get_minimum()
         
-        pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
-        pub.array_as_image('Py', Py)
         Ry0 = Ry.copy()
         np.fill_diagonal(Ry0, np.NaN)
+        Py0 = Py.copy()
+        np.fill_diagonal(Py0, np.NaN)
         
-        pub.array_as_image('Ry', Ry)
+        
+        pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
+        pub.array_as_image('Py', Py, caption='cov(y)')
+        pub.array_as_image('Py0', Py0, caption='cov(y) - no diagonal')
+        
+        pub.array_as_image('Ry', Ry, caption='corr(y)')
+        pub.array_as_image('Ry0', Ry0, caption='corr(y) - no diagonal')
+        
         pub.array_as_image('Py_inv', Py_inv)
         pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
         
@@ -53,10 +60,14 @@ class EstStats(ExpSwitcher):
             pylab.plot(y_min, label='y_min')
             pylab.legend()
 
-        with pub.plot(name='y_stats_log') as pylab:
-            pylab.semilogy(Ey, label='E(y)')
-            pylab.semilogy(y_max, label='y_max')
-            pylab.semilogy(y_min, label='y_min')
-            pylab.legend()
+        all_positive = (np.min(Ey) > 0 
+                        and np.min(y_max) > 0 
+                        and np.min(y_min) > 0)
+        if all_positive:
+            with pub.plot(name='y_stats_log') as pylab:            
+                pylab.semilogy(Ey, label='E(y)')
+                pylab.semilogy(y_max, label='y_max')
+                pylab.semilogy(y_min, label='y_min')
+                pylab.legend()
 
 
