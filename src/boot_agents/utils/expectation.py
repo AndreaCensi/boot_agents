@@ -49,16 +49,17 @@ class ExpectationFast:
             TODO: put automatic tests to detect this
         '''
         self.max_window = max_window
-        self.accum_mass = 0
+        self.accum_mass = 0.0
         self.accum = None
         self.needs_normalization = True
         self.extremely_fast = extremely_fast
     
+    @contract(cur_mass='float,>=0')
     def reset(self, cur_mass=1.0):    
         self.accum = self.get_value()
         self.accum_mass = cur_mass    
 
-    @contract(value='array', dt='>=0')
+    @contract(value='array', dt='float,>=0')
     def update(self, value, dt=1.0):
         if not np.isfinite(value).all():
             raise ValueError('Invalid values')
@@ -101,6 +102,9 @@ class ExpectationFast:
                 self.result = ratio * self.accum
             self.needs_normalization = False
         return self.result
+    
+    def __call__(self):
+        return self.get_value()
     
     def get_mass(self):
         return self.accum_mass

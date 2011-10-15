@@ -1,6 +1,6 @@
 from ..utils import Expectation, outer, MeanCovariance
 from contracts import contract, new_contract
-from geometry.formatting import printm
+from geometry import printm
 from numpy.linalg.linalg import LinAlgError
 import numpy as np
 import scipy.linalg

@@ -8,16 +8,12 @@
 #Means and Variances. Journal of the American Statistical Association,
 # Vol. 69, No. 348, 859-866. 
  
-import numpy as np
+from . import logger, Expectation, np, contract, Publisher
 from numpy.linalg.linalg import pinv, LinAlgError
 from numpy import  multiply 
-
-from . import logger, Expectation
-from contracts import contract
-from bootstrapping_olympics.interfaces import Publisher
-
-
 outer = multiply.outer
+
+
 
 def cov2corr(covariance, zero_diagonal=False):
     ''' 
@@ -134,18 +130,20 @@ class MeanCovariance:
         
         pub.text('stats', 'Num samples: %s' % self.mean_accum.get_mass())
         
-        pub.array_as_image('covariance', P)
-        pub.array_as_image('correlation', R)
-        if publish_information:
-            P_inv = self.get_information()
-            pub.array_as_image('information', P_inv)
-        
-        with pub.plot('y_stats') as pylab:
+        with pub.plot('expectation') as pylab:
             pylab.plot(Ey, label='expectation')
             pylab.plot(y_max, label='max')
             pylab.plot(y_min, label='min')
             pylab.legend()
  
+        pub.array_as_image('covariance', P)
+        R = R.copy()
+        np.fill_diagonal(R, np.nan)
+        pub.array_as_image('correlation', R)
+        if publish_information:
+            P_inv = self.get_information()
+            pub.array_as_image('information', P_inv)
+        
         with pub.plot('P_diagonal') as pylab:
             pylab.plot(P.diagonal(), 'x-')
 

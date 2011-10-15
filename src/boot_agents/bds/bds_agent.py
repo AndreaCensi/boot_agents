@@ -79,13 +79,13 @@ class BDSAgent(ExpSwitcher):
             self.info('Skipping publishing as count=%d' % self.count)
             return
 
-        params = dict(filter=publisher.FILTER_POSNEG, filter_params={'skim':2})
+#        params = dict(filter=publisher.FILTER_POSNEG, filter_params={'skim':2})
 
-        T = self.bds_estimator.get_T()
-        T0 = T[0, :, :]
-        T1 = T[1, :, :]
-        Tplus = T0 + T1
-        Tminus = T0 - T1 
+#        T = self.bds_estimator.get_T()
+#        T0 = T[0, :, :]
+#        T1 = T[1, :, :]
+#        Tplus = T0 + T1
+#        Tminus = T0 - T1 
         self.bds_estimator.publish(publisher)
 
 #        P = self.y_stats.get_covariance()
@@ -107,9 +107,15 @@ class BDSAgent(ExpSwitcher):
         self.u_stats.publish(publisher.section('u_stats'))
         self.y_dot_stats.publish(publisher.section('y_dot_stats'))
         self.y_dot_abs_stats.publish(publisher.section('y_dot_abs_stats'))
-#        self.dt_stats.publish(publisher, 'dt')
+        #        self.dt_stats.publish(publisher, 'dt')
         
-    
-        publisher.array_as_image('Tplus', Tplus, **params)
-        publisher.array_as_image('Tminus', Tminus, **params)
+        # publisher.array_as_image('Tplus', Tplus, **params)
+        # publisher.array_as_image('Tminus', Tminus, **params)
 
+    def get_predictor(self):
+        print self.__dict__
+        from boot_agents.bds.bds_predictor import BDSPredictor
+
+        return BDSPredictor(self.bds_estimator)
+        
+        
