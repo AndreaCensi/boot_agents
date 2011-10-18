@@ -1,4 +1,4 @@
-from contracts import contract
+from . import contract
 
 __all__ = ['RemoveDoubles']
 

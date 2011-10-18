@@ -1,5 +1,5 @@
-from contracts import contract
-import numpy as np
+from . import contract, np
+
 
 __all__ = ['Expectation', 'ExpectationSlow', 'ExpectationFast']
 

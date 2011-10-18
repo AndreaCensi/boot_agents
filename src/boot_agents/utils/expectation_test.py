@@ -1,4 +1,4 @@
-from boot_agents.utils import ExpectationSlow, ExpectationFast
+from . import ExpectationSlow, ExpectationFast
 from numpy.testing.utils import assert_allclose
 import numpy as np
 

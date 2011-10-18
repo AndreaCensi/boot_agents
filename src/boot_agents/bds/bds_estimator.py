@@ -1,8 +1,8 @@
+from . import np, contract
 from ..utils import Expectation, outer, MeanCovariance
-from contracts import contract, new_contract
+from contracts import new_contract
 from geometry import printm
 from numpy.linalg.linalg import LinAlgError
-import numpy as np
 import scipy.linalg
 
 @contract(M='array[KxNxN]', y='array[N]', u='array[K]')

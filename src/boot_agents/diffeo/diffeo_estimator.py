@@ -1,7 +1,6 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
-    np, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend)
-from boot_agents.diffeo.diffeo_display import diffeo_to_rgb_curv, \
-    diffeo_text_stats
+    np, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv,
+    diffeo_text_stats)
 
 
 class Diffeomorphism2D:

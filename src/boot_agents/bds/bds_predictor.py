@@ -1,4 +1,4 @@
-from boot_agents.bds.bds_estimator import bds_dynamics
+from . import bds_dynamics
 
 
 class BDSPredictor():

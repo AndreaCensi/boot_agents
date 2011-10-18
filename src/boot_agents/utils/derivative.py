@@ -1,5 +1,4 @@
-from . import Queue
-from contracts import contract
+from . import Queue, contract
 
 class DerivativeBox():
     # TODO: do not use dt

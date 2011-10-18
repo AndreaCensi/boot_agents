@@ -1,8 +1,6 @@
-import numpy as np
-from contracts import contract
 from bootstrapping_olympics.interfaces import Publisher
 
-from .. import logger
+from .. import logger, np, contract
 from .nonparametric import *
 from .expectation import *
 from .mean_variance import *

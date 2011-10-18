@@ -1,5 +1,5 @@
-from boot_agents.utils import RemoveDoubles
-import numpy as np
+from . import RemoveDoubles, np
+
 
 def remove_doubles_test_1():
     rd = RemoveDoubles(0.5) 

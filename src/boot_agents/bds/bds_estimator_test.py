@@ -1,6 +1,6 @@
-from . import BDSEstimator2
+from . import BDSEstimator2, np
 from unittest import TestCase
-import numpy as np
+
 
       
 m = lambda k: np.zeros(k) 

@@ -1,4 +1,4 @@
-from . import BDSEstimator2, np
+from . import BDSEstimator2, np, BDSServo
 from ..simple_stats import ExpSwitcher
 from ..utils import MeanCovariance, DerivativeBox, RemoveDoubles
 from bootstrapping_olympics import UnsupportedSpec
@@ -32,6 +32,7 @@ class BDSAgent(ExpSwitcher):
         self.dt_stats = MeanCovariance()
         
         ExpSwitcher.init(self, boot_spec)
+        self.commands_spec = boot_spec.get_commands()
         
     def process_observations(self, obs):
         ExpSwitcher.process_observations(self, obs)
@@ -113,9 +114,10 @@ class BDSAgent(ExpSwitcher):
         # publisher.array_as_image('Tminus', Tminus, **params)
 
     def get_predictor(self):
-        print self.__dict__
         from boot_agents.bds.bds_predictor import BDSPredictor
-
         return BDSPredictor(self.bds_estimator)
+
+    def get_servo(self):
+        return BDSServo(self.bds_estimator, self.commands_spec)
         
         

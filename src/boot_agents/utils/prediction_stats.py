@@ -1,5 +1,8 @@
 from . import Expectation, np, contract, MeanVariance, Publisher
 
+
+__all__ = ['PredictionStats']
+
 class PredictionStats: 
     
     @contract(label_a='str', label_b='str')
