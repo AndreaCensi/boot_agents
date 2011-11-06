@@ -1,6 +1,6 @@
+from . import np
+from .. import cmap
 from numpy.testing.utils import assert_allclose
-from boot_agents.diffeo import cmap
-import numpy as np
  
 def cmap_test():
     a = cmap(np.array([5, 5]))

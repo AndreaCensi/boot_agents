@@ -1,5 +1,10 @@
 from . import Expectation, contract, np, Publisher
 
+__all__ = ['MeanVariance']
+
+
+# TODO: write tests for this
+
 class MeanVariance:
 
     ''' Computes mean and variance of some stream. '''

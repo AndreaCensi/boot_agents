@@ -258,6 +258,37 @@ class BDSEstimator2:
             pylab.xlabel('observation')
             pylab.ylabel('prediction')
 
+       
+    def publish_compact(self, pub, rcond=1e-2):
+        if self.T.get_mass() == 0:
+            pub.text('warning',
+                     'No samples obtained yet -- not publishing anything.')
+            return        
+
+        params = dict(filter=pub.FILTER_POSNEG, filter_params={})
+
+        T = self.get_T()
+        M = self.get_M(rcond=rcond)
+        yy = self.get_yy()
+                    
+        def pub_tensor(name, V):
+            section = pub.section(name)
+            for i in range(V.shape[0]):
+                section.array_as_image('%s%d' % (name, i), V[i, :, :], **params)
+
+        pub_tensor('T', T) 
+        pub_tensor('M', M) 
+        
+        pub.array_as_image('yy', self.get_yy(), **params)
+
+        with pub.plot('yy_svd') as pylab:
+            u, s, v = np.linalg.svd(yy) #@UnusedVariable
+            s /= s[0]
+            pylab.semilogy(s, 'bx-')
+            pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
+
+
+
         
 
 def normalize(T, P):

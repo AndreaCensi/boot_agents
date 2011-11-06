@@ -1,9 +1,8 @@
-from boot_agents.diffeo import (diffeomorphism_from_function,
-    diffeomorphism_to_rgb)
+from . import np
+from .. import diffeomorphism_from_function, diffeomorphism_to_rgb
 from nose.plugins.attrib import attr
 from numpy.testing.utils import assert_allclose
 from reprep import Report
-import numpy as np
 
 def f_identity(X): 
     return X

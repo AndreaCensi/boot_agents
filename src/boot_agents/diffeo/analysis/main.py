@@ -1,13 +1,11 @@
+from . import logger, np, plan_analysis, similarity_analysis
+from bootstrapping_olympics.display import ReprepPublisher
 from optparse import OptionParser
 import cPickle as pickle
-from . import logger
-import traceback
-import sys
-import numpy as np
-
-from . import plan_analysis, similarity_analysis
-from bootstrapping_olympics.ros_scripts.log_learn.reprep_publisher import ReprepPublisher
 import os
+import sys
+import traceback
+
 
 commands = {
     'plan': plan_analysis,

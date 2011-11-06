@@ -21,7 +21,7 @@ class Embed(ExpSwitcher):
         
     def process_observations(self, obs):
         y = obs['observations']
-        dt = float(obs['dt'])
+        dt = obs['dt'].item()
         self.y_stats.update(y, dt)
 
         self.y_deriv.update(y, dt)

@@ -1,8 +1,7 @@
-from . import np
+from . import BDSEstimator2, bds_dynamics, np
 from bootstrapping_olympics.display import ReprepPublisher
 import itertools
 import sys
-from. import BDSEstimator2, bds_dynamics
 
 def main():   
     N = 20

@@ -1,7 +1,9 @@
-from . import np
+from . import np, contract
 import itertools
-from contracts import contract
+
 from bootstrapping_olympics import StreamSpec
+
+__all__ = ['RandomCanonicalCommand', 'RandomCommand']
 
 class RandomCanonicalCommand:
     ''' Returns a canonical command; if u ~ [min, max], then

@@ -1,9 +1,10 @@
-import numpy as np
+from . import np
 from boot_agents.bgds import BGDS
-import itertools
 from numpy.testing.utils import assert_allclose
+import itertools
 #from geometry.formatting import printm
 
+# TODO: finish this
 def test_bgds_0():
     h = 10
     w = 10

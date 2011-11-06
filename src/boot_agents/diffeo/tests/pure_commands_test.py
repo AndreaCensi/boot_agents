@@ -1,5 +1,5 @@
-from boot_agents.diffeo import PureCommands
-import numpy as np
+from . import np
+from .. import PureCommands
 
 def pure_commands_test():
     

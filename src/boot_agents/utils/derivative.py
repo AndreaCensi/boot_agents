@@ -1,5 +1,7 @@
 from . import Queue, contract
 
+__all__ = ['DerivativeBox']
+
 class DerivativeBox():
     # TODO: do not use dt
     def __init__(self):

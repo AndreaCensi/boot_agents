@@ -1,5 +1,7 @@
 from . import np
 
+__all__ = ['Queue']
+
 class Queue():
     ''' keeps the last num elements ''' 
     def __init__(self, num):

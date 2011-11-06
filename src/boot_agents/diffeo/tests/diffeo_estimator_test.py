@@ -1,11 +1,9 @@
-from boot_agents.diffeo import (DiffeomorphismEstimator,
-    diffeomorphism_from_function, coords_iterate, diffeomorphism_to_rgb_cont)
-from boot_agents.diffeo.tests.diffeo_creation_test import diffeomorphisms
-from contracts import contract
+from . import diffeomorphisms, contract, np
+from .. import (DiffeomorphismEstimator, diffeomorphism_from_function,
+    coords_iterate, diffeomorphism_to_rgb_cont, MATCH_CONTINUOUS)
 from reprep import Report
-import numpy as np
 import time
-from boot_agents.diffeo.diffeo_estimator import MATCH_CONTINUOUS
+
 
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]', y='array[MxN]', returns='array[MxN]')
 def apply_diffeomorphism(diffeo, y):

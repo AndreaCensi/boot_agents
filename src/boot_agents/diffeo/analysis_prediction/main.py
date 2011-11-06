@@ -1,16 +1,13 @@
-from boot_agents.diffeo import diffeo_compose, diffeo_apply
-from boot_agents.diffeo.analysis.action import Action
-from boot_agents.diffeo.analysis.pil_utils import imread, resize
-from bootstrapping_olympics.ros_scripts.log_learn import ReprepPublisher
+from . import contract, np
+from .. import diffeo_compose, diffeo_apply, diffeo_identity
+from ..analysis import Action, imread, resize
+from PIL import Image
+from bootstrapping_olympics.display import ReprepPublisher
 from collections import namedtuple
 from optparse import OptionParser
 import cPickle as pickle
 import glob
 import os
-import numpy as np
-from boot_agents.diffeo import diffeo_identity
-from contracts import contract
-from PIL import Image
 
 # 
 #

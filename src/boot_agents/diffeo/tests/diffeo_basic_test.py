@@ -1,8 +1,7 @@
-from boot_agents.diffeo import (coords_iterate, coords_to_X, X_to_coords,
-    diffeo_identity, diffeo_compose, dmod, diffeo_distance_Linf,
-    diffeo_from_function, diffeo_inverse, diffeo_distance_L2)
-from boot_agents.diffeo.tests.diffeo_creation_test import (f_roty, f_rotx, f_id,
-    f_rotx2, f_rotx_inv)
+from . import f_roty, f_rotx, f_id, f_rotx2, f_rotx_inv
+from .. import (coords_iterate, coords_to_X, X_to_coords, diffeo_identity,
+    diffeo_compose, dmod, diffeo_distance_Linf, diffeo_from_function, diffeo_inverse,
+    diffeo_distance_L2)
 from numpy.testing.utils import assert_allclose
 
 def X_to_coords_test():

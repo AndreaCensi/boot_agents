@@ -28,7 +28,10 @@ class BDSServo():
             print('Warning: choose_commands() before set_goal_observations()')
             return self.commands_spec.get_default_value()
         
-            
+        if self.initial_error is None:
+            print('Warning: choose_commands() before process_observations()')
+            return self.commands_spec.get_default_value()
+        
         error = self.y - self.goal
         
         current_error = np.linalg.norm(error)
@@ -43,16 +46,17 @@ class BDSServo():
         
         
         u = u / np.abs(u).max()
-        print('u', u)
-        u = clip(u, self.commands_spec)
-        print('clip(u)', u)
         
+        u = clip(u, self.commands_spec)
+        #print('clip(u)', u)
 #        eps = 0.1
-        eps = current_error / self.initial_error
+        eps1 = current_error / self.initial_error
         eps = 0.1
-        print eps
         u = u * eps
-        print('u*', u)
+        print('e(k): %10.3f e(k)/e(0) %10.3f u: %s ' % (current_error, eps1, u))
+        
+        u += np.random.uniform(-1, 1, u.size) * 0.05
+        u = clip(u, self.commands_spec)
         return u
 
 def clip(x, stream_spec):

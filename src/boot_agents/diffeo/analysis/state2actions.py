@@ -1,4 +1,4 @@
-from boot_agents.diffeo.analysis import Action
+from . import Action
 from optparse import OptionParser
 import cPickle as pickle
 import os

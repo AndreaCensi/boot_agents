@@ -1,10 +1,10 @@
 from . import BGDSEstimator, smooth2d, np, contract
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, Expectation, RemoveDoubles
+from bootstrapping_olympics import UnsupportedSpec
 from collections import namedtuple
 from reprep import MIME_PDF
 import scipy.signal
-from bootstrapping_olympics import UnsupportedSpec
 
 
 __all__ = ['BGDSAgent']
@@ -27,8 +27,11 @@ class BGDSAgent(ExpSwitcher):
                
     def init(self, boot_spec):
         # TODO: do the 1D version
-        if len(boot_spec.get_observations().shape()) != 2:
-            raise UnsupportedSpec('Can only work with 2D signals.')
+        if len(boot_spec.get_observations().shape()) > 2:
+            raise UnsupportedSpec('Can only work with 2D or 1D signals.')
+
+        self.is2D = len(boot_spec.get_observations().shape()) == 2
+        self.is1D = len(boot_spec.get_observations().shape()) == 1
 
         ExpSwitcher.init(self, boot_spec)
         self.count = 0
@@ -64,7 +67,10 @@ class BGDSAgent(ExpSwitcher):
         if not self.rd.ready():
             return
         
-        y = create_scales(y0, self.scales)
+        if self.is2D:
+            y = create_scales(y0, self.scales)
+        else:
+            y = y0
             
         if episode_start:
             self.y_deriv.reset()
@@ -85,7 +91,8 @@ class BGDSAgent(ExpSwitcher):
         self.last_y = y
         
 
-        if self.count > MINIMUM_FOR_PREDICTION:
+        if self.is2D and self.count > MINIMUM_FOR_PREDICTION:
+            # TODO: do for 1D
             if self.count % 200 == 0 or self.model is None:
                 self.info('Updating BGDS model.')
                 self.model = self.bgds_estimator.get_model()
@@ -115,22 +122,23 @@ class BGDSAgent(ExpSwitcher):
         
         self.bgds_estimator.publish(publisher)
 
-        sec = publisher.section('preprocessing')
-        sec.array_as_image('last_y0', self.last_y0, filter='scale')
-        sec.array_as_image('last_y', self.last_y, filter='scale')
-        example = np.zeros(self.last_y.shape)
-        example.flat[150] = 1 
-        example_smooth = create_scales(example, self.scales) 
-        sec.array_as_image('example_smooth', example_smooth)
-        
-        if self.count > MINIMUM_FOR_PREDICTION:
-            sec = publisher.section('reliability')
-            sec.array_as_image('y_disag',
-                               self.y_disag.get_value(), filter='posneg')
-            sec.array_as_image('y_disag_s',
-                               self.y_disag_s.get_value(), filter='posneg')
+        if self.is2D:
+            sec = publisher.section('preprocessing')
+            sec.array_as_image('last_y0', self.last_y0, filter='scale')
+            sec.array_as_image('last_y', self.last_y, filter='scale')
+            example = np.zeros(self.last_y.shape)
+            example.flat[150] = 1 
+            example_smooth = create_scales(example, self.scales) 
+            sec.array_as_image('example_smooth', example_smooth)
             
-        if True:
+            if self.count > MINIMUM_FOR_PREDICTION:
+                sec = publisher.section('reliability')
+                sec.array_as_image('y_disag',
+                                   self.y_disag.get_value(), filter='posneg')
+                sec.array_as_image('y_disag_s',
+                                   self.y_disag_s.get_value(), filter='posneg')
+                
+        if False: # XXX
             self.publish_u_stats(publisher.section('u_stats'))
             
     def publish_u_stats(self, pub):

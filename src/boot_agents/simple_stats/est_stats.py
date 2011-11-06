@@ -45,14 +45,7 @@ class EstStats(ExpSwitcher):
         
         
         pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
-        pub.array_as_image('Py', Py, caption='cov(y)')
-        pub.array_as_image('Py0', Py0, caption='cov(y) - no diagonal')
         
-        pub.array_as_image('Ry', Ry, caption='corr(y)')
-        pub.array_as_image('Ry0', Ry0, caption='corr(y) - no diagonal')
-        
-        pub.array_as_image('Py_inv', Py_inv)
-        pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
         
         with pub.plot(name='y_stats') as pylab:
             pylab.plot(Ey, label='E(y)')
@@ -71,3 +64,18 @@ class EstStats(ExpSwitcher):
                 pylab.legend()
 
 
+        pub.array_as_image('Py', Py, caption='cov(y)')
+        pub.array_as_image('Py0', Py0, caption='cov(y) - no diagonal')
+        
+        pub.array_as_image('Ry', Ry, caption='corr(y)')
+        pub.array_as_image('Ry0', Ry0, caption='corr(y) - no diagonal')
+        
+        pub.array_as_image('Py_inv', Py_inv)
+        pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
+        
+        with pub.plot('Py_svd') as pylab:
+            _, s, _ = np.linalg.svd(Py) 
+            s /= s[0]
+            pylab.semilogy(s, 'bx-')
+
+        
