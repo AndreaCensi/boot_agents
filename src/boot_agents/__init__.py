@@ -9,6 +9,7 @@ logger.setLevel(logging.DEBUG)
 import numpy as np
 from contracts import contract
 
+from .misc_utils import *
 from .simple_stats import *
 from .geometry import *
 from .bds import *

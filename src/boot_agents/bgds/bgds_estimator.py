@@ -2,6 +2,7 @@ from . import (compute_gradient_information_matrix, contract,
     generalized_gradient, outer_first_dim, np, BGDS)
 from ..utils import Expectation, outer
 import itertools
+from boot_agents.misc_utils.pylab_axis import y_axis_balanced
 
 
 __all__ = ['BGDSEstimator']
@@ -18,12 +19,22 @@ Dimensions of P (covariance of gradient):
 Dimensions of Q:
     (K x K)
 
+Dimensions of C:
+- for 1D signals:  (K x N )
+- for 2D signals:  (K x H x W )
+
+
 '''
 
     def __init__(self):
         self.Q = Expectation()
         self.P = Expectation()
         self.G = Expectation()
+        self.B = Expectation()
+        
+        self.C = None
+        self.C_needs_update = True
+        
         self.R = None
         self.R_needs_update = True
         self.H = None
@@ -46,6 +57,7 @@ Dimensions of Q:
         self.is2D = y.ndim == 2
         
         gy = generalized_gradient(y)
+        
         self.Q.update(outer(u, u), dt) 
         self.P.update(outer_first_dim(gy), dt)
         self.R_needs_update = True
@@ -53,6 +65,10 @@ Dimensions of Q:
         Gi = outer(u, gy * y_dot)
         self.G.update(Gi, dt)
         self.H_needs_update = True
+        
+        Bk = outer(u, y_dot)
+        self.B.update(Bk, dt)
+        self.C_needs_update = True
     
         self.last_y = y
         self.last_gy = gy
@@ -70,6 +86,7 @@ Dimensions of Q:
             self.R_needs_update = False
         return self.R
     
+    def get_B(self): return self.B.get_value()
     def get_G(self): return self.G.get_value()
     def get_P(self): return self.P.get_value()
     def get_Q(self): return self.Q.get_value()
@@ -78,15 +95,14 @@ Dimensions of Q:
         if self.H_needs_update:
             R = self.get_R()
             G = self.get_G()
-            Q = self.get_Q()
             H = np.empty_like(G)
-            Q = self.get_Q()
-            Qinv = np.linalg.pinv(Q)
+            Qinv = self.get_Q_inv()
             # - for 2D signals:  (K x 2 x H x W )
             # multiply Qinv on the first
             # multiply R on the second
             if self.is2D:
-                for i, j in itertools.product(range(G.shape[2]), range(G.shape[3])):
+                h, w = G.shape[2], G.shape[3]
+                for i, j in iterate_indices((h, w)):
                     G_s = G[:, :, i, j].squeeze()
                     R_s = R[:, :, i, j].squeeze() 
                     H_s = np.dot(Qinv, np.dot(G_s, R_s)) 
@@ -102,6 +118,31 @@ Dimensions of Q:
             self.H_needs_update = False
         return self.H
     
+    def get_C(self):
+        if self.C_needs_update:
+            B = self.get_B()
+            Qinv = self.get_Q_inv()
+            if self.C is None:
+                self.C = np.empty_like(B)
+
+            if self.is2D:
+                h, w = B.shape[-2], B.shape[-1]
+                for i, j in iterate_indices((h, w)):
+                    B_s = B[:, i, j].squeeze()
+                    C_s = np.dot(Qinv, B_s) 
+                    self.C[:, i, j] = C_s
+            else: # 1D
+                for i in range(B.shape[-1]):
+                    B_s = B[:, i].squeeze()
+                    C_s = np.dot(Qinv, B_s)
+                    self.C[:, i] = C_s
+        return self.C
+    
+    def get_Q_inv(self):
+        # TODO: check convergence
+        Q = self.get_Q()
+        return np.linalg.pinv(Q)
+    
     def publish(self, pub):
         # FIXME: add 2d case
         if self.is2D:
@@ -115,14 +156,22 @@ Dimensions of Q:
         P = self.get_P()
         R = self.get_R()
         H = self.get_H()
+        B = self.get_B()
+        C = self.get_C()
         
+        # TODO: use names from boot spec
         u_labels = ['cmd%s' % k for k in range(K)]
         grad_labels = ['h', 'v']
 
-        display_4d_tensor(pub, 'G', G, xlabels=u_labels, ylabels=grad_labels)
-        display_4d_tensor(pub, 'P', P, xlabels=grad_labels, ylabels=grad_labels)
-        display_4d_tensor(pub, 'R', R, xlabels=grad_labels, ylabels=grad_labels)
-        display_4d_tensor(pub, 'H', H, xlabels=u_labels, ylabels=grad_labels)
+        acc = pub.section('accumulators')
+        display_4d_tensor(acc, 'G', G, xlabels=u_labels, ylabels=grad_labels)
+        display_3d_tensor(acc, 'B', B, labels=u_labels)
+        display_4d_tensor(acc, 'P', P, xlabels=grad_labels, ylabels=grad_labels)
+        display_4d_tensor(acc, 'R', R, xlabels=grad_labels, ylabels=grad_labels)
+        
+        est = pub.section('estimated')
+        display_4d_tensor(est, 'H', H, xlabels=u_labels, ylabels=grad_labels)
+        display_3d_tensor(acc, 'C', B, labels=u_labels)
 
         data = pub.section('last_data')
         data.array_as_image('last_y', self.last_y, filter='scale')
@@ -137,29 +186,39 @@ Dimensions of Q:
         P = self.get_P()
         R = self.get_R()
         H = self.get_H()
+        B = self.get_B()
+        C = self.get_C()
         
-        @contract(value='array[Kx1xN]')
+        @contract(value='array[Kx1xN]|array[KxN]')
         def display_1d_tensor(pub, name, value):
             with pub.plot(name) as pylab:
                 for k in range(value.shape[0]):
-                    x = value[k, :, :].squeeze()
+                    x = value[k, ...].squeeze()
+                    assert x.ndim == 1
                     pylab.plot(x, label='%s%s' % (name, k))
+                    
+                y_axis_balanced(pylab, show0=True)
                 pylab.legend()
-                
+        
+        @contract(value='array[N]')
         def display_1d_field(pub, name, value):
             with pub.plot(name) as pylab:
                 pylab.plot(value)
                 
-        display_1d_tensor(pub, 'G', G)
-        display_1d_tensor(pub, 'P', P)
-        display_1d_tensor(pub, 'R', R)
-        display_1d_tensor(pub, 'H', H)
+        accum = pub.section('accumulators')
+        display_1d_tensor(accum, 'G', G)
+        display_1d_tensor(accum, 'B', B)
+        display_1d_tensor(accum, 'P', P)
+        display_1d_tensor(accum, 'R', R)
+        
+        estim = pub.section('inferred')
+        display_1d_tensor(estim, 'H', H)
+        display_1d_tensor(estim, 'C', C)
 
         data = pub.section('last_data')
         display_1d_field(data, 'last_y', self.last_y)
         display_1d_field(data, 'last_y_dot', self.last_y_dot)
-#        display_1d_field(data, 'last_gy', self.last_gy[0, :, :])
-#        display_1d_field(data, 'last_gy_v', self.last_gy[1, :, :])
+        display_1d_field(data, 'last_gy', self.last_gy[0, :])
 
     def publish_compact(self, pub):
 #        K = self.last_u.size
@@ -175,14 +234,30 @@ Dimensions of Q:
         for k in inter:
             with pub.plot('H%s' % k) as pylab:
                 pylab.plot(H[k, ...].squeeze())
-        
-        
+    
+def iterate_indices(shape):
+    if len(shape) == 2:
+        for i, j in itertools.product(range(shape[0]), range(shape[1])):
+            yield i, j
+    else:
+        assert(False)
+                
 @contract(G='array[AxBxHxW]', xlabels='list[A](str)', ylabels='list[B](str)')
 def display_4d_tensor(pub, name, G, xlabels, ylabels):
-    section = pub.section(name)
     A = G.shape[0]
     B = G.shape[1]
-    for (a, b) in itertools.product(range(A), range(B)):
+    section = pub.section(name, cols=A)
+    for b, a in iterate_indices((B, A)):
         value = G[a, b , :, :].squeeze() 
         label = '%s_%s_%s' % (name, xlabels[a], ylabels[b])
+        section.array_as_image(label, value)
+
+      
+@contract(G='array[AxHxW]', labels='list[A](str)')
+def display_3d_tensor(pub, name, G, labels):
+    A = G.shape[0]
+    section = pub.section(name, cols=A)
+    for a in range(A):
+        value = G[a, :, :].squeeze() 
+        label = '%s_%s' % (name, labels[a])
         section.array_as_image(label, value)

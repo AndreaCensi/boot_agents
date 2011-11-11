@@ -33,7 +33,9 @@ setup(name='BootAgents',
       install_requires=[ 
         'scikits.image', 
         'BootOlympics>=1.0,<2'],
-      tests_require=['nose'],
+      setup_requires=['nose>=1.0'],
+      tests_require=['nose>=1.0', 'rudolf', 'nose-progressive', 'nose-cov'],
+
        entry_points={
          'console_scripts': [
            'boot_agents_diff_actions = '

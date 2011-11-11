@@ -91,7 +91,8 @@ class BGDSAgent(ExpSwitcher):
         self.last_y = y
         
 
-        if self.is2D and self.count > MINIMUM_FOR_PREDICTION:
+        # TODO: implement this separately
+        if False and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
             # TODO: do for 1D
             if self.count % 200 == 0 or self.model is None:
                 self.info('Updating BGDS model.')
@@ -122,7 +123,7 @@ class BGDSAgent(ExpSwitcher):
         
         self.bgds_estimator.publish(publisher)
 
-        if self.is2D:
+        if False and self.is2D: # TODO: implement separately
             sec = publisher.section('preprocessing')
             sec.array_as_image('last_y0', self.last_y0, filter='scale')
             sec.array_as_image('last_y', self.last_y, filter='scale')

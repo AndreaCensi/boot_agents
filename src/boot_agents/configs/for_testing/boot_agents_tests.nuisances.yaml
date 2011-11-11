@@ -1,0 +1,5 @@
+- id: n_id
+  desc: The identity nuisance
+  code:
+  - bootstrapping_olympics.examples.Identity
+  - {}

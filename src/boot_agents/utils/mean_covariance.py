@@ -10,6 +10,8 @@
  
 from . import logger, Expectation, np, contract, Publisher, cov2corr, outer   
 from numpy.linalg.linalg import pinv, LinAlgError
+from boot_agents.misc_utils.pylab_axis import y_axis_positive, \
+    y_axis_extra_space
 
 class MeanCovariance:
     ''' Computes mean and covariance of a quantity '''
@@ -69,7 +71,9 @@ class MeanCovariance:
     
     def get_correlation(self):
         self.assert_some_data()
-        return cov2corr(self.covariance_accum.get_value())
+        corr = cov2corr(self.covariance_accum.get_value())
+        np.fill_diagonal(corr, 1)
+        return corr
     
     def get_information(self, rcond=1e-2):
         self.assert_some_data()
@@ -102,6 +106,7 @@ class MeanCovariance:
             pylab.plot(Ey, label='expectation')
             pylab.plot(y_max, label='max')
             pylab.plot(y_min, label='min')
+            y_axis_extra_space(pylab)
             pylab.legend()
  
         pub.array_as_image('covariance', P)
@@ -114,7 +119,10 @@ class MeanCovariance:
         
         with pub.plot('P_diagonal') as pylab:
             pylab.plot(P.diagonal(), 'x-')
+            y_axis_positive(pylab)
 
         with pub.plot('P_diagonal_sqrt') as pylab:
             pylab.plot(np.sqrt(P.diagonal()), 'x-')
-    
+            y_axis_positive(pylab)
+            
+            

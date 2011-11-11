@@ -6,7 +6,7 @@ from optparse import OptionParser
 import os
 import numpy as np
 import itertools
-from geometry.formatting import   formatm
+from geometry.formatting import formatm
 
 def zoom(M, factor=10):
     return np.kron(M, np.ones((10, 10)))
