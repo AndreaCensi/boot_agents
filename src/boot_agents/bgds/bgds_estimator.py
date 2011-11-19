@@ -171,7 +171,7 @@ Dimensions of C:
         
         est = pub.section('estimated')
         display_4d_tensor(est, 'H', H, xlabels=u_labels, ylabels=grad_labels)
-        display_3d_tensor(acc, 'C', B, labels=u_labels)
+        display_3d_tensor(acc, 'C', C, labels=u_labels)
 
         data = pub.section('last_data')
         data.array_as_image('last_y', self.last_y, filter='scale')
