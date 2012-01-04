@@ -11,6 +11,7 @@ __all__ = ['BGDSAgent']
 
 MINIMUM_FOR_PREDICTION = 200 # XXX
 
+
 class BGDSAgent(ExpSwitcher):
     '''
         Skip: only consider every $skip observations.
@@ -24,7 +25,7 @@ class BGDSAgent(ExpSwitcher):
         self.skip = skip
         self.scales = scales
         self.fixed_dt = fixed_dt
-               
+
     def init(self, boot_spec):
         # TODO: do the 1D version
         if len(boot_spec.get_observations().shape()) > 2:
@@ -36,8 +37,8 @@ class BGDSAgent(ExpSwitcher):
         ExpSwitcher.init(self, boot_spec)
         self.count = 0
         self.y_deriv = DerivativeBox()
-        self.bgds_estimator = BGDSEstimator()  
-        
+        self.bgds_estimator = BGDSEstimator()
+
         self.model = None
         self.y_disag = Expectation()
         self.y_disag_s = Expectation()
@@ -48,39 +49,39 @@ class BGDSAgent(ExpSwitcher):
         self.rd = RemoveDoubles(0.5)
 
     def process_observations(self, obs):
-        dt = float(obs['dt']) 
+        dt = float(obs['dt'])
         u = obs['commands']
         y0 = obs['observations']
         episode_start = obs['episode_start']
 
-        self.count += 1 
+        self.count += 1
         if self.count % self.skip != 0:
             return
-        
-        if self.fixed_dt: 
+
+        if self.fixed_dt:
             # dt is not reliable sometime
             # you don't want to give high weight to higher dt samples.
             dt = 1 # XXX: add in constants
-            
-        
+
+
         self.rd.update(y0)
         if not self.rd.ready():
             return
-        
+
         if self.is2D:
             y = create_scales(y0, self.scales)
         else:
             y = y0
-            
+
         if episode_start:
             self.y_deriv.reset()
-            return        
+            return
 
         self.y_deriv.update(y, dt)
-        
+
         if not self.y_deriv.ready():
             return
-        
+
         y_sync, y_dot_sync = self.y_deriv.get_value()
 
         self.bgds_estimator.update(u=u.astype('float32'),
@@ -89,7 +90,7 @@ class BGDSAgent(ExpSwitcher):
                                    dt=dt)
         self.last_y0 = y0
         self.last_y = y
-        
+
 
         # TODO: implement this separately
         if False and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
@@ -97,30 +98,30 @@ class BGDSAgent(ExpSwitcher):
             if self.count % 200 == 0 or self.model is None:
                 self.info('Updating BGDS model.')
                 self.model = self.bgds_estimator.get_model()
-            
+
             gy = self.bgds_estimator.last_gy
             y_dot_est = self.model.estimate_y_dot(y, u, gy=gy)
             y_dot_corr = y_dot_est * y_dot_sync
             self.y_disag.update(np.maximum(-y_dot_corr, 0))
             self.y_disag_s.update(np.sign(y_dot_corr))
-            
+
             u_est = self.model.estimate_u(y, y_dot_sync, gy=gy)
-            
+
             data = {'u': u,
                     'u_est': u_est,
                     'timestamp': obs.time,
                     'id_episode': obs.id_episode
             }
-            self.u_stats.append(data) 
-            
+            self.u_stats.append(data)
+
 #            u_est = self.model.estimate_u(y, y_dot_sync, gy=self.bgds_estimator)
 #            self.u_stats.append()
 #            
     def publish(self, publisher):
-        if self.count < 10: 
+        if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
-        
+
         self.bgds_estimator.publish(publisher)
 
         if False and self.is2D: # TODO: implement separately
@@ -128,20 +129,20 @@ class BGDSAgent(ExpSwitcher):
             sec.array_as_image('last_y0', self.last_y0, filter='scale')
             sec.array_as_image('last_y', self.last_y, filter='scale')
             example = np.zeros(self.last_y.shape)
-            example.flat[150] = 1 
-            example_smooth = create_scales(example, self.scales) 
+            example.flat[150] = 1
+            example_smooth = create_scales(example, self.scales)
             sec.array_as_image('example_smooth', example_smooth)
-            
+
             if self.count > MINIMUM_FOR_PREDICTION:
                 sec = publisher.section('reliability')
                 sec.array_as_image('y_disag',
                                    self.y_disag.get_value(), filter='posneg')
                 sec.array_as_image('y_disag_s',
                                    self.y_disag_s.get_value(), filter='posneg')
-                
+
         if False: # XXX
             self.publish_u_stats(publisher.section('u_stats'))
-            
+
     def publish_u_stats(self, pub):
         T = len(self.u_stats)
         print('Obtained %d obs' % T)
@@ -152,7 +153,7 @@ class BGDSAgent(ExpSwitcher):
         u_suc = np.zeros((T, K))
         time = np.zeros(T)
         num_episode = np.zeros(T, 'int')
-        id_episode2num = {} 
+        id_episode2num = {}
         num2id_episode = {}
         id_episode2start = {}
         cmd2faults = {}
@@ -160,13 +161,13 @@ class BGDSAgent(ExpSwitcher):
             u_act[t, :] = stats['u']
             u_est[t, :] = stats['u_est']
             time[t] = stats['timestamp']
-            id_ep = stats['id_episode'] 
+            id_ep = stats['id_episode']
             if not id_ep in id_episode2num:
                 id_episode2num[id_ep] = len(id_episode2num)
                 id_episode2start[id_ep] = time[t]
                 num2id_episode[id_episode2num[id_ep]] = id_ep
             num_episode[t] = id_episode2num[id_ep]
-      
+
         s = ""
         for k, v in id_episode2num.items():
             s += '%s: %s\n' % (k, v)
@@ -177,8 +178,8 @@ class BGDSAgent(ExpSwitcher):
             pylab.ylabel('num\_episode')
 #          
         for k in range(K):
-            sec = pub.section('u%d' % k) 
-            
+            sec = pub.section('u%d' % k)
+
             good_data = np.array(range(T)) > 15000
             for u in np.unique(u_act[:, k]):
                 which, = np.nonzero((u_act[:, k] == u) & good_data)
@@ -193,9 +194,9 @@ class BGDSAgent(ExpSwitcher):
 #            u_mis[:, k] = np.maximum(-u_est[:, k] * u_act[:, k], 0)
 #            u_mis[:, k] = np.abs(u_est[:, k] - u_act[:, k])
 
-            u_mis[:, k] = (np.maximum(-u_est[:, k] * u_act[:, k], 0) + 
+            u_mis[:, k] = (np.maximum(-u_est[:, k] * u_act[:, k], 0) +
                                      np.abs(u_est[:, k]) * (u_act[:, k] == 0))
-                           
+
             u_suc[:, k] = count_positive(-mis0, interval=400)
             faults = detect_faults(num_episode, time, u_mis[:, k],
                                     scale=7, threshold=0.75,
@@ -205,32 +206,32 @@ class BGDSAgent(ExpSwitcher):
             s = ""
             for fault in faults:
                 id_ep = num2id_episode[fault.num_episode]
-                s += ('Episode %s, timestamp %s (%s)\n' % 
+                s += ('Episode %s, timestamp %s (%s)\n' %
                        (id_ep, fault.timestamp,
                         fault.timestamp - id_episode2start[id_ep]))
             sec.text('faults', s)
 
             graphics = dict(markersize=1)
-            
+
             with sec.plot('time') as pylab:
                 plot_with_colors(pylab, np.array(range(T)),
                  u_est[:, k], u_act[:, k], **graphics)
 
 #                pylab.plot(u_act[:, k], 'k.', **graphics)
 #                pylab.plot(u_est[:, k], 'b.', **graphics)
-                
+
             with sec.plot('mis') as pylab:
                 pylab.plot(u_mis[:, k], 'r.', **graphics)
                 for fault in faults:
                     pylab.plot(fault.index, fault.detect, 'kx')
-                    
+
             with sec.plot('success') as pylab:
                 pylab.plot(u_suc[:, k], 'r.', **graphics)
                 set_y_axis(pylab, -0.05, 1.05)
-            
+
             with sec.plot('mis0') as pylab:
                 pylab.plot(mis0, 'r.', **graphics)
-                
+
         for id_episode, num in id_episode2num.items():
             print id_episode
 #            if id_episode != '20100615_234934': continue
@@ -239,10 +240,10 @@ class BGDSAgent(ExpSwitcher):
             et = num_episode == num
             # normalize from 0
             e_timestamps = time[et]
-            log_start = e_timestamps[0] 
+            log_start = e_timestamps[0]
             e_timestamps -= log_start
             cmd2color = {0:'g', 1:'b'}
-            
+
             episode_bounds = (18, 60)
             markersize = 2
             with S.plot('mis', figsize=(8, 2), mime=MIME_PDF) as pylab:
@@ -257,17 +258,17 @@ class BGDSAgent(ExpSwitcher):
 #                pylab.legend()
                 set_x_axis(pylab, episode_bounds[0], episode_bounds[1])
 
-                
+
             with S.plot('success', figsize=(8, 2), mime=MIME_PDF) as pylab:
                 pylab.plot(e_timestamps, e_timestamps * 0, 'k--')
                 pylab.plot(e_timestamps, np.ones(len(e_timestamps)), 'k--')
                 for k in range(K):
                     pylab.plot(e_timestamps, u_suc[et, k],
                                '%s-' % cmd2color[k], label='cmd #%d' % k)
-                set_y_axis(pylab, -0.05, 1.05) 
+                set_y_axis(pylab, -0.05, 1.05)
                 set_x_axis(pylab, episode_bounds[0], episode_bounds[1])
                 pylab.legend(loc='lower right')
-     
+
             for k in range(K):
                 with S.plot('commands_%d' % k, figsize=(8, 2), mime=MIME_PDF) as pylab:
                     pylab.plot(e_timestamps, u_act[et, k], 'y.', label='actual', markersize=3)
@@ -285,8 +286,8 @@ def plot_with_colors(pylab,
         which = values_giving_colors == u
         pylab.plot(timestamps[which], values[which], '%s.' % col,
                                     label='estimated', **kwargs)
-                 
-     
+
+
 def set_y_axis(pylab, y_min, y_max):
     a = pylab.axis()
     pylab.axis([a[0], a[1], y_min, y_max])
@@ -294,19 +295,19 @@ def set_y_axis(pylab, y_min, y_max):
 def set_x_axis(pylab, x_min, x_max):
     a = pylab.axis()
     pylab.axis([x_min, x_max, a[2], a[3]])
-    
+
 def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start, cmd2color):
     a = pylab.axis()
     for k, faults in cmd2faults.items():
         xs = []
-        ys = []    
+        ys = []
         for fault in faults:
             if fault.num_episode != num_episode: continue
             t = fault.timestamp - episode_time_start
             xs.extend([t, t, None])
             ys.extend([a[2], a[3], None])
         pylab.plot(xs, ys, '%s-' % cmd2color[k])
-               
+
 
 # TODO: remove all of this
 Fault = namedtuple('Fault', 'index,num_episode,timestamp,detect,detect_smooth')
@@ -322,11 +323,11 @@ def detect_faults(episode, timestamp, signal, scale, threshold, minimum_spacing)
         l = locations[index]
         cur_time = timestamp[l]
         for _, _, other_time, _, _ in faults:
-            spacing = np.abs(other_time - cur_time) 
+            spacing = np.abs(other_time - cur_time)
             if spacing < minimum_spacing:
                 #print('Skipping %d because %d is close  (%f)' % 
                 #      (l, l2, spacing))
-                break  
+                break
         else:
             faults.append(Fault(l,
                        episode[l],
@@ -336,7 +337,7 @@ def detect_faults(episode, timestamp, signal, scale, threshold, minimum_spacing)
     return faults
 
 def local_minima(x):
-    return ((x <= np.roll(x, +1, 0)) & 
+    return ((x <= np.roll(x, +1, 0)) &
             (x <= np.roll(x, -1, 0)))
 
 def count_positive(x, interval):

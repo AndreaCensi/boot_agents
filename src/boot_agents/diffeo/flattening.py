@@ -1,5 +1,6 @@
 from . import contract, coords_iterate, np
 
+
 class Flattening:
     ''' A Flattening is a way to assign a 1D index to each cell of a 
         2D array. '''
@@ -11,8 +12,8 @@ class Flattening:
         self.shape = cell2index.shape
         self.cell2index = cell2index
         self.index2cell = index2cell
-    
-    @staticmethod    
+
+    @staticmethod
     @contract(cell2index='array[MxN](int32,>=0,<M*N)',
               index2cell='array[(M*N)x2](int32,>=0)')
     def check_conjugate(cell2index, index2cell):
@@ -22,10 +23,10 @@ class Flattening:
             k = cell2index[c]
             assert index2cell[k, 0] == c[0]
             assert index2cell[k, 1] == c[1]
-        
-    @staticmethod 
+
+    @staticmethod
     @contract(shape='seq[2](>0)')
-    def by_rows(shape): 
+    def by_rows(shape):
         M = shape[0]
         N = shape[1]
         cell2index = np.zeros((M, N), 'int32')
@@ -36,8 +37,8 @@ class Flattening:
             index2cell[k] = [i, j]
             k += 1
         return Flattening(cell2index, index2cell)
-    
-    
+
+
     @contract(flat='array[MxN](int32, >=0, <=M*N)')
     def flat2coords(self, flat):
         ''' Converts a representation of the type index[i,j] = k
@@ -54,4 +55,4 @@ class Flattening:
     def random_coords(self):
         k = np.random.randint(self.size)
         return tuple(self.index2cell[k, :])
-    
+

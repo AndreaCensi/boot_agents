@@ -1,6 +1,7 @@
 from . import np, contract
 import itertools
 
+
 @contract(a='array[N],N>3', returns='array[N]')
 def gradient1d(a):
     ''' 
@@ -13,6 +14,7 @@ def gradient1d(a):
     b[-1] = b[-2]
     return b
 
+
 @contract(a='array[N],N>3', returns='array[N]')
 def gradient1d_slow(a):
     ''' 
@@ -22,16 +24,17 @@ def gradient1d_slow(a):
     n = a.size
     for i in xrange(1, n - 1):
         b[i] = (a[i + 1] - a[i - 1]) / 2
-    
+
     b[0] = b[1]
     b[-1] = b[-2]
     return b
+
 
 @contract(a='array[HxW]', returns='tuple(array[HxW],array[HxW])')
 def gradient2d(a):
     g0 = np.empty_like(a)
     g1 = np.empty_like(a)
-    
+
     # vertical gradient
     for j in range(a.shape[1]):
         g0[:, j] = gradient1d(a[:, j])
@@ -39,9 +42,10 @@ def gradient2d(a):
     # horizontal
     for i in range(a.shape[0]):
         g1[i, :] = gradient1d(a[i, :])
-    
+
     return g0, g1
-    
+
+
 @contract(y='array[HxW]|array[N]', returns='array')
 def generalized_gradient(y):
     assert y.ndim in [1, 2]
@@ -50,10 +54,11 @@ def generalized_gradient(y):
     if y.ndim == 1:
         gy[0, ...] = gradient1d(y)
     else:
-        x, y = gradient2d(y) 
+        x, y = gradient2d(y)
         gy[0, ...] = x
         gy[1, ...] = y
     return gy
+
 
 @contract(P='array[2x2xHxW]', returns='array[2x2xHxW]')
 def compute_gradient_information_matrix(P):
@@ -67,18 +72,18 @@ def compute_gradient_information_matrix(P):
     b = P[0, 1, :, :].squeeze()
     c = P[1, 0, :, :].squeeze()
     d = P[1, 1, :, :].squeeze()
-    
+
     det = (a * d - b * c)
     det[det <= 0] = 1
     one_over_det = 1.0 / det
-    
+
     I[0, 0, :, :] = one_over_det * (+d)
     I[0, 1, :, :] = one_over_det * (-b)
     I[1, 0, :, :] = one_over_det * (-c)
     I[1, 1, :, :] = one_over_det * (+a)
-        
+
     return I
-        
+
 def outer_first_dim(x):
     K = x.shape[0]
     result_shape = (K,) + x.shape
@@ -95,4 +100,4 @@ def smooth2d(y, scale):
     return gaussian_filter(y, sigma=scale)
 
 
-    
+
