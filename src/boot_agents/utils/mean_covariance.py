@@ -7,11 +7,11 @@
 #Ling, Robert F. (1974). Comparison of Several Algorithms for Computing Sample 
 #Means and Variances. Journal of the American Statistical Association,
 # Vol. 69, No. 348, 859-866. 
- 
-from . import logger, Expectation, np, contract, Publisher, cov2corr, outer   
+
+from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
+from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
-from boot_agents.misc_utils.pylab_axis import y_axis_positive, \
-    y_axis_extra_space
+
 
 class MeanCovariance:
     ''' Computes mean and covariance of a quantity '''
@@ -21,13 +21,13 @@ class MeanCovariance:
         self.minimum = None
         self.maximum = None
         self.num_samples = 0
-        
+
     def get_num_samples(self):
         return self.num_samples
-    
+
     def update(self, value, dt=1.0):
         self.num_samples += dt
-        
+
         n = value.size
         if  self.maximum is None:
             self.maximum = value.copy()
@@ -36,23 +36,23 @@ class MeanCovariance:
         else:
             # TODO: check dimensions
             if not (value.shape == self.maximum.shape):
-                raise ValueError('Value shape changed: %s -> %s' % 
-                                 (self.maximum.shape, value.shape)) 
+                raise ValueError('Value shape changed: %s -> %s' %
+                                 (self.maximum.shape, value.shape))
             self.maximum = np.maximum(value, self.maximum)
-            self.minimum = np.minimum(value, self.minimum)    
-            
+            self.minimum = np.minimum(value, self.minimum)
+
         self.mean_accum.update(value, dt)
-        mean = self.mean_accum.get_value()        
+        mean = self.mean_accum.get_value()
         value_norm = value - mean
-         
+
         P = outer(value_norm, value_norm)
         self.covariance_accum.update(P, dt)
         self.last_value = value
-    
+
     def assert_some_data(self):
         if self.num_samples == 0:
             raise Exception('Never updated')
-        
+
     def get_mean(self):
         self.assert_some_data()
         return self.mean_accum.get_value()
@@ -64,17 +64,17 @@ class MeanCovariance:
     def get_minimum(self):
         self.assert_some_data()
         return self.minimum
-    
+
     def get_covariance(self):
         self.assert_some_data()
         return self.covariance_accum.get_value()
-    
+
     def get_correlation(self):
         self.assert_some_data()
         corr = cov2corr(self.covariance_accum.get_value())
         np.fill_diagonal(corr, 1)
         return corr
-    
+
     def get_information(self, rcond=1e-2):
         self.assert_some_data()
         try:
@@ -86,29 +86,29 @@ class MeanCovariance:
             with  open(filename + '.pickle', 'w') as f:
                 pickle.dump(self, f)
             logger.error('Did not converge; saved on %s' % filename)
-            
-        
-    @contract(pub=Publisher, publish_information='bool')    
+
+    @contract(pub=Publisher, publish_information='bool')
     def publish(self, pub, publish_information=False):
         if self.num_samples == 0:
-            pub.text('warning', 'Cannot publish anything as I was never updated.')
+            pub.text('warning',
+                     'Cannot publish anything as I was never updated.')
             return
 
         P = self.get_covariance()
         R = self.get_correlation()
         Ey = self.get_mean()
         y_max = self.get_maximum()
-        y_min = self.get_minimum() 
-        
+        y_min = self.get_minimum()
+
         pub.text('stats', 'Num samples: %s' % self.mean_accum.get_mass())
-        
+
         with pub.plot('expectation') as pylab:
             pylab.plot(Ey, label='expectation')
             pylab.plot(y_max, label='max')
             pylab.plot(y_min, label='min')
             y_axis_extra_space(pylab)
             pylab.legend()
- 
+
         pub.array_as_image('covariance', P)
         R = R.copy()
         np.fill_diagonal(R, np.nan)
@@ -116,7 +116,7 @@ class MeanCovariance:
         if publish_information:
             P_inv = self.get_information()
             pub.array_as_image('information', P_inv)
-        
+
         with pub.plot('P_diagonal') as pylab:
             pylab.plot(P.diagonal(), 'x-')
             y_axis_positive(pylab)
@@ -124,5 +124,5 @@ class MeanCovariance:
         with pub.plot('P_diagonal_sqrt') as pylab:
             pylab.plot(np.sqrt(P.diagonal()), 'x-')
             y_axis_positive(pylab)
-            
-            
+
+
