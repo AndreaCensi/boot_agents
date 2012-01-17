@@ -84,6 +84,7 @@ def compute_gradient_information_matrix(P):
 
     return I
 
+
 def outer_first_dim(x):
     K = x.shape[0]
     result_shape = (K,) + x.shape
@@ -92,11 +93,15 @@ def outer_first_dim(x):
         result[i, j, ...] = x[i, ...] * x[j, ...]
     return result
 
-from scipy.ndimage import gaussian_filter
 
 @contract(y='array[HxW]', scale='>0', returns='array[HxW]')
 def smooth2d(y, scale):
-    ''' Smooths the 2D array y with a kernel of the given scale (sigma in sensels). '''
+    ''' 
+        Smooths the 2D array y with a kernel of the given scale 
+        (sigma in sensels). 
+    '''
+    from scipy.ndimage import gaussian_filter
+    # TODO: move somewhere else
     return gaussian_filter(y, sigma=scale)
 
 

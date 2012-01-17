@@ -12,12 +12,13 @@ from vehicles import VehiclesConfig
 
 
 def plan_analysis(global_options, data, args):
-    
+
     np.random.seed(12345226)
     from matplotlib import rc
-    rc('font', **{'family':'serif', 'serif':['Times', 'Times New Roman', 'Palatino'],
-                       'size': 9.0})
-        
+    rc('font', **{'family': 'serif',
+                  'serif': ['Times', 'Times New Roman', 'Palatino'],
+                   'size': 9.0})
+
     contracts.disable_all()
     usage = ""
     parser = OptionParser(usage=usage)
@@ -27,22 +28,21 @@ def plan_analysis(global_options, data, args):
     (options, args) = parser.parse_args(args)
     if args:
         raise Exception('Extra args')
-    
+
     id_robot = data['id_robot']
 #    id_agent = data['id_agent']
     pub = data['publisher']
-        
+
     vehicle = VehiclesConfig.vehicles.instance(id_robot) #@UndefinedVariable
     world = VehiclesConfig.worlds.instance(options.id_world) #@UndefinedVariable
-    
+
     sim = VehicleSimulation(vehicle, world)
-    
-    
+
     FORWARD = [1, 1]
     BACKWARD = [-1, -1]
     LEFT = [-1, +1]
     RIGHT = [+1, -1]
-    
+
     FORWARD = np.array([0, +1])
     BACKWARD = np.array([0, -1])
     LEFT = np.array([+0.3, 0])
@@ -51,14 +51,14 @@ def plan_analysis(global_options, data, args):
     FWD_R = np.array([1, -1])
     BWD_R = np.array([-1, -1])
     BWD_L = np.array([+1, -1])
-    
+
     T1 = 1
     T2 = 2
     T1 = 1
     dt = 0.02
     def commutator(cmd1, cmd2, T):
         return [(cmd1, T), (cmd2, T), (-cmd1, T), (-cmd2, T)]
-    
+
     examples = {
                 'forwd1': {'trajectory': [(FORWARD, T1)]},
 ##                'forwd2': {'trajectory': [(FORWARD, T2)]},
@@ -87,10 +87,10 @@ def plan_analysis(global_options, data, args):
 #                'sidel3': {'trajectory': commutator(LEFT, FORWARD, T1) }
 #                
     }
-    
-        
+
+
 #    examples = {}
-    
+
     for name, scenario in examples.items():
         while True:
             try:
@@ -98,12 +98,12 @@ def plan_analysis(global_options, data, args):
                 break
             except ValueError as e:
                 print(e)
-        
+
     actions = data['actions']
     for name, scenario in examples.items():
         scenario_solve(scenario, actions)
 
-    
+
     for name, scenario in examples.items():
         S = pub.section(name)
         scenario_display(scenario, S, sim)
@@ -119,8 +119,8 @@ def scenario_solve(scenario, actions):
         res4 = diffeo_apply(action.diffeo.d, res3)
         exploration[code] = res4# {'actions' = }
     scenario['exploration'] = exploration
-    
-    
+
+
 @contract(y0='array(>=0,<=1)')
 def sensels2map(y0):
     y0 = np.maximum(y0, 0)
@@ -148,25 +148,25 @@ def scenario_display(scenario, S, sim):
     print(SE2.friendly(SE2_from_SE3(q0)))
     print(SE2.friendly(SE2_from_SE3(q1)))
     print('increment: %s' % SE2.friendly(SE2_from_SE3(delta)))
-    
-    
+
+
     with S.plot('data') as pylab:
         pylab.plot(y0, label='y0')
         pylab.plot(y1, label='y1')
         pylab.axis((0, 180, -0.04, 1.04))
-    
+
     with S.plot('world') as pylab:
         show_sensor_data(pylab, scenario['sim0']['vehicle'], col='r')
         show_sensor_data(pylab, scenario['sim1']['vehicle'], col='g')
         pylab.axis('equal')
-    
+
 #    for pose in scenario['poses']:
 #        delta = pose_diff(q0, pose)
 #        print('increment: %s' % SE2.friendly(SE2_from_SE3(delta)))
 #        
     S.array_as_image('M0', scenario['M0'])
     S.array_as_image('M1', scenario['M1'])
-    
+
     pdfparams = dict(figsize=(4, 4), mime=MIME_PDF)
     def display_all(S, name, sensels, mapp):
         x = scenario['sim0']['vehicle']['sensors'][0]['sensor']
@@ -184,30 +184,30 @@ def scenario_display(scenario, S, sim):
             pylab.plot([theta[0], theta[-1]], [0, 0], 'k--')
             pylab.plot([theta[0], theta[-1]], [1, 1], 'k--')
             pylab.axis((theta[0], theta[-1], -0.05 , 1.01))
-            
+
         with sec.plot('minimap', **pdfparams) as pylab:
             xs = np.cos(theta_rad) * sensels
             ys = np.sin(theta_rad) * sensels
             pylab.plot(xs, ys, 'k.')
-            
+
             L = 0.2
             parms = dict(linewidth=2)
             pylab.plot([0, L], [0, 0], 'r-', **parms)
             pylab.plot([0, 0], [0, L], 'g-', **parms)
-                       
+
             pylab.axis('equal')
             R = 1.05
             pylab.axis((-R, R, -R, R))
-            
+
         if mapp is not None:
             sec.array_as_image('field', mapp, 'scale')
-        
-    
+
+
     display_all(S, 'y0', y0, None)
     display_all(S, 'm0y', map2sensels(scenario['M0']), scenario['M0'])
     display_all(S, 'm1y', map2sensels(scenario['M1']), scenario['M1'])
 
-        
+
     with S.plot('poses') as pylab:
 #        for pose in scenario['poses']:
 ##            print pose
@@ -219,12 +219,12 @@ def scenario_display(scenario, S, sim):
             draw_axes(pylab, SE2_from_SE3(pose), 'k', 'k', size=1)
         draw_axes(pylab, SE2_from_SE3(q0), [0.3, 0, 0], [0, 0.3, 0], size=5)
         draw_axes(pylab, SE2_from_SE3(q1), 'r', 'g', size=5)
-        
+
 
 #        plot_sensor(pylab, sim.vehicle, q0, y0, 'g')
 #        plot_sensor(pylab, sim.vehicle, q1, y1, 'b')
         pylab.axis('equal')
-        
+
 #    print(scenario['commands'])
 
     Se = S.section('exploration')
@@ -232,19 +232,19 @@ def scenario_display(scenario, S, sim):
         Si = Se.section(name)
 #        Si.array_as_image('M1est', M1est)
         Si.array_as_image('diff', M1est - scenario['M1'])
-    
+
         display_all(Si, 'M1est', map2sensels(M1est), M1est)
-    
-    
-        
+
+
+
 def draw_axes(pylab, pose, cx='r', cy='g', size=1, L=0.3):
     t, th = translation_angle_from_SE2(pose)
-    
+
     tx = [t[0] + L * np.cos(th),
           t[1] + L * np.sin(th)]
     ty = [t[0] + L * -np.sin(th),
           t[1] + L * np.cos(th)]
-    
+
     pylab.plot([t[0], tx[0]],
                [t[1], tx[1]], '-', color=cx, linewidth=size)
     pylab.plot([t[0], ty[0]],
@@ -255,13 +255,13 @@ def plot_sensor(pylab, vehicle, pose, readings, color):
 
 def pose_diff(a, b):
     return SE3.multiply(SE3.inverse(a), b)
-    
+
 def scenario_compute_inputs(scenario, sim, dt=0.1):
     sim.new_episode()
     scenario['y0'] = sim.compute_observations()
     scenario['pose0'] = sim.vehicle.get_pose()
     scenario['sim0'] = sim.to_yaml()
-    
+
     scenario['poses'] = []
     scenario['poses_important'] = []
     scenario['commands'] = []
@@ -278,15 +278,15 @@ def scenario_compute_inputs(scenario, sim, dt=0.1):
             scenario['commands'].append(command)
         scenario['poses'].append(sim.vehicle.get_pose())
         scenario['poses_important'].append(sim.vehicle.get_pose())
-        
+
     scenario['y1'] = sim.compute_observations()
     scenario['pose1'] = sim.vehicle.get_pose()
-    scenario['sim1'] = sim.to_yaml()    
+    scenario['sim1'] = sim.to_yaml()
     scenario['delta'] = pose_diff(scenario['pose0'], scenario['pose1'])
 
     scenario['M0'] = sensels2map(scenario['y0'])
     scenario['M1'] = sensels2map(scenario['y1'])
-    
+
 
 def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
     if robot_pose is None:
@@ -336,4 +336,4 @@ def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
                 pylab.plot(x, y, color=(lum, lum, lum), markersize=0.5, zorder=2000)
         else:
             print('Unknown sensor type %r' % sensor['type'])
-    
+

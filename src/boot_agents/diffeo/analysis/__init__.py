@@ -1,6 +1,6 @@
 import logging
 
-logging.basicConfig();
+logging.basicConfig() # XXX
 logger = logging.getLogger("diffeo_analysis")
 logger.setLevel(logging.DEBUG)
 

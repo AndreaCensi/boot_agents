@@ -12,14 +12,15 @@ class RandomSwitcher:
         self.time = 0
         self.next_switch = self.time + self.interval_function()
         self.output = self.value_function()
-        
+
     def get_value(self, dt):
         self.time += dt
         if self.time > self.next_switch:
             self.next_switch = self.time + self.interval_function()
             self.output = self.value_function()
         return self.output
-    
+
+
 class ExpSwitcher(AgentInterface):
     ''' A simple agent that switches commands randomly according 
         to an exponential distribution. 
@@ -28,14 +29,14 @@ class ExpSwitcher(AgentInterface):
     '''
 
     def __init__(self, beta):
-        self.beta = beta 
-        
+        self.beta = beta
+
     def init(self, boot_spec):
         interval = RandomExponential(self.beta)
-        value = RandomCommand(boot_spec.get_commands()) 
+        value = RandomCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
-        
+
     def process_observations(self, observations):
         self.dt = float(observations['dt'])
 
@@ -45,23 +46,26 @@ class ExpSwitcher(AgentInterface):
 
 class RandomExponential():
     ''' Wrapper for easy pickling. '''
+
     def __init__(self, beta):
         self.beta = beta
+
     def __call__(self):
         return np.random.exponential(self.beta, 1)
-    
+
+
 class ExpSwitcherCanonical(AgentInterface):
     ''' Only canonical commands are chosen. '''
 
     def __init__(self, beta):
-        self.beta = beta 
-        
+        self.beta = beta
+
     def init(self, boot_spec):
         interval = RandomExponential(self.beta)
-        value = RandomCanonicalCommand(boot_spec.get_commands()) 
+        value = RandomCanonicalCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
-        
+
     def process_observations(self, observations):
         self.dt = float(observations['dt'])
 

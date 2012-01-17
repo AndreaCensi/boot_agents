@@ -3,9 +3,8 @@ from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, MeanCovariance, scale_score
 # FIXME: dependency to remove
 from geometry import inner_product_embedding
+from geometry import mds
 from bootstrapping_olympics import UnsupportedSpec
-from bootstrapping_olympics.utils.dict_utils import check_contained
-from geometry.mds_algos import mds
 
 __all__ = ['Embed']
 

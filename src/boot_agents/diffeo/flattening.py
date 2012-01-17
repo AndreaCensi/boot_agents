@@ -38,7 +38,6 @@ class Flattening:
             k += 1
         return Flattening(cell2index, index2cell)
 
-
     @contract(flat='array[MxN](int32, >=0, <=M*N)')
     def flat2coords(self, flat):
         ''' Converts a representation of the type index[i,j] = k

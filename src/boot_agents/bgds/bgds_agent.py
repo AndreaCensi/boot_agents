@@ -4,7 +4,7 @@ from ..utils import DerivativeBox, Expectation, RemoveDoubles
 from bootstrapping_olympics import UnsupportedSpec
 from collections import namedtuple
 from reprep import MIME_PDF
-import scipy.signal
+import scipy.signal # XXX better import?
 
 
 __all__ = ['BGDSAgent']
@@ -63,7 +63,6 @@ class BGDSAgent(ExpSwitcher):
             # you don't want to give high weight to higher dt samples.
             dt = 1 # XXX: add in constants
 
-
         self.rd.update(y0)
         if not self.rd.ready():
             return
@@ -91,7 +90,6 @@ class BGDSAgent(ExpSwitcher):
         self.last_y0 = y0
         self.last_y = y
 
-
         # TODO: implement this separately
         if False and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
             # TODO: do for 1D
@@ -114,8 +112,8 @@ class BGDSAgent(ExpSwitcher):
             }
             self.u_stats.append(data)
 
-#            u_est = self.model.estimate_u(y, y_dot_sync, gy=self.bgds_estimator)
-#            self.u_stats.append()
+#          u_est = self.model.estimate_u(y, y_dot_sync, gy=self.bgds_estimator)
+#          self.u_stats.append()
 #            
     def publish(self, publisher):
         if self.count < 10:
@@ -183,7 +181,8 @@ class BGDSAgent(ExpSwitcher):
             good_data = np.array(range(T)) > 15000
             for u in np.unique(u_act[:, k]):
                 which, = np.nonzero((u_act[:, k] == u) & good_data)
-                with sec.plot('u=%s' % u, figsize=(6, 3), mime=MIME_PDF) as pylab:
+                with sec.plot('u=%s' % u, figsize=(6, 3),
+                              mime=MIME_PDF) as pylab:
 #                    hist_max = 400
                     pylab.hist(u_est[which, k], 100)
                     a = pylab.axis()
@@ -242,14 +241,15 @@ class BGDSAgent(ExpSwitcher):
             e_timestamps = time[et]
             log_start = e_timestamps[0]
             e_timestamps -= log_start
-            cmd2color = {0:'g', 1:'b'}
+            cmd2color = {0: 'g', 1: 'b'}
 
             episode_bounds = (18, 60)
             markersize = 2
             with S.plot('mis', figsize=(8, 2), mime=MIME_PDF) as pylab:
                 for k in range(K):
 #                    scale = 7
-#                    u_mis_smooth = scipy.signal.convolve(u_mis[et, k], np.ones(scale) / scale,
+#                    u_mis_smooth = scipy.signal.convolve(u_mis[et, k], 
+#                     np.ones(scale) / scale,
 #                                                         mode='same')
                     pylab.plot(e_timestamps, u_mis[et, k], #u_mis_smooth,
                                '%s-' % cmd2color[k], label='u[%d]' % k,
@@ -257,7 +257,6 @@ class BGDSAgent(ExpSwitcher):
                 #plot_fault_lines(pylab, cmd2faults, num, log_start, cmd2color)
 #                pylab.legend()
                 set_x_axis(pylab, episode_bounds[0], episode_bounds[1])
-
 
             with S.plot('success', figsize=(8, 2), mime=MIME_PDF) as pylab:
                 pylab.plot(e_timestamps, e_timestamps * 0, 'k--')
@@ -270,12 +269,16 @@ class BGDSAgent(ExpSwitcher):
                 pylab.legend(loc='lower right')
 
             for k in range(K):
-                with S.plot('commands_%d' % k, figsize=(8, 2), mime=MIME_PDF) as pylab:
-                    pylab.plot(e_timestamps, u_act[et, k], 'y.', label='actual', markersize=3)
+                with S.plot('commands_%d' % k, figsize=(8, 2),
+                            mime=MIME_PDF) as pylab:
+                    pylab.plot(e_timestamps, u_act[et, k], 'y.',
+                               label='actual', markersize=3)
                     plot_with_colors(pylab, e_timestamps,
-                                     u_est[et, k], u_act[et, k], markersize=markersize)
+                                     u_est[et, k], u_act[et, k],
+                                     markersize=markersize)
                     set_y_axis(pylab, -2, 2)
-                    #plot_fault_lines(pylab, {k:cmd2faults[k]}, num, log_start, cmd2color)
+                    #plot_fault_lines(pylab, {k:cmd2faults[k]}, num, 
+                    # log_start, cmd2color)
                     set_x_axis(pylab, episode_bounds[0], episode_bounds[1])
 
 
@@ -292,11 +295,14 @@ def set_y_axis(pylab, y_min, y_max):
     a = pylab.axis()
     pylab.axis([a[0], a[1], y_min, y_max])
 
+
 def set_x_axis(pylab, x_min, x_max):
     a = pylab.axis()
     pylab.axis([x_min, x_max, a[2], a[3]])
 
-def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start, cmd2color):
+
+def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start,
+                     cmd2color):
     a = pylab.axis()
     for k, faults in cmd2faults.items():
         xs = []

@@ -1,5 +1,6 @@
 from PIL import Image
-import numpy 
+import numpy
+
 
 def imread(filename):
     ''' 
@@ -10,16 +11,16 @@ def imread(filename):
         
         :return: image: The image as a numpy array.
         :rtype: image
-    ''' 
+    '''
     try:
         im = Image.open(filename)
     except Exception as e:
         raise Exception('Could not open filename "%s": %s' % \
                         (filename, e))
-    
+
     data = numpy.array(im)
 
-    return data 
+    return data
 
 
 def resize(value, width=None, height=None, mode=Image.NEAREST):
@@ -39,34 +40,34 @@ def resize(value, width=None, height=None, mode=Image.NEAREST):
 
         :return: image: The image as a numpy array.
         :rtype: rgb
-    ''' 
-    
+    '''
+
     image = Image_from_array(value)
-    
+
     if width is None and height is None:
         raise ValueError('You should pass at least one of width and height.')
-    
+
     if width is None and height is not None:
         width = (height * image.size[0]) / image.size[1]
     elif height is None and width is not None:
         height = (width * image.size[1]) / image.size[0]
-    
+
     # TODO: RGBA?
     image = image.resize((width, height), mode)
-    return numpy.asarray(image.convert("RGB"))    
-    
+    return numpy.asarray(image.convert("RGB"))
+
 
 def Image_from_array(a):
     ''' Converts an image in a numpy array to an Image instance.
         Accepts:  h x w      255  interpreted as grayscale
         Accepts:  h x w x 3  255  rgb  
         Accepts:  h x w x 4  255  rgba '''
-        
+
     #require_array(a)
 
     if not a.dtype == 'uint8':
         raise ValueError('I expect dtype to be uint8, got "%s".' % a.dtype)
-    
+
     if len(a.shape) == 2:
         height, width = a.shape
         rgba = numpy.zeros((height, width, 4), dtype='uint8')
@@ -84,8 +85,8 @@ def Image_from_array(a):
         if depth == 3:
             rgba[:, :, 3] = 255
     else:
-        raise ValueError('Unexpected shape "%s".' % str(a.shape))    
-    
+        raise ValueError('Unexpected shape "%s".' % str(a.shape))
+
     im = Image.frombuffer("RGBA", (width, height), rgba.data,
                            "raw", "RGBA", 0, 1)
     return im

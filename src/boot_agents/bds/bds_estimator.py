@@ -5,21 +5,24 @@ from geometry import printm
 from numpy.linalg.linalg import LinAlgError
 import scipy.linalg
 
+
 @contract(M='array[KxNxN]', y='array[N]', u='array[K]')
 def bds_dynamics(M, y, u):
     y_dot = np.dot(u, np.dot(M, y))
     return y_dot
+
 
 # TODO: put in contracts
 @new_contract
 @contract(x='array')
 def array_finite(x):
     return np.isfinite(x).all()
-    
+
 __all__ = ['BDSEstimator2', 'bds_dynamics']
 
+
 class BDSEstimator2:
-    
+
     def __init__(self):
         self.T = Expectation()
         self.uu = Expectation()
@@ -29,21 +32,21 @@ class BDSEstimator2:
         self.M = None
         self.MP = None
         self.M_needs_update = True
-        
-        self.y_dot_noise = MeanCovariance() 
-        
+
+        self.y_dot_noise = MeanCovariance()
+
         self.y_dot_stats = MeanCovariance()
         self.y_dot_pred_stats = MeanCovariance()
         self.y_dots_stats = MeanCovariance()
         self.Py_dots_stats = MeanCovariance()
-        
+
         self.fits1 = Expectation()
         self.fits2 = Expectation()
-    
+
         self.u2y2 = Expectation()
-    
+
         self.count = 0
-        
+
     @contract(u='array[K],K>0,array_finite',
               y='array[N],N>0,array_finite',
               y_dot='array[N],array_finite', dt='>0')
@@ -51,21 +54,21 @@ class BDSEstimator2:
         if np.linalg.norm(u) == 0:
             self.y_dot_noise.update(y_dot, dt)
             return
-            
+
         self.num_commands = u.size
         self.num_sensels = y.size
-        Tk = outer(u, outer(y, y_dot))  
-        
+        Tk = outer(u, outer(y, y_dot))
+
         self.T.update(Tk, dt)
         self.yy.update(outer(y, y), dt)
         self.uu.update(outer(u, u), dt)
-        
+
         uy = outer(u, y)
         self.u2y2.update(uy * uy, dt)
-        
+
         self.yy_inv_needs_update = True
         self.M_needs_update = True
-        
+
         T = self.get_T()
         uu_inv = np.linalg.pinv(self.get_uu())
         un = np.dot(uu_inv, u)
@@ -78,10 +81,10 @@ class BDSEstimator2:
         self.fits2.update(error2)
 
         use_old_version = self.count % 50 != 0
-        self.count += 1                 
+        self.count += 1
         M = self.get_M(rcond=1e-5, use_old_version=use_old_version)
         y_dot_pred = bds_dynamics(M, y, u)
-        
+
         y_dots = np.hstack((y_dot, y_dot_pred))
         self.y_dots_stats.update(y_dots)
 
@@ -89,12 +92,12 @@ class BDSEstimator2:
         self.Py_dots_stats.update(Py_dots)
         #self.y_dot_stats.update(y_dot_pred)
         #self.y_dot_pred_stats.update(y_dot_pred)
-        
+
         self.last_y_dot = y_dot
         self.last_y_dot_pred = y_dot_pred
         self.last_Py_dot = Py_dot
         self.last_Py_dot_pred = Py_dot_pred
-        
+
     def get_yy_inv(self, rcond=1e-5):
         if not hasattr(self, 'yy_inv_rcond'):
             setattr(self, 'yy_inv_rcond', 0)
@@ -102,9 +105,9 @@ class BDSEstimator2:
             self.yy_inv_needs_update = False
             yy = self.yy.get_value()
             self.yy_inv = np.linalg.pinv(yy, rcond)
-            self.yy_inv_rcond = rcond 
-        return self.yy_inv 
-    
+            self.yy_inv_rcond = rcond
+        return self.yy_inv
+
     def get_M(self, rcond=1e-5, use_old_version=False):
         if not hasattr(self, 'M_rcond'):
             setattr(self, 'M_rcond', 0)
@@ -114,7 +117,7 @@ class BDSEstimator2:
             T = self.get_T()
             if self.MP is None:
                 self.MP = np.zeros(T.shape, T.dtype)
-            for k in range(self.num_commands): 
+            for k in range(self.num_commands):
                 yy = self.get_yy()
                 Tk = T[k, :, :]
                 try:
@@ -126,13 +129,12 @@ class BDSEstimator2:
                     yy_pinv = np.linalg.inv(np.eye(yy.shape[0]) * rcond + yy)
                     Mk = np.dot(yy_pinv, Tk)
                 self.MP[k, :, :] = Mk.T # note transpose
-                
+
             uu_inv = np.linalg.pinv(self.get_uu()).astype(self.MP.dtype)
             self.M = np.tensordot(uu_inv, self.MP, ([0], [0]))
 
-        
         return self.M
-        
+
     def get_M2(self, rcond=1e-5):
         T = self.get_T()
         M2 = np.empty_like(T)
@@ -141,26 +143,26 @@ class BDSEstimator2:
         u2y2 = self.u2y2.get_value()
         for k in range(self.num_commands):
             for v in range(self.num_sensels):
-                M2[k, :, v] = T[k, v, :] / u2y2[k, v] 
+                M2[k, :, v] = T[k, v, :] / u2y2[k, v]
                 M2info[k, :, v] = u2y2[k, v]
 #            Tk = T[k, :, :]
 #            M2[k, :, :] = Tk / uy[k, :, :]  # note transpose
         return M2, M2info
-    
+
     def get_T(self):
         return self.T.get_value()
 
     def get_yy(self):
         return self.yy.get_value()
-    
+
     def get_uu(self):
         return self.uu.get_value()
-        
+
     def publish(self, pub):
         if self.T.get_mass() == 0:
             pub.text('warning',
                      'No samples obtained yet -- not publishing anything.')
-            return        
+            return
         #params = dict(filter=pub.FILTER_POSNEG, filter_params={'skim':2})
         params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
@@ -169,7 +171,6 @@ class BDSEstimator2:
         M = self.get_M(rcond)
         yy_inv = self.get_yy_inv(rcond)
         yy = self.get_yy()
-        
 
         y_dots_corr = self.y_dots_stats.get_correlation()
         n = T.shape[2]
@@ -180,7 +181,8 @@ class BDSEstimator2:
             invalid = var_noise == 0
             var_noise[invalid] = 0
             var_prediction[invalid] = 1
-            corrected_corr = measured_corr * np.sqrt(1 + var_noise / var_prediction) 
+            corrected_corr = measured_corr * np.sqrt(1 + var_noise /
+                                                     var_prediction)
             with pub.plot('correlation') as pylab:
                 pylab.plot(measured_corr, 'bx', label='raw')
                 pylab.plot(corrected_corr, 'rx', label='corrected')
@@ -190,11 +192,12 @@ class BDSEstimator2:
                 pylab.legend()
         except:
             pass # XXX: 
-                    
+
         def pub_tensor(name, V):
             section = pub.section(name)
             for i in range(V.shape[0]):
-                section.array_as_image('%s%d' % (name, i), V[i, :, :], **params)
+                section.array_as_image('%s%d' % (name, i), V[i, :, :],
+                                       **params)
 
         pub_tensor('T', T)
         pub_tensor('M', M)
@@ -217,7 +220,7 @@ class BDSEstimator2:
             pass
         self.y_dots_stats.publish(pub.section('y_dots'))
         self.Py_dots_stats.publish(pub.section('Py_dots'))
-        
+
         pub.array_as_image('yy', self.get_yy(), **params)
         pub.array_as_image('yy_inv', yy_inv, **params)
         pub.array_as_image('uu', self.get_uu(), **params)
@@ -231,11 +234,11 @@ class BDSEstimator2:
         with pub.plot('fits1') as pylab:
             q = self.fits1.get_value()
             pylab.plot(q, 'x')
-            
+
         with pub.plot('fits2') as pylab:
             q = self.fits2.get_value()
             pylab.plot(q, 'x')
-        
+
         with pub.plot('last_values_Py_dot') as pylab:
             pylab.plot(self.last_Py_dot, 'kx-', label='actual')
             pylab.plot(self.last_Py_dot_pred, 'go-', label='pred')
@@ -258,27 +261,27 @@ class BDSEstimator2:
             pylab.xlabel('observation')
             pylab.ylabel('prediction')
 
-       
     def publish_compact(self, pub, rcond=1e-2):
         if self.T.get_mass() == 0:
             pub.text('warning',
                      'No samples obtained yet -- not publishing anything.')
-            return        
+            return
 
         params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
         T = self.get_T()
         M = self.get_M(rcond=rcond)
         yy = self.get_yy()
-                    
+
         def pub_tensor(name, V):
             section = pub.section(name)
             for i in range(V.shape[0]):
-                section.array_as_image('%s%d' % (name, i), V[i, :, :], **params)
+                section.array_as_image('%s%d' % (name, i), V[i, :, :],
+                                       **params)
 
-        pub_tensor('T', T) 
-        pub_tensor('M', M) 
-        
+        pub_tensor('T', T)
+        pub_tensor('M', M)
+
         pub.array_as_image('yy', self.get_yy(), **params)
 
         with pub.plot('yy_svd') as pylab:
@@ -287,9 +290,6 @@ class BDSEstimator2:
             pylab.semilogy(s, 'bx-')
             pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
 
-
-
-        
 
 def normalize(T, P):
     # XXX: again
@@ -300,6 +300,7 @@ def normalize(T, P):
         Tn[i, :, :] = T[i, :, :] * P * P
     return Tn
 
+
 @contract(T='array[KxNxN]', returns='tuple(array[KxNxN], array[KxK])')
 def orthogonalize(T):
     if T.shape[0] != 2:
@@ -309,21 +310,21 @@ def orthogonalize(T):
     Z = np.empty_like(T)
     for k in range(K):
         N[k, k] = 1.0 / np.linalg.norm(T[k, :, :])
-        Z[k, :, :] = T[k, :, :] * N[k, k] 
-        
+        Z[k, :, :] = T[k, :, :] * N[k, k]
+
     proj = (Z[0, :, :] * Z[1, :, :]).sum()
     print('Projection: %s' % proj)
     W = np.empty_like(T)
     W[0, :, :] = Z[0, :, :] - proj * Z[1, :, :]
-    W[1, :, :] = proj * Z[0, :, :] + Z[1, :, :]    
+    W[1, :, :] = proj * Z[0, :, :] + Z[1, :, :]
     for k in range(K):
         W[k, :, :] = W[k, :, :] / np.linalg.norm(W[k, :, :])
-        
+
     Q = np.zeros((K, K))
     Q[0, :] = [1, -proj]
     Q[1, :] = [proj, 1]
     A = np.dot(Q, N)
     printm('Q', Q, 'N', N, 'A', A)
     return W, A
- 
-    
+
+

@@ -1,10 +1,11 @@
-from boot_agents.diffeo import diffeo_norm_L2
-from boot_agents.diffeo.analysis.action import Action
-from geometry.formatting import printm # FIXME:
+from ... import diffeo_norm_L2
+from ..action import Action
+from geometry import printm # FIXME: dependency
 import itertools
 import numpy as np
 
-def actions_compress(actions, threshold): 
+
+def actions_compress(actions, threshold):
     ''' Compresses actions, checking if there are opposite commands pairs. 
     
         Returns a tuple new_actions, dict with other info.
@@ -21,35 +22,34 @@ def actions_compress(actions, threshold):
 #    baseline = np.abs(M).min()
     printm('M', M)
 #    m0 = M / M.mean()
-    
+
     for i in range(n):
         print('action[%d] = %s' % (i, actions[i]))
-        
+
     Distance = np.zeros((n, n))
     for i, j in itertools.product(range(n), range(n)):
         Distance[i, j] = Action.distance(actions[i], actions[j])
-        
+
     scale = Distance.mean()
     Distance = Distance / scale
     printm('Distance', Distance)
-    
+
     Distance_to_inverse = np.zeros((n, n))
     for i, j in itertools.product(range(n), range(n)):
-        Distance_to_inverse[i, j] = Action.distance_to_inverse(actions[i], actions[j])
+        Distance_to_inverse[i, j] = Action.distance_to_inverse(actions[i],
+                                                               actions[j])
     Distance_to_inverse = Distance_to_inverse / scale
     printm('DistToInv', Distance_to_inverse)
-    
-    
+
 #    print('Baseline similarity is %g' % baseline)
     # subtract, normalize
 #    M2 = np.abs(M) - baseline
 #    M2 = M2 / np.max(M2)
 #    M2 = M2 * np.sign(M)
 #    printm('M2', M2)
-    
     # set diagonal to zero
     M2d = M.copy()
-    np.fill_diagonal(M2d, 0) 
+    np.fill_diagonal(M2d, 0)
     necessary = set()
     redundant = set()
 
@@ -65,39 +65,41 @@ def actions_compress(actions, threshold):
             if M2d[i, most] > threshold:
                 # match it as same command
                 # (just remove it)
-                print(' - removing %s because too sim  (%s)' % 
+                print(' - removing %s because too sim  (%s)' %
                       (actions[most], M2d[i, most]))
                 redundant.add(most)
                 M2d[:, most] = 0
                 M2d[most, :] = 0
             else:
-                print(' - no more; max is %s at %s' % (actions[most], M2d[i, most]))
+                print(' - no more; max is %s at %s' % (actions[most],
+                                                       M2d[i, most]))
                 break
         # look for opposite
         while True:
-            most = np.argmin(M2d[i, :])                
+            most = np.argmin(M2d[i, :])
             if M2d[i, most] < -threshold:
                 # match it as same command
                 # (just remove it)
-                print(' - remove %s because opposite (%s)' % 
+                print(' - remove %s because opposite (%s)' %
                       (actions[most], M2d[i, most]))
                 redundant.add(most)
                 M2d[:, most] = 0
                 M2d[most, :] = 0
                 actions[i].invertible = True
             else:
-                print(' - no more; min is %s at %s' % (actions[most], M2d[i, most]))
+                print(' - no more; min is %s at %s' % (actions[most],
+                                                       M2d[i, most]))
                 break
-    
+
     compressed = []
     for i in range(n):
         if i in necessary:
-            compressed.append(actions[i]) 
+            compressed.append(actions[i])
     info = dict()
-    
+
     info['Distance'] = Distance
     info['Distance_to_inverse'] = Distance_to_inverse
-    
+
     return (compressed, info)
 
 
@@ -122,7 +124,7 @@ def actions_remove_similar_to_identity(actions, threshold):
             actions2.append(action)
     return actions2
 
-    
-    
-    
-    
+
+
+
+

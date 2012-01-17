@@ -1,5 +1,6 @@
 from . import contract, np, coords_iterate
 
+
 @contract(size='array[2]((int32|int64),>=1)')
 def cmap(size):
     for k in [0, 1]:

@@ -19,23 +19,22 @@ class MeanVariance:
         self.Ex.update(x, dt)
         dx = x - self.Ex()
         dx2 = dx * dx
-        self.Edx2.update(dx2, dt)        
+        self.Edx2.update(dx2, dt)
 
     def assert_some_data(self):
         if self.num_samples == 0:
             raise Exception('Never updated')
-        
+
     def get_mean(self):
         return self.Ex()
 
     def get_var(self):
         return self.Edx2()
-    
+
     def get_std_dev(self):
         return np.sqrt(self.get_var())
-    
 
-    @contract(pub=Publisher)    
+    @contract(pub=Publisher)
     def publish(self, pub):
         if self.num_samples == 0:
             pub.text('warning',
@@ -46,17 +45,17 @@ class MeanVariance:
 
         mean = self.Ex()
         S = self.get_std_dev()
-        
+
         with pub.plot('mean') as pylab:
             pylab.plot(mean, 'k.')
-            
+
         with pub.plot('std_dev') as pylab:
             pylab.plot(S, 'k.')
             a = pylab.axis()
             m = 0.1 * (a[3] - a[2])
             pylab.axis((a[0], a[1], 0, a[3] + m))
             pylab.legend()
-            
-            
+
+
 
 

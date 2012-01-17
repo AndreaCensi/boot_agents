@@ -1,5 +1,6 @@
 from . import np
 
+
 def cov2corr(covariance, zero_diagonal=False):
     ''' 
     Compute the correlation matrix from the covariance matrix.
@@ -21,9 +22,9 @@ def cov2corr(covariance, zero_diagonal=False):
     one_over = 1.0 / sigma
     M = outer(one_over, one_over)
     correlation = covariance * M
-    
+
     if zero_diagonal:
         for i in range(covariance.shape[0]):
             correlation[i, i] = 0
-    
+
     return correlation

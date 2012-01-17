@@ -1,5 +1,6 @@
 from . import generalized_gradient, np, contract
 
+
 class BGDS(object):
     """
     Dimensions of G:

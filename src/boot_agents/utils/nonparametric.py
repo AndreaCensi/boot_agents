@@ -1,5 +1,6 @@
 from . import np
 
+
 def scale_score(x):
     y = x.copy()
     order = np.argsort(x.flat)

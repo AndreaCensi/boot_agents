@@ -3,6 +3,7 @@ from optparse import OptionParser
 import cPickle as pickle
 import os
 
+
 def main():
     usage = ""
     parser = OptionParser(usage=usage)
@@ -14,17 +15,17 @@ def main():
     (options, args) = parser.parse_args()
     if args:
         raise Exception('Extra args')
-    
+
     print('Loading %r' % options.pickle)
     with open(options.pickle) as f:
         data = pickle.load(f)
     print('(done)')
-        
+
     state = data.agent_state
     dd = state['diffeo_dynamics']
-    
+
     cmds = []
-    
+
     for cmd_index, de in dd.commands2dynamics.items():
         original_cmd = dd.commands2u[cmd_index]
         diffeo = de.summarize()
@@ -33,7 +34,8 @@ def main():
         cmds.append(a)
 
     actions_filename = os.path.join(os.path.dirname(options.pickle),
-                        '%s-%s.actions.pickle' % (data.id_agent, data.id_robot)) 
+                        '%s-%s.actions.pickle' % (data.id_agent,
+                                                  data.id_robot))
     print('Saving actions to %r.' % actions_filename)
     tosave = {
               'id_robot': data.id_robot,
@@ -42,7 +44,7 @@ def main():
     }
     with open(actions_filename, 'wb') as f:
         pickle.dump(tosave, f)
-    return 
-        
+    return
+
 if __name__ == '__main__':
     main()
