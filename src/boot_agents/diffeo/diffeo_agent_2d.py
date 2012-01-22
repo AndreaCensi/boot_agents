@@ -1,9 +1,7 @@
 from . import DiffeoDynamics, PureCommands
 from ..simple_stats import ExpSwitcherCanonical
-from bootstrapping_olympics import AgentInterface
-from contracts import contract
+from bootstrapping_olympics import AgentInterface, UnsupportedSpec
 import numpy as np
-from bootstrapping_olympics import UnsupportedSpec
 
 __all__ = ['DiffeoAgent2Db']
 
@@ -65,10 +63,10 @@ class DiffeoAgent2Db(AgentInterface):
 #            
 #            self.last_y = y
 
-        if len(y.shape) == 1:
-            y = np.maximum(0, y)
-            y = np.minimum(1, y)
-            y = popcode(y, self.target_resolution[1])
+#            y = np.maximum(0, y)
+#            y = np.minimum(1, y)
+#            y = popcode(y, self.target_resolution[1])
+#        if len(y.shape) == 1:
 #        self.info('Now resolution is %s' % str(y.shape))
 
         if self.target_resolution is not None:
@@ -131,19 +129,4 @@ class DiffeoAgent2Db(AgentInterface):
         self.diffeo_dynamics.publish(pub.section('commands'))
 
 
-# TODO: move somewhere else
-@contract(y='array[N](>=0,<=1)', M='int,>1,M', returns='array[NxM](float32)')
-def popcode(y, M, soft=True):
-    N = y.shape[0]
-    pc = np.zeros((N, M), 'float32')
-    for i in range(N):
-        assert 0 <= y[i] <= 1, 'Strange value of y[%d] = %s' % (i, y[i])
-        j = int(np.round(y[i] * (M - 1)))
-        assert 0 <= j < M
-        pc[i, j] = 1
-        if soft and j > 0:
-            pc[i, j - 1] = 0.5
-        if soft and j < M - 1:
-            pc[i, j + 1] = 0.5
-    return pc
 

@@ -9,9 +9,11 @@ import cPickle as pickle
 import glob
 import os
 
+
 # 
 #
-# python diffeo/analysis_prediction/main.py -p ~/boot_learning_states/agent_states/icra12-diffeo_agent_2d-er1-video0_b,er1c2_0_bw_s.pickle
+# python diffeo/analysis_prediction/main.py 
+# -p ~/boot_learning_states/agent_states/....pickle
 # 
 def main():
     usage = ""
@@ -34,7 +36,6 @@ def main():
     state = data.agent_state
     confid = '%s-%s' % (data.id_robot, data.id_agent)
     publisher = ReprepPublisher(confid)
-
 
     dd = state['diffeo_dynamics']
 
@@ -65,10 +66,12 @@ def main():
     filename = os.path.join(options.outdir, "%s-preds.html" % confid)
     publisher.r.to_html(filename)
 
+
 @contract(d='valid_diffeomorphism,array[HxWx2]', var='array[HxW]',
           returns='array[HxW]')
 def propagate_variance(d, var):
     return var * diffeo_apply(d, var)
+
 
 def compute_effects(pub, action, image):
     d1 = action.diffeo.d
@@ -90,12 +93,10 @@ def compute_effects(pub, action, image):
         #alpha = np.sqrt(np.sqrt(alpha))
         return blend_alpha(res, gray, alpha)
 
-
     b1 = with_uncertainty(d1, C1, image)
     b2 = with_uncertainty(d2, C2, image)
     b4 = with_uncertainty(d4, C4, image)
     b8 = with_uncertainty(d8, C8, image)
-
 
     def show(name, x):
         res = diffeo_apply(x, image)
@@ -108,7 +109,7 @@ def compute_effects(pub, action, image):
     show('d8', d8)
 
     params = {'filter': 'scale',
-              'filter_params': { 'min_value': 0, 'max_value': 1}}
+              'filter_params': {'min_value': 0, 'max_value': 1}}
     pub.array_as_image('C1', C1, **params)
     pub.array_as_image('C2', C2, **params)
     pub.array_as_image('C4', C4, **params)

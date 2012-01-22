@@ -1,5 +1,4 @@
 from boot_agents.diffeo import diffeo_apply
-from boot_agents.diffeo.diffeo_agent_2d import popcode
 from contracts import contract
 from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
 from geometry.yaml import from_yaml
@@ -9,6 +8,7 @@ from vehicles import VehicleSimulation
 import contracts
 import numpy as np
 from vehicles import VehiclesConfig
+from bootstrapping_olympics.examples.rep_nuisances.popcode_functions import popcode
 
 
 def plan_analysis(global_options, data, args):
@@ -131,6 +131,7 @@ def sensels2map(y0):
     y = np.array(y, dtype='float32')
     return y
 
+
 @contract(Y='array[NxP]', returns='array[N]')
 def map2sensels(Y):
     N, _ = Y.shape
@@ -138,6 +139,7 @@ def map2sensels(Y):
     for i in range(N):
         y[i] = np.argmax(Y[i, :])
     return y
+
 
 def scenario_display(scenario, S, sim):
     y0 = scenario['y0']
@@ -148,7 +150,6 @@ def scenario_display(scenario, S, sim):
     print(SE2.friendly(SE2_from_SE3(q0)))
     print(SE2.friendly(SE2_from_SE3(q1)))
     print('increment: %s' % SE2.friendly(SE2_from_SE3(delta)))
-
 
     with S.plot('data') as pylab:
         pylab.plot(y0, label='y0')
@@ -168,6 +169,7 @@ def scenario_display(scenario, S, sim):
     S.array_as_image('M1', scenario['M1'])
 
     pdfparams = dict(figsize=(4, 4), mime=MIME_PDF)
+
     def display_all(S, name, sensels, mapp):
         x = scenario['sim0']['vehicle']['sensors'][0]['sensor']
         theta = x['directions']
@@ -183,7 +185,7 @@ def scenario_display(scenario, S, sim):
             pylab.plot(theta, sensels, 'b.')
             pylab.plot([theta[0], theta[-1]], [0, 0], 'k--')
             pylab.plot([theta[0], theta[-1]], [1, 1], 'k--')
-            pylab.axis((theta[0], theta[-1], -0.05 , 1.01))
+            pylab.axis((theta[0], theta[-1], -0.05, 1.01))
 
         with sec.plot('minimap', **pdfparams) as pylab:
             xs = np.cos(theta_rad) * sensels
@@ -202,11 +204,9 @@ def scenario_display(scenario, S, sim):
         if mapp is not None:
             sec.array_as_image('field', mapp, 'scale')
 
-
     display_all(S, 'y0', y0, None)
     display_all(S, 'm0y', map2sensels(scenario['M0']), scenario['M0'])
     display_all(S, 'm1y', map2sensels(scenario['M1']), scenario['M1'])
-
 
     with S.plot('poses') as pylab:
 #        for pose in scenario['poses']:
@@ -219,7 +219,6 @@ def scenario_display(scenario, S, sim):
             draw_axes(pylab, SE2_from_SE3(pose), 'k', 'k', size=1)
         draw_axes(pylab, SE2_from_SE3(q0), [0.3, 0, 0], [0, 0.3, 0], size=5)
         draw_axes(pylab, SE2_from_SE3(q1), 'r', 'g', size=5)
-
 
 #        plot_sensor(pylab, sim.vehicle, q0, y0, 'g')
 #        plot_sensor(pylab, sim.vehicle, q1, y1, 'b')
@@ -236,7 +235,6 @@ def scenario_display(scenario, S, sim):
         display_all(Si, 'M1est', map2sensels(M1est), M1est)
 
 
-
 def draw_axes(pylab, pose, cx='r', cy='g', size=1, L=0.3):
     t, th = translation_angle_from_SE2(pose)
 
@@ -250,11 +248,14 @@ def draw_axes(pylab, pose, cx='r', cy='g', size=1, L=0.3):
     pylab.plot([t[0], ty[0]],
                [t[1], ty[1]], '-', color=cy, linewidth=size)
 
+
 def plot_sensor(pylab, vehicle, pose, readings, color):
     show_sensor_data(pylab, vehicle.to_yaml())
 
+
 def pose_diff(a, b):
     return SE3.multiply(SE3.inverse(a), b)
+
 
 def scenario_compute_inputs(scenario, sim, dt=0.1):
     sim.new_episode()

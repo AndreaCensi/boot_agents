@@ -11,6 +11,7 @@
 from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
 from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
+from bootstrapping_olympics.utils import check_all_finite
 
 
 class MeanCovariance:
@@ -26,6 +27,8 @@ class MeanCovariance:
         return self.num_samples
 
     def update(self, value, dt=1.0):
+        check_all_finite(value)
+
         self.num_samples += dt
 
         n = value.size
@@ -45,6 +48,7 @@ class MeanCovariance:
         mean = self.mean_accum.get_value()
         value_norm = value - mean
 
+        check_all_finite(value_norm)
         P = outer(value_norm, value_norm)
         self.covariance_accum.update(P, dt)
         self.last_value = value

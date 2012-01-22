@@ -2,7 +2,7 @@ __version__ = '1.0'
 
 import logging
 
-logging.basicConfig();
+logging.basicConfig()
 logger = logging.getLogger("BootAgents")
 logger.setLevel(logging.DEBUG)
 

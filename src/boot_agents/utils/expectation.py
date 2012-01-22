@@ -1,4 +1,5 @@
 from . import contract, np
+from bootstrapping_olympics.utils.np_comparisons import check_all_finite
 
 
 __all__ = ['Expectation', 'ExpectationSlow', 'ExpectationFast']
@@ -64,11 +65,7 @@ class ExpectationFast:
 
     @contract(value='array', dt='float,>=0')
     def update(self, value, dt=1.0):
-        # TODO: make this fast
-        #if not np.isfinite(value).all():
-        #    raise ValueError('Invalid values')
-        if not all_finite(value):
-            raise ValueError('Invalid values')
+        check_all_finite(value)
 
         if self.accum is None:
             self.accum = value * dt
@@ -114,10 +111,6 @@ class ExpectationFast:
 
     def get_mass(self):
         return self.accum_mass
-
-
-def all_finite(x):
-    return np.isfinite(np.min(x)) and np.isfinite(np.max(x))
 
 Expectation = ExpectationFast
 #Expectation = ExpectationSlow
