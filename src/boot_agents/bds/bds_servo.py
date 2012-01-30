@@ -51,12 +51,14 @@ class BDSServo():
         #print('clip(u)', u)
 #        eps = 0.1
         eps1 = current_error / self.initial_error
-        eps = 0.1
+#        eps = 0.1
+        eps = 0.25
         u = u * eps
-        print('e(k): %10.3f e(k)/e(0) %10.3f u: %s ' %
-              (current_error, eps1, u))
+        #print('e(k): %10.3f e(k)/e(0) %10.3f u: %s ' %
+        #      (current_error, eps1, u))
 
-        u += np.random.uniform(-1, 1, u.size) * 0.05
+        #u += np.random.uniform(-1, 1, u.size) * 0.05
+
         u = clip(u, self.commands_spec)
         return u
 

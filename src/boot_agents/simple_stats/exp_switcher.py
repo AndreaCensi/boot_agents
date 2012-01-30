@@ -30,17 +30,23 @@ class ExpSwitcher(AgentInterface):
 
     def __init__(self, beta):
         self.beta = beta
+        self.switcher = None
 
     def init(self, boot_spec):
         interval = RandomExponential(self.beta)
         value = RandomCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
+        self.info("angent inited %s" % (self.switcher))
 
     def process_observations(self, observations):
         self.dt = float(observations['dt'])
 
     def choose_commands(self):
+        if self.switcher is None:
+            msg = 'choose_commands() called before init().'
+            raise Exception(msg)
+
         return self.switcher.get_value(self.dt)
 
 
