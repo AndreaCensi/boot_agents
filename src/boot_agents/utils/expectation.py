@@ -48,7 +48,7 @@ class ExpectationFast:
             If max_window is given, the covariance is computed
             over a certain interval. 
             
-            extremely_fast: save memory; might crash on some python 
+            extremely_fast: saves memory; might crash on some python 
             interpreters
             TODO: put automatic tests to detect this
         '''
@@ -89,6 +89,11 @@ class ExpectationFast:
         if self.max_window and self.accum_mass > self.max_window:
             self.accum = self.max_window * self.get_value()
             self.accum_mass = self.max_window
+
+        MAX_MASS = 100 # TODO: watch np.max(self.accum) instead
+        # Do not let pass too much before normalization
+        if self.accum_mass > MAX_MASS:
+            self.get_value()
 
     def get_value(self):
         if self.accum is None:

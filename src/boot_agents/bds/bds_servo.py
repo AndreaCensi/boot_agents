@@ -3,11 +3,16 @@ from . import contract, np
 
 class BDSServo():
 
-    def __init__(self, bds_estimator, commands_spec):
+    strategies = ['S1', 'S2']
+
+    def __init__(self, bds_estimator, commands_spec,
+                 strategy='S1', gain=0.1):
         self.commands_spec = commands_spec
         self.bds_estimator = bds_estimator
         self.y = None
         self.goal = None
+        self.strategy = strategy
+        self.gain = gain
 
     @contract(goal='array')
     def set_goal_observations(self, goal):
@@ -22,38 +27,42 @@ class BDSServo():
 
     def choose_commands(self):
         if self.y is None:
-            print('Warning: choose_commands() before process_observations()')
-            return self.commands_spec.get_default_value()
+            msg = ('Warning: choose_commands() before process_observations()')
+            raise Exception(msg)
+            #return self.commands_spec.get_default_value()
 
         if self.goal is None:
-            print('Warning: choose_commands() before set_goal_observations()')
-            return self.commands_spec.get_default_value()
+            msg = ('Warning: choose_commands() before set_goal_observations()')
+            raise Exception(msg)
+            #return self.commands_spec.get_default_value()
 
         if self.initial_error is None:
-            print('Warning: choose_commands() before process_observations()')
-            return self.commands_spec.get_default_value()
+            msg = ('Warning: choose_commands() before process_observations()')
+            raise Exception(msg)
+            #return self.commands_spec.get_default_value()
 
         error = self.y - self.goal
 
-        current_error = np.linalg.norm(error)
+        if self.strategy == 'S1':
+            M = self.bds_estimator.get_T()
+        elif self.strategy == 'S2':
+            M = -self.bds_estimator.get_M()
+        else:
+            raise Exception('Unknown strategy %r.' % self.strategy)
 
-#        print('y', self.y.shape)
-        M = -self.bds_estimator.get_T()
-#        print('M', M.shape)
         My = np.tensordot(M, self.y, axes=(1, 0))
-#        print('My', My.shape)
-#        print('error', error.shape)
-        u = np.tensordot(My, error, axes=(1, 0))
+
+        u = -np.tensordot(My, error, axes=(1, 0))
 
         u = u / np.abs(u).max()
 
         u = clip(u, self.commands_spec)
-        #print('clip(u)', u)
-#        eps = 0.1
-        eps1 = current_error / self.initial_error
-#        eps = 0.1
-        eps = 0.25
-        u = u * eps
+
+        #current_error = np.linalg.norm(error)
+#        eps1 = current_error / self.initial_error
+
+#        eps = 0.25
+        u = u * self.gain
         #print('e(k): %10.3f e(k)/e(0) %10.3f u: %s ' %
         #      (current_error, eps1, u))
 

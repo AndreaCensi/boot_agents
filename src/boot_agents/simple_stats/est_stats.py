@@ -1,6 +1,7 @@
 from . import ExpSwitcher, np
 from ..utils import MeanCovariance, cov2corr
 from bootstrapping_olympics import UnsupportedSpec
+from reprep.plot_utils.styles import style_ieee_fullcol_xy
 
 __all__ = ['EstStats']
 
@@ -50,6 +51,7 @@ class EstStats(ExpSwitcher):
         pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
 
         with pub.plot(name='y_stats') as pylab:
+            style_ieee_fullcol_xy(pylab)
             pylab.plot(Ey, label='E(y)')
             pylab.plot(y_max, label='y_max')
             pylab.plot(y_min, label='y_min')
@@ -60,6 +62,7 @@ class EstStats(ExpSwitcher):
                         and np.min(y_min) > 0)
         if all_positive:
             with pub.plot(name='y_stats_log') as pylab:
+                style_ieee_fullcol_xy(pylab)
                 pylab.semilogy(Ey, label='E(y)')
                 pylab.semilogy(y_max, label='y_max')
                 pylab.semilogy(y_min, label='y_min')
@@ -74,7 +77,8 @@ class EstStats(ExpSwitcher):
         pub.array_as_image('Py_inv', Py_inv)
         pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
 
-        with pub.plot('Py_svd') as pylab:
+        with pub.plot('Py_svd') as pylab: # XXX: use spectrum
+            style_ieee_fullcol_xy(pylab)
             _, s, _ = np.linalg.svd(Py)
             s /= s[0]
             pylab.semilogy(s, 'bx-')

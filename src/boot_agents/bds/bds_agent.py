@@ -11,10 +11,11 @@ class BDSAgent(ExpSwitcher):
     '''
         Skip: only consider every $skip observations. 
     '''
-    def __init__(self, beta, skip=1, change_fraction=0.0):
+    def __init__(self, beta, skip=1, change_fraction=0.0, servo={}):
         ExpSwitcher.__init__(self, beta)
         self.skip = skip
         self.change_fraction = change_fraction
+        self.servo = servo
 
     def init(self, boot_spec):
         if len(boot_spec.get_observations().shape()) != 1:
@@ -41,12 +42,15 @@ class BDSAgent(ExpSwitcher):
         self.count += 1
         if self.count % self.skip != 0:
             return
+
         dt = float(obs['dt'])
         y = obs['observations']
         u = obs['commands']
 
         self.rd.update(y)
         if not self.rd.ready():
+            #self.info('Skipping observation because double observations %s'
+            # % self.count)
             return
 
         # XXX: this is not `dt` anymore FiXME:
@@ -119,6 +123,6 @@ class BDSAgent(ExpSwitcher):
         return BDSPredictor(self.bds_estimator)
 
     def get_servo(self):
-        return BDSServo(self.bds_estimator, self.commands_spec)
+        return BDSServo(self.bds_estimator, self.commands_spec, **self.servo)
 
 

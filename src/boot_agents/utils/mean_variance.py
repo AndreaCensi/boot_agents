@@ -54,7 +54,6 @@ class MeanVariance:
             a = pylab.axis()
             m = 0.1 * (a[3] - a[2])
             pylab.axis((a[0], a[1], 0, a[3] + m))
-            pylab.legend()
 
 
 

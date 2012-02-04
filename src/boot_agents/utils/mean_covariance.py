@@ -12,6 +12,7 @@ from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
 from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
 from bootstrapping_olympics.utils import check_all_finite
+from reprep.plot_utils.styles import style_ieee_fullcol_xy
 
 
 class MeanCovariance:
@@ -107,9 +108,10 @@ class MeanCovariance:
         pub.text('stats', 'Num samples: %s' % self.mean_accum.get_mass())
 
         with pub.plot('expectation') as pylab:
-            pylab.plot(Ey, label='expectation')
-            pylab.plot(y_max, label='max')
-            pylab.plot(y_min, label='min')
+            style_ieee_fullcol_xy(pylab)
+            pylab.plot(Ey, 's', label='expectation')
+            pylab.plot(y_max, 's', label='max')
+            pylab.plot(y_min, 's', label='min')
             y_axis_extra_space(pylab)
             pylab.legend()
 
@@ -122,11 +124,13 @@ class MeanCovariance:
             pub.array_as_image('information', P_inv)
 
         with pub.plot('P_diagonal') as pylab:
-            pylab.plot(P.diagonal(), 'x-')
+            style_ieee_fullcol_xy(pylab)
+            pylab.plot(P.diagonal(), 's')
             y_axis_positive(pylab)
 
         with pub.plot('P_diagonal_sqrt') as pylab:
-            pylab.plot(np.sqrt(P.diagonal()), 'x-')
+            style_ieee_fullcol_xy(pylab)
+            pylab.plot(np.sqrt(P.diagonal()), 's')
             y_axis_positive(pylab)
 
 
