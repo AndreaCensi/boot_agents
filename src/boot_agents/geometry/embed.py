@@ -3,8 +3,7 @@ from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, MeanCovariance, scale_score
 from bootstrapping_olympics import UnsupportedSpec
 from geometry import double_center, inner_product_embedding, mds
-import reprep
-from reprep.plot_utils.styles import style_ieee_halfcol_xy
+from reprep.plot_utils import style_ieee_halfcol_xy
 # FIXME: dependency to remove
 
 __all__ = ['Embed']

@@ -38,7 +38,6 @@ class BGDSAgent(ExpSwitcher):
                    'small to compute gradients: %s' % str(shape))
             raise UnsupportedSpec(msg)
 
-
         self.is2D = len(boot_spec.get_observations().shape()) == 2
         self.is1D = len(boot_spec.get_observations().shape()) == 1
 

@@ -10,9 +10,12 @@ class CanonicalCommandsAgent(AgentInterface):
 
     def init(self, boot_spec):
         self.commands = get_canonical_commands(boot_spec.get_commands())
-        self.nepisode = 0
 
         self.info('Found %d canonical commands.' % len(self.commands))
+        for i, cmd in enumerate(self.commands):
+            self.info('cmd %d  %s' % (i, list(cmd)))
+
+        self.nepisode = -1
 
     def process_observations(self, observations):
         # We don't need observations, but we check whether the 
