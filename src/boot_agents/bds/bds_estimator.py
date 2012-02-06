@@ -4,6 +4,7 @@ from contracts import new_contract
 from geometry import printm
 from numpy.linalg.linalg import LinAlgError
 import scipy.linalg
+from boot_agents.utils.prediction_stats import PredictionStats
 
 
 @contract(M='array[KxNxN]', y='array[N]', u='array[K]')
@@ -23,7 +24,7 @@ __all__ = ['BDSEstimator2', 'bds_dynamics']
 
 class BDSEstimator2:
 
-    def __init__(self):
+    def __init__(self, min_count_for_prediction=100):
         self.T = Expectation()
         self.uu = Expectation()
         self.yy = Expectation()
@@ -37,8 +38,12 @@ class BDSEstimator2:
 
         self.y_dot_stats = MeanCovariance()
         self.y_dot_pred_stats = MeanCovariance()
-        self.y_dots_stats = MeanCovariance()
-        self.Py_dots_stats = MeanCovariance()
+
+        self.y_dot_pred_stats = PredictionStats('y_dot', 'y_dot_pred')
+        self.Py_dot_pred_stats = PredictionStats('Py_dot', 'Py_dot_pred')
+#
+#        self.y_dots_stats = MeanCovariance()
+#        self.Py_dots_stats = MeanCovariance()
 
         self.fits1 = Expectation()
         self.fits2 = Expectation()
@@ -46,6 +51,8 @@ class BDSEstimator2:
         self.u2y2 = Expectation()
 
         self.count = 0
+
+        self.min_count_for_prediction = min_count_for_prediction
 
     @contract(u='array[K],K>0,array_finite',
               y='array[N],N>0,array_finite',
@@ -68,10 +75,16 @@ class BDSEstimator2:
 
         self.yy_inv_needs_update = True
         self.M_needs_update = True
+        self.count += 1
 
+        if self.count > self.min_count_for_prediction:
+            self.update_prediction_stats(y, y_dot, u, dt)
+
+    def update_prediction_stats(self, y, y_dot, u, dt):
         T = self.get_T()
-        uu_inv = np.linalg.pinv(self.get_uu())
+        uu_inv = np.linalg.pinv(self.get_uu()) # XXX: change this
         un = np.dot(uu_inv, u)
+
         A = np.tensordot(un, T, ([0], [0]))
         Py_dot_pred = np.dot(A.T, y)
         Py_dot = np.dot(self.get_yy(), y_dot)
@@ -81,23 +94,36 @@ class BDSEstimator2:
         self.fits2.update(error2)
 
         use_old_version = self.count % 50 != 0
-        self.count += 1
         M = self.get_M(rcond=1e-5, use_old_version=use_old_version)
         y_dot_pred = bds_dynamics(M, y, u)
 
-        y_dots = np.hstack((y_dot, y_dot_pred))
-        self.y_dots_stats.update(y_dots)
+#        def printstats(name, x):
+#            print('stats for %15s: [%10f, %10f]' %
+#                      (name, np.min(x), np.max(x)))
+#
+#        printstats('Py_dot', Py_dot)
+#        printstats('Py_dot_pred', Py_dot_pred)
+#        printstats('y_dot', y_dot)
+#        printstats('y_dot_pred', y_dot_pred)
 
-        Py_dots = np.hstack((Py_dot, Py_dot_pred))
-        self.Py_dots_stats.update(Py_dots)
-        #self.y_dot_stats.update(y_dot_pred)
-        #self.y_dot_pred_stats.update(y_dot_pred)
+        # Assuming y in [-1,+1], we have the following bound
+        delta_y_bound = 1 - (-1)
+        # If we do this in 1 time step, then the derivative is
+        y_dot_bound = np.abs(delta_y_bound) / dt
+        # Therefore, we bound the prediction
+        y_dot_pred = np.clip(y_dot_pred, -y_dot_bound, +y_dot_bound)
+
+#        printstats('y_dot_pred(clip)', y_dot_pred)
+
+        self.y_dot_pred_stats.update(y_dot, y_dot_pred, dt)
+        self.Py_dot_pred_stats.update(Py_dot, Py_dot_pred, dt)
 
         self.last_y_dot = y_dot
         self.last_y_dot_pred = y_dot_pred
         self.last_Py_dot = Py_dot
         self.last_Py_dot_pred = Py_dot_pred
 
+    @contract(returns='array_finite')
     def get_yy_inv(self, rcond=1e-5):
         if not hasattr(self, 'yy_inv_rcond'):
             setattr(self, 'yy_inv_rcond', 0)
@@ -108,6 +134,7 @@ class BDSEstimator2:
             self.yy_inv_rcond = rcond
         return self.yy_inv
 
+    @contract(returns='array_finite')
     def get_M(self, rcond=1e-5, use_old_version=False):
         if not hasattr(self, 'M_rcond'):
             setattr(self, 'M_rcond', 0)
@@ -132,7 +159,6 @@ class BDSEstimator2:
 
             uu_inv = np.linalg.pinv(self.get_uu()).astype(self.MP.dtype)
             self.M = np.tensordot(uu_inv, self.MP, ([0], [0]))
-
         return self.M
 
     def get_M2(self, rcond=1e-5):
@@ -172,26 +198,28 @@ class BDSEstimator2:
         yy_inv = self.get_yy_inv(rcond)
         yy = self.get_yy()
 
-        y_dots_corr = self.y_dots_stats.get_correlation()
-        n = T.shape[2]
-        measured_corr = y_dots_corr[:n, n:].diagonal() # upper right
-        try:
-            var_noise = self.y_dot_noise.get_covariance().diagonal()
-            var_prediction = y_dots_corr.diagonal()[n:]
-            invalid = var_noise == 0
-            var_noise[invalid] = 0
-            var_prediction[invalid] = 1
-            corrected_corr = measured_corr * np.sqrt(1 + var_noise /
-                                                     var_prediction)
-            with pub.plot('correlation') as pylab:
-                pylab.plot(measured_corr, 'bx', label='raw')
-                pylab.plot(corrected_corr, 'rx', label='corrected')
-                pylab.axis((-1, n, -0.1, 1.1))
-                pylab.ylabel('correlation')
-                pylab.xlabel('sensel')
-                pylab.legend()
-        except:
-            pass # XXX: 
+        if False:
+            # TODO: computation of usefulness
+            y_dots_corr = self.y_dots_stats.get_correlation()
+            n = T.shape[2]
+            measured_corr = y_dots_corr[:n, n:].diagonal() # upper right
+            try:
+                var_noise = self.y_dot_noise.get_covariance().diagonal()
+                var_prediction = y_dots_corr.diagonal()[n:]
+                invalid = var_noise == 0
+                var_noise[invalid] = 0
+                var_prediction[invalid] = 1
+                corrected_corr = measured_corr * np.sqrt(1 + var_noise /
+                                                         var_prediction)
+                with pub.plot('correlation') as pylab:
+                    pylab.plot(measured_corr, 'bx', label='raw')
+                    pylab.plot(corrected_corr, 'rx', label='corrected')
+                    pylab.axis((-1, n, -0.1, 1.1))
+                    pylab.ylabel('correlation')
+                    pylab.xlabel('sensel')
+                    pylab.legend()
+            except:
+                pass # XXX: 
 
         def pub_tensor(name, V):
             section = pub.section(name)
@@ -218,8 +246,9 @@ class BDSEstimator2:
             self.y_dot_noise.publish(pub.section('y_dot_noise'))
         except:
             pass
-        self.y_dots_stats.publish(pub.section('y_dots'))
-        self.Py_dots_stats.publish(pub.section('Py_dots'))
+
+        self.y_dot_pred_stats.publish(pub.section('y_dot_pred_stats'))
+        self.Py_dot_pred_stats.publish(pub.section('Py_dot_pred_stats'))
 
         pub.array_as_image('yy', self.get_yy(), **params)
         pub.array_as_image('yy_inv', yy_inv, **params)
@@ -231,30 +260,31 @@ class BDSEstimator2:
             pylab.semilogy(s, 'bx-')
             pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
 
-        with pub.plot('fits1') as pylab:
+        sec = pub.section('prediction')
+        with sec.plot('fits1') as pylab:
             q = self.fits1.get_value()
             pylab.plot(q, 'x')
 
-        with pub.plot('fits2') as pylab:
+        with sec.plot('fits2') as pylab:
             q = self.fits2.get_value()
             pylab.plot(q, 'x')
 
-        with pub.plot('last_values_Py_dot') as pylab:
+        with sec.plot('last_values_Py_dot') as pylab:
             pylab.plot(self.last_Py_dot, 'kx-', label='actual')
             pylab.plot(self.last_Py_dot_pred, 'go-', label='pred')
 
-        with pub.plot('last_values_y_dot') as pylab:
+        with sec.plot('last_values_y_dot') as pylab:
             pylab.plot(self.last_y_dot, 'kx-', label='actual')
             pylab.plot(self.last_y_dot_pred, 'go-', label='pred')
 
-        with pub.plot('last_values_Py_dot_v') as pylab:
+        with sec.plot('last_values_Py_dot_v') as pylab:
             x = self.last_Py_dot
             y = self.last_Py_dot_pred
             pylab.plot(x, y, '.')
             pylab.xlabel('observation')
             pylab.ylabel('prediction')
 
-        with pub.plot('last_values_y_dot_v') as pylab:
+        with sec.plot('last_values_y_dot_v') as pylab:
             x = self.last_y_dot
             y = self.last_y_dot_pred
             pylab.plot(x, y, '.')

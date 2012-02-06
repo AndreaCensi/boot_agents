@@ -3,7 +3,7 @@ from . import contract, np
 
 class BDSServo():
 
-    strategies = ['S1', 'S2']
+    strategies = ['S1', 'S2', 'S1n']
 
     def __init__(self, bds_estimator, commands_spec,
                  strategy='S1', gain=0.1):
@@ -11,6 +11,8 @@ class BDSServo():
         self.bds_estimator = bds_estimator
         self.y = None
         self.goal = None
+        if not strategy in BDSServo.strategies:
+            raise Exception('Unknown strategy %r.' % strategy)
         self.strategy = strategy
         self.gain = gain
 
@@ -43,7 +45,11 @@ class BDSServo():
 
         error = self.y - self.goal
 
-        if self.strategy == 'S1':
+        if self.strategy == 'S1n':
+            # Normalize error, so that we can tolerate discontinuity
+            error = np.sign(error) * np.mean(np.abs(error))
+
+        if self.strategy in ['S1', 'S1n']:
             M = self.bds_estimator.get_T()
         elif self.strategy == 'S2':
             M = -self.bds_estimator.get_M()
