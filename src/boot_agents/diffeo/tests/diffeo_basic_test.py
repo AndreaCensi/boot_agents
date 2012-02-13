@@ -50,12 +50,14 @@ def diffeo_distance_test_L2_0():
     identity2 = diffeo_from_function(shape, f_id)
     assert_allclose(diffeo_distance_L2(identity, identity2), 0)
 
+
 def diffeo_distance_test_L2_1():
     shape = (20, 20)
     identity = diffeo_identity(shape)
     # They all rotate by 0.1 in [-1,1]; so maximum will be 0.05
     d_rotx = diffeo_from_function(shape, f_rotx)
     assert_allclose(diffeo_distance_L2(identity, d_rotx), 0.05, rtol=0.01)
+
 
 def diffeo_inverse_test_1():
     shape = (20, 20)
@@ -79,6 +81,7 @@ def diffeo_inverse_test_1():
     dclose(identity, identity2)
     dclose(identity, identity3)
 
+
 def diffeo_inverse_suite(f):
     shape = (30, 30)
     # They all rotate by 0.1 in [-1,1]; so maximum will be 0.05
@@ -98,10 +101,12 @@ def diffeo_inverse_suite(f):
     dclose(identity, identity2)
     dclose(identity, identity3)
 
+
 def diffeo_inverse_test():
     use = [f_id, f_rotx, f_roty]
     for f in use:
         yield diffeo_inverse_suite, f
+
 
 def dmod_test():
     N = 5

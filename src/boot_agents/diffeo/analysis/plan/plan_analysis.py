@@ -1,14 +1,13 @@
 from boot_agents.diffeo import diffeo_apply
+from bootstrapping_olympics.examples import popcode
 from contracts import contract
 from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
 from geometry.yaml import from_yaml
 from optparse import OptionParser
 from reprep import MIME_PDF
-from vehicles import VehicleSimulation
+from vehicles import VehicleSimulation, VehiclesConfig
 import contracts
 import numpy as np
-from vehicles import VehiclesConfig
-from bootstrapping_olympics.examples.rep_nuisances.popcode_functions import popcode
 
 
 def plan_analysis(global_options, data, args):
@@ -38,10 +37,12 @@ def plan_analysis(global_options, data, args):
 
     sim = VehicleSimulation(vehicle, world)
 
+
     FORWARD = [1, 1]
     BACKWARD = [-1, -1]
     LEFT = [-1, +1]
     RIGHT = [+1, -1]
+
 
     FORWARD = np.array([0, +1])
     BACKWARD = np.array([0, -1])
@@ -291,7 +292,7 @@ def scenario_compute_inputs(scenario, sim, dt=0.1):
 
 def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
     if robot_pose is None:
-        robot_pose = from_yaml(vehicle['pose'])
+        robot_pose = SE3.from_yaml(vehicle['pose'])
     for attached in vehicle['sensors']:
         sensor_pose = from_yaml(attached['current_pose'])
         sensor_t, sensor_theta = \
@@ -312,10 +313,14 @@ def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
             rho_min = 0.05
             for theta_i, rho_i in zip(directions, readings):
                 print('theta_i: %s' % theta_i)
-                x.append(sensor_t[0] + np.cos(sensor_theta + theta_i) * rho_min)
-                y.append(sensor_t[1] + np.sin(sensor_theta + theta_i) * rho_min)
-                x.append(sensor_t[0] + np.cos(sensor_theta + theta_i) * rho_i)
-                y.append(sensor_t[1] + np.sin(sensor_theta + theta_i) * rho_i)
+                x.append(sensor_t[0] +
+                         np.cos(sensor_theta + theta_i) * rho_min)
+                y.append(sensor_t[1] +
+                         np.sin(sensor_theta + theta_i) * rho_min)
+                x.append(sensor_t[0] +
+                         np.cos(sensor_theta + theta_i) * rho_i)
+                y.append(sensor_t[1] +
+                         np.sin(sensor_theta + theta_i) * rho_i)
                 x.append(None)
                 y.append(None)
             pylab.plot(x, y, color=col, markersize=0.5, zorder=2000)
@@ -330,11 +335,16 @@ def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
             for theta_i, rho_i, lum in zip(directions, readings, luminance):
                 x = []
                 y = []
-                x.append(sensor_t[0] + np.cos(sensor_theta + theta_i) * rho_min)
-                y.append(sensor_t[1] + np.sin(sensor_theta + theta_i) * rho_min)
-                x.append(sensor_t[0] + np.cos(sensor_theta + theta_i) * rho_i)
-                y.append(sensor_t[1] + np.sin(sensor_theta + theta_i) * rho_i)
-                pylab.plot(x, y, color=(lum, lum, lum), markersize=0.5, zorder=2000)
+                x.append(sensor_t[0] +
+                         np.cos(sensor_theta + theta_i) * rho_min)
+                y.append(sensor_t[1] +
+                         np.sin(sensor_theta + theta_i) * rho_min)
+                x.append(sensor_t[0] +
+                         np.cos(sensor_theta + theta_i) * rho_i)
+                y.append(sensor_t[1] +
+                         np.sin(sensor_theta + theta_i) * rho_i)
+                pylab.plot(x, y, color=(lum, lum, lum),
+                           markersize=0.5, zorder=2000)
         else:
             print('Unknown sensor type %r' % sensor['type'])
 

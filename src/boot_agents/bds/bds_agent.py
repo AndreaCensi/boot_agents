@@ -57,7 +57,7 @@ class BDSAgent(ExpSwitcher):
         self.y_stats.update(y, dt)
 
         if obs['episode_start']:
-            self.info('episode_changed: %s' % obs['id_episode'])
+            #self.info('episode_changed: %s' % obs['id_episode'])
             self.y_deriv.reset()
             return
 

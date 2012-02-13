@@ -6,3 +6,4 @@ src/out
 src/boot_agents/out
 .transferred
 *.transferred
+out
