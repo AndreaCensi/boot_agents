@@ -18,12 +18,14 @@ class BDSServo():
 
     @contract(goal='array')
     def set_goal_observations(self, goal):
+#        print('goal shape: %s' % str(goal.shape))
         self.goal = goal
         self.initial_error = None
 
     def process_observations(self, obs):
         self.u = obs['commands']
         self.y = obs['observations']
+#        print('self.y shape: %s' % str(self.y.shape))
         if self.initial_error is None:
             self.initial_error = np.linalg.norm(self.y - self.goal)
 
