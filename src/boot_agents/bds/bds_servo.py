@@ -3,7 +3,7 @@ from . import contract, np
 
 class BDSServo():
 
-    strategies = ['S1', 'S2', 'S1n']
+    strategies = ['S1', 'S2', 'S1n', 'S2d']
 
     def __init__(self, bds_estimator, commands_spec,
                  strategy='S1', gain=0.1):
@@ -33,17 +33,14 @@ class BDSServo():
         if self.y is None:
             msg = ('Warning: choose_commands() before process_observations()')
             raise Exception(msg)
-            #return self.commands_spec.get_default_value()
 
         if self.goal is None:
             msg = ('Warning: choose_commands() before set_goal_observations()')
             raise Exception(msg)
-            #return self.commands_spec.get_default_value()
 
         if self.initial_error is None:
             msg = ('Warning: choose_commands() before process_observations()')
             raise Exception(msg)
-            #return self.commands_spec.get_default_value()
 
         error = self.y - self.goal
 
@@ -53,7 +50,7 @@ class BDSServo():
 
         if self.strategy in ['S1', 'S1n']:
             M = self.bds_estimator.get_T()
-        elif self.strategy == 'S2':
+        elif self.strategy in  ['S2', 'S2d']:
             M = -self.bds_estimator.get_M()
         else:
             raise Exception('Unknown strategy %r.' % self.strategy)
@@ -62,19 +59,23 @@ class BDSServo():
 
         u = -np.tensordot(My, error, axes=(1, 0))
 
+        # XXX check u=0
         u = u / np.abs(u).max()
+
+        #current_error = np.linalg.norm(error)
+        if self.strategy in ['S1', 'S1n', 'S2']:
+            pass
+        elif self.strategy in ['S2d']:
+            initial_error = (self.initial_error
+                             if self.initial_error > 0 else 1)
+            current_error = np.linalg.norm(self.y - self.goal)
+            u = u * current_error / initial_error
+        else:
+            raise Exception('Unknown strategy %r.' % self.strategy)
 
         u = clip(u, self.commands_spec)
 
-        #current_error = np.linalg.norm(error)
-#        eps1 = current_error / self.initial_error
-
-#        eps = 0.25
         u = u * self.gain
-        #print('e(k): %10.3f e(k)/e(0) %10.3f u: %s ' %
-        #      (current_error, eps1, u))
-
-        #u += np.random.uniform(-1, 1, u.size) * 0.05
 
         u = clip(u, self.commands_spec)
         return u

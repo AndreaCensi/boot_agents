@@ -43,6 +43,7 @@ class ExpectationSlow:
 
 class ExpectationFast:
     ''' A more efficient implementation. '''
+
     def __init__(self, max_window=None, extremely_fast=False):
         ''' 
             If max_window is given, the covariance is computed

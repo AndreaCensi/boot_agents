@@ -19,7 +19,7 @@ class PredictionStats:
         self.last_a = None
         self.last_b = None
 
-    @contract(a='array[K]', b='array[K]', dt='float,>0')
+    @contract(a='array,shape(x)', b='array,shape(x)', dt='float,>0')
     def update(self, a, b, dt=1.0):
         self.Ea.update(a, dt)
         self.Eb.update(b, dt)
@@ -57,23 +57,27 @@ class PredictionStats:
 
         R = self.get_correlation()
 
-        with pub.plot('correlation') as pylab:
-            pylab.plot(R, 'k.')
-            pylab.axis((0, R.size, -1.1, +1.1))
+        if R.ndim == 1:
+            with pub.plot('correlation') as pylab:
+                pylab.plot(R, 'k.')
+                pylab.axis((0, R.size, -1.1, +1.1))
 
-        with pub.plot('last') as pylab:
-            pylab.plot(self.last_a, 'g.', label=self.label_a)
-            pylab.plot(self.last_b, 'm.', label=self.label_b)
-            a = pylab.axis()
-            m = 0.1 * (a[3] - a[2])
-            pylab.axis((a[0], a[1], a[2] - m, a[3] + m))
-            pylab.legend()
+            with pub.plot('last') as pylab:
+                pylab.plot(self.last_a, 'g.', label=self.label_a)
+                pylab.plot(self.last_b, 'm.', label=self.label_b)
+                a = pylab.axis()
+                m = 0.1 * (a[3] - a[2])
+                pylab.axis((a[0], a[1], a[2] - m, a[3] + m))
+                pylab.legend()
 
-        with pub.plot('vs') as pylab:
-            pylab.plot(self.last_a, self.last_b, '.')
-            pylab.xlabel(self.label_a)
-            pylab.ylabel(self.label_b)
-            pylab.axis('equal')
+            with pub.plot('vs') as pylab:
+                pylab.plot(self.last_a, self.last_b, '.')
+                pylab.xlabel(self.label_a)
+                pylab.ylabel(self.label_b)
+                pylab.axis('equal')
+        elif R.ndim == 2:
+            pass
+            pub.text('warning', 'not implemented yet for ndim == 2')
 
         self.Ea.publish(pub.section('%s_stats' % self.label_a))
         self.Eb.publish(pub.section('%s_stats' % self.label_b))

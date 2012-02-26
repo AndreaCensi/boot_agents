@@ -1,11 +1,7 @@
-all: develop
-	
-develop:
-	python setup.py develop
+package=boot_agents
+include pypackage.mk
 
-install:
-	python setup.py install
-
+# XXX: maybe this does not work
 test: test-local test-bo
 	
 test-local:

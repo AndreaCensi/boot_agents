@@ -46,15 +46,17 @@ class MeanVariance:
         mean = self.Ex()
         S = self.get_std_dev()
 
-        with pub.plot('mean') as pylab:
-            pylab.plot(mean, 'k.')
+        if mean.ndim == 1:
+            with pub.plot('mean') as pylab:
+                pylab.plot(mean, 'k.')
 
-        with pub.plot('std_dev') as pylab:
-            pylab.plot(S, 'k.')
-            a = pylab.axis()
-            m = 0.1 * (a[3] - a[2])
-            pylab.axis((a[0], a[1], 0, a[3] + m))
-
+            with pub.plot('std_dev') as pylab:
+                pylab.plot(S, 'k.')
+                a = pylab.axis()
+                m = 0.1 * (a[3] - a[2])
+                pylab.axis((a[0], a[1], 0, a[3] + m))
+        else:
+            pub.text('warning', 'Not implemented for ndim > 1')
 
 
 
