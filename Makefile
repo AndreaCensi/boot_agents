@@ -7,6 +7,8 @@ test: test-local test-bo
 test-local:
 	nosetests -a '!slow' boot_agents
 	
+current_dir=$(dir $(CURDIR)/$(lastword $(MAKEFILE_LIST)))
+ 
 test-bo:
-	BO_TEST_CONFIG=$(PWD)/src/boot_agents/configs/for_testing nosetests bootstrapping_olympics
+	BO_TEST_CONFIG=$(current_dir)/src/boot_agents/configs/for_testing nosetests bootstrapping_olympics
 	

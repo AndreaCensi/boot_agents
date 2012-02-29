@@ -81,7 +81,7 @@ def diffeo_creation_suite(f):
     name = f.__name__
     r = Report(name)
     fig = r.figure()
-    with r.data_pylab('grid') as pylab:
+    with r.plot('grid') as pylab:
         grids = 10
         N = 100
 
