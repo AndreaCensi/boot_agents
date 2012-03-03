@@ -1,10 +1,11 @@
 from . import BDSEstimator2, bds_dynamics, np
-from bootstrapping_olympics.display import ReprepPublisher
 import itertools
 import sys
 
 
 def main():
+    from   bootstrapping_olympics.extra.reprep import ReprepPublisher
+
     N = 20
     K = 2
 

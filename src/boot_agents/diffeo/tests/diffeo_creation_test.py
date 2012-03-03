@@ -1,82 +1,13 @@
 from . import np
 from .. import diffeomorphism_from_function, diffeomorphism_to_rgb
-from nose.plugins.attrib import attr
-from numpy.testing.utils import assert_allclose
-from reprep import Report
+from ..library import for_all_diffeos
 
 
-def f_identity(X):
-    return X
-
-P = 3.0
-
-
-def f_pow3(X):
-    return np.power(X[0], P), np.power(X[1], P)
-
-
-def f_pow3x(X):
-    return np.power(X[0], P), X[1]
-
-
-def f_pow3x_inv(X):
-    A = np.abs(X[0])
-    S = np.sign(X[0])
-    return S * np.power(A, 1 / P), X[1]
-
-
-def mod1d(x):
-    ''' bounds in [-1,1] '''
-    return np.fmod(np.fmod(x + 1, 2) + 2, 2) - 1
-
-
-def mod(X):
-    ''' bounds in [-1,+1]x[-1,+1] '''
-    return mod1d(X[0]), mod1d(X[1])
-
-
-def f_id(X):
-    return mod(X)
-
-
-def f_rotx(X):
-    return mod((X[0] + 0.1, X[1]))
-
-
-def f_rotx_inv(X):
-    return mod((X[0] - 0.1, X[1]))
-
-
-def f_rotx2(X):
-    return mod((X[0] + 0.2, X[1]))
-
-
-def f_roty(X):
-    return mod((X[0], X[1] + 0.1))
-
-diffeomorphisms = [f_identity, f_pow3, f_pow3x, f_pow3x_inv, f_rotx, f_roty]
-
-
-def mod_test():
-    assert_allclose(mod1d(0), 0)
-    assert_allclose(mod1d(1), -1)
-    assert_allclose(mod1d(2), 0)
-    assert_allclose(mod1d(-1), -1)
-    assert_allclose(mod1d(1.1), -0.9)
-    assert_allclose(mod1d(0.1), 0.1)
-    assert_allclose(mod1d(-0.1), -0.1)
-    assert_allclose(mod1d(-1.1), +0.9)
-
-
-@attr('slow')
-def diffeo_creation_tests():
-    for f in diffeomorphisms:
-        diffeo_creation_suite(f)
-
-
-def diffeo_creation_suite(f):
+@for_all_diffeos
+def creation_suite(fid, f):
     shape = [50, 50]
     D = diffeomorphism_from_function(shape, f)
+    from reprep import Report
 
     name = f.__name__
     r = Report(name)

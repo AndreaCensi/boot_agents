@@ -2,12 +2,12 @@ from . import contract, np
 from .. import diffeo_compose, diffeo_apply, diffeo_identity
 from ..analysis import Action, imread, resize
 from PIL import Image
-from bootstrapping_olympics.display import ReprepPublisher
 from collections import namedtuple
 from optparse import OptionParser
 import cPickle as pickle
 import glob
 import os
+from bootstrapping_olympics.extra.reprep.reprep_publisher import ReprepPublisher
 
 
 # 

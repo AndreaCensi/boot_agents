@@ -1,3 +1,2 @@
 from .. import np, contract
-
-from .diffeo_creation_test import *
+from numpy.testing.utils import assert_allclose

@@ -1,6 +1,6 @@
 from . import np
 from .. import cmap
-from numpy.testing.utils import assert_allclose
+from . import assert_allclose
 
 
 def cmap_test():

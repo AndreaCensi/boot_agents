@@ -1,8 +1,8 @@
-from . import diffeomorphisms, contract, np
+from . import  contract, np
 from .. import (DiffeomorphismEstimator, diffeomorphism_from_function,
     coords_iterate, diffeomorphism_to_rgb_cont, MATCH_CONTINUOUS)
-from reprep import Report
 import time
+from ..library import for_all_diffeos
 
 
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]', y='array[MxN]',
@@ -28,12 +28,8 @@ def generate_input(shape, K, diffeo, epsilon=0.5):
     print('%.2f fps' % (K / (t1 - t0)))
 
 
-def diffeo_estimator_test1():
-    for f in diffeomorphisms:
-        diffeo_estimation_suite(f)
-
-
-def diffeo_estimation_suite(f):
+@for_all_diffeos
+def estimation(fid, f):
     shape = [50, 50]
     diffeo = diffeomorphism_from_function(shape, f)
 
@@ -46,6 +42,8 @@ def diffeo_estimation_suite(f):
     diff2d = de.summarize()
     diffeo_learned = diff2d.d
 
+    from reprep import Report
+
     name = f.__name__
     r = Report(name)
     fig = r.figure(cols=4)
@@ -54,8 +52,8 @@ def diffeo_estimation_suite(f):
     diffeo_rgb = diffeomorphism_to_rgb_cont(diffeo)
     r.data_rgb('diffeo_rgb', diffeo_rgb).add_to(fig)
     r.data_rgb('diffeo_learned_rgb', diffeo_learned_rgb).add_to(fig)
-    r.data('diffeo_learned_uncertainty', diff2d.variance).display('scale').add_to(fig,
-                                                                caption='uncertainty')
+    L = r.data('diffeo_learned_uncertainty', diff2d.variance)
+    L.display('scale').add_to(fig, caption='uncertainty')
     r.data('last_y0', y0).display('scale').add_to(fig, caption='last y0')
     r.data('last_y1', y1).display('scale').add_to(fig, caption='last y1')
 
