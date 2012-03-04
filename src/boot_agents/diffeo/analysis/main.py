@@ -1,5 +1,4 @@
 from . import logger, np, plan_analysis, similarity_analysis
-from bootstrapping_olympics.display import ReprepPublisher
 from optparse import OptionParser
 import cPickle as pickle
 import os
@@ -14,6 +13,7 @@ commands = {
 
 
 def actions_analysis(args):
+    from bootstrapping_olympics.extra.reprep import ReprepPublisher
     np.seterr(all='raise')
     usage = ""
     parser = OptionParser(usage=usage)

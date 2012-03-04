@@ -1,0 +1,13 @@
+#!/usr/bin/env pg
+--- model diffeo_movie
+""" A simple test that applies a diffeomorphism to a movie stream. """
+config file "Input movie"
+config out "Output movie"
+config f = pow3 "Diffeomorphism to apply (in DiffeoLibrary)"
+config width = 100 "Movie space downsample"
+config every = 1 "Movie time downsample"
+import boot_agents.diffeo.pg
+
+|mplayer stats=1 file=$file| -->  |sieve n=$every| --> |resize width=$width height=$width| --> rgb
+
+rgb -> |diffeo f=$f| --> |mencoder timestamps=0 file=$out|

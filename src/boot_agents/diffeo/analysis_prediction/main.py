@@ -7,7 +7,6 @@ from optparse import OptionParser
 import cPickle as pickle
 import glob
 import os
-from bootstrapping_olympics.extra.reprep.reprep_publisher import ReprepPublisher
 
 
 # 
@@ -16,6 +15,8 @@ from bootstrapping_olympics.extra.reprep.reprep_publisher import ReprepPublisher
 # -p ~/boot_learning_states/agent_states/....pickle
 # 
 def main():
+    from bootstrapping_olympics.extra.reprep import ReprepPublisher
+
     usage = ""
     parser = OptionParser(usage=usage)
     parser.disable_interspersed_args()

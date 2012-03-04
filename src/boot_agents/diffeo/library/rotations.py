@@ -1,6 +1,18 @@
 from . import diffeo_torus, np
 
 
+@diffeo_torus # actually, it's diffeo_square
+def rot90(X):
+    R = [[0, 1], [-1, 0]]
+    return np.dot(R, X)
+
+
+@diffeo_torus
+def rot90_inv(X):
+    R = [[0, -1], [+1, 0]]
+    return np.dot(R, X)
+
+
 def rotx_gen(X, rx, ry):
     a = X[0] + rx
     b = X[1] + ry
