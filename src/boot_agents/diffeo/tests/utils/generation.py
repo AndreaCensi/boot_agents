@@ -27,8 +27,11 @@
 
         
 """
+__all__ = ['fancy_test_decorator']
+
 from nose.tools import istest, nottest
 import sys
+from .. import logger
 
 
 def add_to_module(function, module_name):
@@ -48,28 +51,31 @@ def add_to_module(function, module_name):
 
     module.__dict__[name] = function
 
+    logger.debug('Added test %s:%s' % (module.__name__, name))
+
 
 def add_checker_f(f, x, arguments, attributes, naming):
     @istest
-    def test_caller():
+    def caller():
         args = arguments(x)
         f(*args)
 
     name = 'test_%s_%s' % (f.__name__, naming(x))
-    test_caller.__name__ = name
+    caller.__name__ = name
 
-    if False: #XXX
-        for k, v in attributes(x).items():
-            test_caller.__dict__[k] = v
+    for k, v in attributes(x).items():
+        caller.__dict__[k] = v
 
-    add_to_module(test_caller, f.__module__)
+    caller.__dict__['test'] = f.__name__
+
+    add_to_module(caller, f.__module__)
 
 
 # TODO: add debug info function
 @nottest
 def fancy_test_decorator(lister,
-                       arguments=lambda x:x,
-                       attributes=lambda x:{'id': str(x)},
+                       arguments=lambda x: x,
+                       attributes=lambda x: {'id': str(x)},
                        naming=lambda x: str(x)):
     ''' 
         Creates a fancy decorator for adding checks.
@@ -85,7 +91,6 @@ def fancy_test_decorator(lister,
     def for_all_stuff(check):
         for x in lister():
             add_checker_f(check, x, arguments, attributes, naming)
-
 
     return for_all_stuff
 

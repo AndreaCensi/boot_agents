@@ -1,5 +1,7 @@
 from contracts import new_contract, contract
 import numpy as np
+from .. import getLogger
+logger = getLogger(__name__)
 
 from .misc_utils import *
 from .flattening import *

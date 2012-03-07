@@ -37,12 +37,10 @@ def plan_analysis(global_options, data, args):
 
     sim = VehicleSimulation(vehicle, world)
 
-
     FORWARD = [1, 1]
     BACKWARD = [-1, -1]
     LEFT = [-1, +1]
     RIGHT = [+1, -1]
-
 
     FORWARD = np.array([0, +1])
     BACKWARD = np.array([0, -1])

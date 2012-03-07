@@ -30,10 +30,14 @@ class Embed(ExpSwitcher):
         self.y_deriv = DerivativeBox()
 
     def get_similarity(self, which):
-        if which == 'y_corr': return self.y_stats.get_correlation()
-        if which == 'y_dot_corr': return self.y_dot_stats.get_correlation()
-        if which == 'y_dot_sgn_corr': return self.y_dot_sgn_stats.get_correlation()
-        if which == 'y_dot_abs_corr': return self.y_dot_abs_stats.get_correlation()
+        if which == 'y_corr':
+            return self.y_stats.get_correlation()
+        if which == 'y_dot_corr':
+            return self.y_dot_stats.get_correlation()
+        if which == 'y_dot_sgn_corr':
+            return self.y_dot_sgn_stats.get_correlation()
+        if which == 'y_dot_abs_corr':
+            return self.y_dot_abs_stats.get_correlation()
 
         raise ValueError()
         #check_contained(statistic, self.statistics, 'statistic')
@@ -51,14 +55,12 @@ class Embed(ExpSwitcher):
             self.y_dot_abs_stats.update(np.abs(y_dot), dt)
             self.count += 1
 
-
     def get_S(self, dimensions=2, pub=None):
         similarity = self.get_similarity(self.statistic)
         if pub is not None:
             pub.array_as_image('similarity', similarity,
                                caption='Similarity statistic')
             plot_spectrum(pub, 'similarity', similarity)
-
 
         if self.scale_score:
             R = scale_score(similarity).astype('float32')
@@ -68,7 +70,6 @@ class Embed(ExpSwitcher):
 
         else:
             R = similarity
-
 
         D = 1 - R
         D = D * np.pi / D.max()
@@ -131,7 +132,6 @@ class Embed(ExpSwitcher):
         self.y_dot_abs_stats.publish(pub.section('y_dot_abs_stats'))
 
 
-
 def discretize(M, w):
     X = np.zeros(M.shape, dtype='float32')
     for i in range(M.shape[0]):
@@ -144,6 +144,7 @@ def discretize(M, w):
         X[which, j] += 1
     return X
 
+
 def plot_spectrum(pub, name, matrix):
     from scipy.linalg import eigh
     S, _ = eigh(matrix) # returns the eigenvalues reversed
@@ -151,7 +152,6 @@ def plot_spectrum(pub, name, matrix):
     with pub.plot('%s-eigs' % name, caption='Spectrum of %s' % name) as pylab:
         style_ieee_halfcol_xy(pylab)
         svd_plot(pylab, eigs)
-
 
 
 def svd_plot(pylab, svds, rcond=None):

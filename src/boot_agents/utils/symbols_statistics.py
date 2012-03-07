@@ -48,7 +48,7 @@ class SymbolsStatistics:
             self.history.pop(0)
 
     @contract(pub=Publisher)
-    def publish(self, pub):
+    def publish(self, pub, skim=3):
         if self.num_samples == 0:
             pub.text('warning',
                      'Cannot publish anything as I was never updated.')
@@ -62,24 +62,43 @@ class SymbolsStatistics:
             pylab.xlabel('symbol')
             pylab.ylabel('frequency')
 
-        for i in range(self.window):
-            trans = self.transitions[i, :, :]
-            delta = i + 1
-            pub.array_as_image('tran%d' % i,
+        for delta in range(1, self.window + 1):
+            sec = pub.section('delta%d' % delta)
+            raw = self.get_raw_matrix(delta)
+            trans = self.get_transition_matrix(delta)
+            sec.array_as_image('raw',
+                               raw,
+                               filter='scale',
+                               filter_params={'skim': skim},
+                               caption='raw values')
+
+            sec.array_as_image('transitions',
                                trans,
                                filter='scale',
-                               caption='delta=%d' % delta)
+                               filter_params={'skim': skim},
+                               caption='transitions')
 
-        for i in range(self.window):
-            trans = self.get_transition_matrix(i)
-            delta = i + 1
-            pub.array_as_image('ntran%d' % i,
-                               trans,
-                               filter='scale',
-                               caption='delta=%d' % delta)
+            with sec.plot('returns', caption='Return to same value') as pl:
+                pl.plot(trans.diagonal(), 'k.')
+                pl.ylabel('return probability')
+                pl.xlabel('symbol')
 
+    @contract(delta='int,>=1')
+    def get_raw_matrix(self, delta):
+        K = delta - 1
+        if K >= self.transitions.shape[0]:
+            msg = 'Invalid delta value %d (window = %d)' % (delta, self.window)
+            raise ValueError(msg)
+        return self.transitions[K, :, :]
+
+    @contract(delta='int,>=1')
     def get_transition_matrix(self, delta):
-        X = self.transitions[delta, :, :]
+        K = delta - 1
+        if K >= self.transitions.shape[0]:
+            msg = 'Invalid delta value %d (window = %d)' % (delta, self.window)
+            raise ValueError(msg)
+
+        X = self.transitions[K, :, :]
         # X[delta, b, a] = number of times from a to b
         T = X.copy()
         for j in range(int(self.n)): # XXX
