@@ -62,7 +62,8 @@ class DiffeomorphismEstimator():
             similarity = sim_continuous
         elif self.match_method == MATCH_BINARY:
             similarity = sim_binary
-        else: assert False
+        else:
+            assert False
 
         y0_flat = y0.flat
         y1_flat = y1.flat
@@ -78,7 +79,8 @@ class DiffeomorphismEstimator():
         self.nsensels = y.size
 
         # for each sensel, create an area
-        self.lengths = np.ceil(self.max_displ * np.array(self.shape)).astype('int32')
+        self.lengths = np.ceil(self.max_displ *
+                               np.array(self.shape)).astype('int32')
         print(' Field Shape: %s' % str(self.shape))
         print('    Fraction: %s' % str(self.max_displ))
         print(' Search area: %s' % str(self.lengths))
@@ -89,7 +91,8 @@ class DiffeomorphismEstimator():
         self.neighbor_similarity_flat = [None] * self.nsensels
 
         self.flattening = Flattening.by_rows(y.shape)
-        print('Creating structure shape %s lengths %s' % (self.shape, self.lengths))
+        print('Creating structure shape %s lengths %s' %
+              (self.shape, self.lengths))
         cmg = cmap(self.lengths)
         for coord in coords_iterate(self.shape):
             k = self.flattening.cell2index[coord]
@@ -107,11 +110,15 @@ class DiffeomorphismEstimator():
 
             self.neighbor_indices[k] = indices
             self.neighbor_indices_flat[k] = np.array(indices.flat)
-            self.neighbor_similarity_flat[k] = np.zeros(indices.size, dtype='float32')
+            self.neighbor_similarity_flat[k] = np.zeros(indices.size,
+                                                        dtype='float32')
         print('done')
 
     def summarize(self):
-        ''' Find best estimate for diffeomorphism looking at each singularly. '''
+        ''' 
+            Find best estimate for diffeomorphism looking 
+            at each singularly. 
+        '''
         maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
         variance = np.zeros(self.shape, dtype='float32')
         num_problems = 0
@@ -131,7 +138,8 @@ class DiffeomorphismEstimator():
 #                    # not informative; use self
 ##                    print('Warning: %s' % sim_sort)
 #                    variance[c] = 1
-#                    maximum_likelihood_index[c] = self.flattening.cell2index[c]
+#                    maximum_likelihood_index[c] =
+# self.flattening.cell2index[c]
 #                else:
                 best = np.argmax(sim)
                 best_index = self.neighbor_indices_flat[k][best]
@@ -143,8 +151,8 @@ class DiffeomorphismEstimator():
         if num_problems > 0:
             print('Warning, %d were not informative.' % num_problems)
             pass
-                    #  variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
-                    #  variance[c] = (sim[best] - sim.min())
+        #  variance[c] = (sim[best] - sim.mean()) / (sim[best] - sim.min()) 
+        #  variance[c] = (sim[best] - sim.min())
         # TODO: check conditions
         variance = variance - variance.min()
         vmax = variance.max()
@@ -154,7 +162,8 @@ class DiffeomorphismEstimator():
         return Diffeomorphism2D(d, variance)
 
     def summarize_smooth(self, noise=0.1):
-        ''' Find best estimate for diffeomorphism looking at each singularly. '''
+        ''' Find best estimate for diffeomorphism 
+            looking at each singularly. '''
         maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
         variance = np.zeros(self.shape, dtype='float32')
         epsilon = None

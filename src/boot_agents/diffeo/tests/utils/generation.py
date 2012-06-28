@@ -55,12 +55,24 @@ def add_to_module(function, module_name):
 
 
 def add_checker_f(f, x, arguments, attributes, naming):
+    name = 'test_%s_%s' % (f.__name__, naming(x))
+
     @istest
     def caller():
-        args = arguments(x)
-        f(*args)
+        try:
+            args = None
+            args = arguments(x)
+            f(*args)
+        except:
+            msg = 'Error while executing test %r.\n' % name
+            msg += ' f = %s\n' % f
+            msg += ' f.__module__ = %s\n' % f.__module__
+            msg += ' x = %s\n' % str(x)
+            msg += ' arguments() = %s\n' % str(arguments)
+            msg += ' arguments(x) = %s\n' % str(args)
+            logger.error(msg)
+            raise
 
-    name = 'test_%s_%s' % (f.__name__, naming(x))
     caller.__name__ = name
 
     for k, v in attributes(x).items():

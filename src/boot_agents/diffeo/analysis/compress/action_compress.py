@@ -107,11 +107,14 @@ def actions_commutators(actions):
     n = len(actions)
     actions2 = list(actions)
     for i, j in itertools.product(range(n), range(n)):
-        if i <= j: continue
+        if i <= j:
+            continue
         if actions[i].invertible and actions[j].invertible:
-            print('* Creating commutator of %s and %s' % (actions[i], actions[j]))
+            print('* Creating commutator of %s and %s' %
+                  (actions[i], actions[j]))
             actions2.append(Action.commutator(actions[i], actions[j]))
     return actions2
+
 
 def actions_remove_similar_to_identity(actions, threshold):
     actions2 = []

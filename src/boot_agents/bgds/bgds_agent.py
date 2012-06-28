@@ -315,7 +315,8 @@ def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start,
         xs = []
         ys = []
         for fault in faults:
-            if fault.num_episode != num_episode: continue
+            if fault.num_episode != num_episode:
+                continue
             t = fault.timestamp - episode_time_start
             xs.extend([t, t, None])
             ys.extend([a[2], a[3], None])
@@ -323,8 +324,10 @@ def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start,
 
 #
 ## TODO: remove all of this
-#Fault = namedtuple('Fault', 'index,num_episode,timestamp,detect,detect_smooth')
-#def detect_faults(episode, timestamp, signal, scale, threshold, minimum_spacing):
+#Fault = namedtuple('Fault', 
+#'index,num_episode,timestamp,detect,detect_smooth')
+#def detect_faults(episode, timestamp, signal, scale, threshold, 
+#minimum_spacing):
 #    x = scipy.signal.convolve(signal, np.ones(scale) / scale, mode='same')
 #    assert len(x) == len(signal)
 #    maxima = local_minima(-x) & (x > threshold)
@@ -349,9 +352,11 @@ def plot_fault_lines(pylab, cmd2faults, num_episode, episode_time_start,
 #    faults = sorted(faults, key=lambda x: x[0])
 #    return faults
 
+
 def local_minima(x):
     return ((x <= np.roll(x, +1, 0)) &
             (x <= np.roll(x, -1, 0)))
+
 
 def count_positive(x, interval):
     n = x.size
@@ -362,6 +367,7 @@ def count_positive(x, interval):
         part = x[a:b]
         y[i] = (part >= 0).sum() * 1.0 / (b - a)
     return y
+
 
 def create_scales(y='array[HxW]', scales='list[M](float,>=0)',
                   returns='array[Hx(W*M)]'):

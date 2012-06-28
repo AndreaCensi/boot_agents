@@ -141,10 +141,14 @@ def most_frequent(a):
 ##        print M.astype('int32')
 #        deriv = np.zeros(M.shape)
 #        deriv += information * (M - M0)
-#        deriv += 0.25 * link_weight * dmod(M - rot_L(M), modN) * rot_L(information) 
-#        deriv += 0.25 * link_weight * dmod(M - rot_R(M), modN) * rot_R(information)
-#        deriv += 0.25 * link_weight * dmod(M - rot_U(M), modN) * rot_U(information)
-#        deriv += 0.25 * link_weight * dmod(M - rot_D(M), modN) * rot_D(information)
+#        deriv += 0.25 * link_weight * dmod(M - rot_L(M), modN) 
+#* rot_L(information) 
+#        deriv += 0.25 * link_weight * dmod(M - rot_R(M), modN)
+# * rot_R(information)
+#        deriv += 0.25 * link_weight * dmod(M - rot_U(M), modN)
+# * rot_U(information)
+#        deriv += 0.25 * link_weight * dmod(M - rot_D(M), modN)
+# * rot_D(information)
 #        
 #        dM = -0.2 * deriv
 #        dM[fixed] = 0
@@ -163,6 +167,7 @@ def most_frequent(a):
 #    return M
 #    
 
+
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]',
           template='array[MxNx...]')
 def diffeo_apply(diffeo, template):
@@ -174,12 +179,16 @@ def diffeo_apply(diffeo, template):
         result[i, j, ...] = template[i1, j1, ...]
     return result
 
+
 def diffeo_local_differences(a, b):
     ''' returns tuple (x,y) with normalized difference fields.
         Each entry is normalized in [-0.5,0.5]  '''
-    x = dmod(a[:, :, 0] - b[:, :, 0], a.shape[0] / 2).astype('float32') / (a.shape[0])
-    y = dmod(a[:, :, 1] - b[:, :, 1], a.shape[1] / 2).astype('float32') / (a.shape[1])
+    x = (dmod(a[:, :, 0] - b[:, :, 0], a.shape[0] / 2).astype('float32')
+         / (a.shape[0]))
+    y = (dmod(a[:, :, 1] - b[:, :, 1], a.shape[1] / 2).astype('float32')
+         / (a.shape[1]))
     return x, y
+
 
 @contract(a='valid_diffeomorphism,array[MxNx2]',
           b='valid_diffeomorphism,array[MxNx2]',
@@ -195,14 +204,17 @@ def diffeo_distance_Linf(a, b):
     dy = np.abs(y).max()
     return float(np.max(dx, dy))
 
+
 @contract(a='valid_diffeomorphism,array[MxNx2]',
           b='valid_diffeomorphism,array[MxNx2]',
           returns='>=0,<0.71')
 def diffeo_distance_L2(a, b):
-    ''' The maximum is sqrt(0.5**2 + 0.5**2) = sqrt(0.5) = sqrt(1/2) = sqrt(2)/2 '''
+    ''' The maximum is sqrt(0.5**2 + 0.5**2) = sqrt(0.5)
+        = sqrt(1/2) = sqrt(2)/2 '''
     x, y = diffeo_local_differences(a, b)
     dist = np.sqrt(x * x + y * y)
     return float(dist.mean())
+
 
 @contract(a='valid_diffeomorphism', returns='>=0, <0.71')
 def diffeo_norm_L2(a):
@@ -210,6 +222,7 @@ def diffeo_norm_L2(a):
     # TODO: unittests
     b = diffeo_identity((a.shape[0], a.shape[1]))
     return diffeo_distance_L2(a, b)
+
 
 def dmod(x, N):
     ''' Normalizes between [-N, +N-1] '''

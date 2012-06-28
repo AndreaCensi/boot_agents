@@ -11,7 +11,8 @@ class DerivativeBox():
 
     @contract(y='array', dt='>=0')
     def update(self, y, dt):
-        if dt == 0: return # XXX
+        if dt == 0:
+            return # XXX
         self.q_y.update(y)
         self.q_dt.update(dt)
 

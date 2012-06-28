@@ -61,7 +61,7 @@ def similarity_analysis(global_options, data, args):
         raise Exception('Template %r not found.' % options.template)
 
     cmds = data['actions']
-    cmds = sorted(cmds, key=lambda x:'%s' % x.original_cmd)
+    cmds = sorted(cmds, key=lambda x: '%s' % x.original_cmd)
     publisher = data['publisher']
 
     print('Compressing %d actions' % len(cmds))
@@ -86,10 +86,10 @@ def similarity_analysis(global_options, data, args):
     template = resize(template, width, height)
     publisher.array_as_image('template', template)
 
-
     for cmd in cmds:
         break
-        if not cmd.primitive: continue
+        if not cmd.primitive:
+            continue
         print('Plotting %s' % cmd.label)
         section_name = '%s-%s-%s' % (cmd, cmd.label, cmd.original_cmd)
         s = publisher.section(section_name)
