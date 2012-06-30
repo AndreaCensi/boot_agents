@@ -14,5 +14,6 @@ from .misc_utils import *
 from .simple_stats import *
 from .geometry import *
 from .bds import *
+from .bdse import *
 from .bgds import *
 from .diffeo import *

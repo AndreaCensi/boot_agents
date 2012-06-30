@@ -1,9 +1,8 @@
 from .. import BDSEmodel
 from . import np, contract
-from bootstrapping_olympics.unittests.utils.generation import fancy_test_decorator
+from bootstrapping_olympics.unittests.utils import fancy_test_decorator
 from boot_agents.bdse.testing.simulate import BDSSimulator
 from boot_agents.bdse.model.bdse_estimator import BDSEEstimator
-from geometry.formatting import printm
 
 
 @contract(n='int,>=1', k='int,>=1')
@@ -64,7 +63,7 @@ def check_simulation(mid, model):
     y0 = lambda: np.random.rand(model.get_y_shape())
     u_dist = lambda: np.random.rand(model.get_u_shape())
     simulator = BDSSimulator(model, y0, u_dist)
-    for y, u, y_dot in simulator.get_simulation(10, 0.1):
+    for _ in simulator.get_simulation(10, 0.1):
         pass
 
 

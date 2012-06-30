@@ -1,4 +1,5 @@
 from boot_agents.diffeo import diffeo_apply
+from bootstrapping_olympics.library import popcode
 from contracts import contract
 from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
 from geometry.yaml import from_yaml
@@ -7,7 +8,6 @@ from reprep import MIME_PDF
 from vehicles import VehicleSimulation, VehiclesConfig
 import contracts
 import numpy as np
-from bootstrapping_olympics.library.nuisances.popcode_functions import popcode
 
 
 def plan_analysis(global_options, data, args):

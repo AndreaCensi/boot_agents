@@ -37,7 +37,6 @@ class ExpSwitcher(AgentInterface):
         value = RandomCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
         self.dt = 0
-        self.info("angent inited %s" % (self.switcher))
 
     def process_observations(self, observations):
         self.dt = float(observations['dt'])

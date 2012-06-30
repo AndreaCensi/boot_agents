@@ -1,8 +1,8 @@
-from bootstrapping_olympics.interfaces import Publisher
+from bootstrapping_olympics import Publisher
 
 from .. import logger, np, contract
 
-from .outer import *
+from .outerproduct import *
 from .cov2corr import *
 from .nonparametric import *
 from .expectation import *
