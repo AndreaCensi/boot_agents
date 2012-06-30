@@ -1,20 +1,43 @@
 from . import contract, np
+from geometry.formatting import formatm
 
 
 class BDSEmodel:
+    """
+        
+        M^s_vi is (N) x (N x K)
+        N^s_i  is (N) x (K)
+    
+    """
 
-    @contract(M='array[KxNxN],K>=1,N>=1', N='array[KxN]')
+    @contract(M='array[NxNxK],K>=1,N>=1', N='array[NxK]')
     def __init__(self, M, N):
         # TODO: check finite
         self.M = M
-        self.k = M.shape[0]
-        self.n = M.shape[1]
+        self.N = N
+        self.n = M.shape[0]
+        self.k = M.shape[2]
+
+    def description(self):
+        s = ""
+        for i in range(self.k):
+            s += formatm('M^s_v%d' % i, self.M[:, :, i])
+            s += formatm('N^s_%d' % i, self.N[:, i])
+        return s
+
+    def get_y_shape(self):
+        return self.n
+
+    def get_u_shape(self):
+        return self.k
 
     @contract(y='array[N]', u='array[K]', returns='array[N]')
-    def y_dot(self, y, u):
+    def get_y_dot(self, y, u):
         self.check_valid_u(u)
         self.check_valid_y(y)
-        y_dot = np.dot(u, np.dot(self.M, y) + self.N)
+        My = np.tensordot(self.M, y, axes=(1, 0))
+        MyN = My + self.N
+        y_dot = np.tensordot(MyN, u, axes=(1, 0))
         self.check_valid_y_dot(y_dot)
         return y_dot
 
