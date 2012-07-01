@@ -105,32 +105,39 @@ class MeanCovariance:
         y_max = self.get_maximum()
         y_min = self.get_minimum()
 
-        pub.text('stats', 'Num samples: %s' % self.mean_accum.get_mass())
+        pub.text('data', 'Num samples: %s' % self.mean_accum.get_mass())
 
-        with pub.plot('expectation') as pylab:
-            style_ieee_fullcol_xy(pylab)
-            pylab.plot(Ey, 's', label='expectation')
-            pylab.plot(y_max, 's', label='max')
-            pylab.plot(y_min, 's', label='min')
-            y_axis_extra_space(pylab)
-            pylab.legend()
+        if Ey.size > 1:
+            with pub.plot('expectation') as pylab:
+                style_ieee_fullcol_xy(pylab)
+                pylab.plot(Ey, 's', label='expectation')
+                pylab.plot(y_max, 's', label='max')
+                pylab.plot(y_min, 's', label='min')
+                y_axis_extra_space(pylab)
+                pylab.legend()
 
-        pub.array_as_image('covariance', P)
-        R = R.copy()
-        np.fill_diagonal(R, np.nan)
-        pub.array_as_image('correlation', R)
-        if publish_information:
-            P_inv = self.get_information()
-            pub.array_as_image('information', P_inv)
+            pub.array_as_image('covariance', P)
+            R = R.copy()
+            np.fill_diagonal(R, np.nan)
+            pub.array_as_image('correlation', R)
+            if publish_information:
+                P_inv = self.get_information()
+                pub.array_as_image('information', P_inv)
 
-        with pub.plot('P_diagonal') as pylab:
-            style_ieee_fullcol_xy(pylab)
-            pylab.plot(P.diagonal(), 's')
-            y_axis_positive(pylab)
+            with pub.plot('P_diagonal') as pylab:
+                style_ieee_fullcol_xy(pylab)
+                pylab.plot(P.diagonal(), 's')
+                y_axis_positive(pylab)
 
-        with pub.plot('P_diagonal_sqrt') as pylab:
-            style_ieee_fullcol_xy(pylab)
-            pylab.plot(np.sqrt(P.diagonal()), 's')
-            y_axis_positive(pylab)
-
+            with pub.plot('P_diagonal_sqrt') as pylab:
+                style_ieee_fullcol_xy(pylab)
+                pylab.plot(np.sqrt(P.diagonal()), 's')
+                y_axis_positive(pylab)
+        else:
+            stats = ""
+            stats += 'min: %g\n' % y_min
+            stats += 'mean: %g\n' % Ey
+            stats += 'max: %g\n' % y_min
+            stats += 'std: %g\n' % np.sqrt(P)
+            pub.text('stats', stats)
 

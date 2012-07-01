@@ -37,7 +37,6 @@ class BDSEmodel:
         pub_tensor3_slice2(pub, 'M', self.M)
         pub_tensor2_comp1(pub, 'N', self.N)
 
-
     def description(self):
         s = ""
         for i in range(self.k):

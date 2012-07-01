@@ -1,8 +1,8 @@
 from . import BDSEmodel, np, contract
+from boot_agents.misc_utils.tensors_display import (pub_tensor2_cov,
+    pub_tensor3_slice2, pub_tensor2_comp1)
 from boot_agents.utils import Expectation, MeanCovariance, outer
 from geometry import printm
-from boot_agents.misc_utils.tensors_display import pub_tensor2_cov, \
-    pub_tensor3_slice2, pub_tensor2, pub_tensor2_comp1
 
 
 __all__ = ['BDSEEstimator']
@@ -17,11 +17,16 @@ class BDSEEstimator:
     
     """
 
-    def __init__(self, min_count_for_prediction=100):
+    @contract(rcond='float,>0')
+    def __init__(self, rcond=1e-10):
+        """
+            :param rcond: Threshold for computing pseudo-inverse of P.
+        """
         self.T = Expectation()
         self.U = Expectation()
         self.y_stats = MeanCovariance()
         self.u_stats = MeanCovariance()
+        self.rcond = rcond
 
     @contract(u='array[K],K>0,array_finite',
               y='array[N],N>0,array_finite',
@@ -43,13 +48,22 @@ class BDSEEstimator:
         self.T.update(T_k, w)
         self.U.update(U_k, w)
 
+    def get_P_inv_cond(self):
+        P = self.y_stats.get_covariance()
+        if False:
+            P_inv = np.linalg.pinv(P, rcond=self.rcond)
+        if True:
+            P2 = P + np.eye(P.shape[0]) * self.rcond
+            P_inv = np.linalg.inv(P2)
+        return P_inv
+
     def get_model(self):
         T = self.T.get_value()
         U = self.U.get_value()
         P = self.y_stats.get_covariance()
         Q = self.u_stats.get_covariance()
 
-        P_inv = np.linalg.pinv(P)
+        P_inv = self.get_P_inv_cond()
         Q_inv = np.linalg.pinv(Q)
 
         if False:
@@ -73,6 +87,7 @@ class BDSEEstimator:
         return BDSEmodel(M, N)
 
     def publish(self, pub):
+        pub.text('rcond', '%g' % self.rcond)
         model = self.get_model()
         model.publish(pub.section('model'))
 
@@ -82,10 +97,12 @@ class BDSEEstimator:
         P = self.y_stats.get_covariance()
         Q = self.u_stats.get_covariance()
         P_inv = np.linalg.pinv(P)
+        P_inv_cond = self.get_P_inv_cond()
         Q_inv = np.linalg.pinv(Q)
         pub_tensor3_slice2(pub, 'T', T)
         pub_tensor2_comp1(pub, 'U', U)
-        pub_tensor2_cov(pub, 'P', P)
+        pub_tensor2_cov(pub, 'P', P, rcond=self.rcond)
         pub_tensor2_cov(pub, 'P_inv', P_inv)
+        pub_tensor2_cov(pub, 'P_inv_cond', P_inv_cond)
         pub_tensor2_cov(pub, 'Q', Q)
         pub_tensor2_cov(pub, 'Q_inv', Q_inv)

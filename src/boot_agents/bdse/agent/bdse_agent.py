@@ -12,7 +12,8 @@ class BDSEAgent(AgentInterface):
     '''
         Skip: only consider every $skip observations. 
     '''
-    def __init__(self, explorer, skip=1, change_fraction=0.0, servo={}):
+    def __init__(self, explorer, rcond=1e-10, skip=1,
+                 change_fraction=0.0, servo={}):
         """
             :param explorer: ID of the explorer agent.
             :param servo: extra parameters for servo.
@@ -22,6 +23,7 @@ class BDSEAgent(AgentInterface):
         self.skip = skip
         self.change_fraction = change_fraction
         self.servo = servo
+        self.rcond = rcond
 
     def init(self, boot_spec):
         if len(boot_spec.get_observations().shape()) != 1:
@@ -30,7 +32,7 @@ class BDSEAgent(AgentInterface):
         self.count = 0
         self.rd = RemoveDoubles(self.change_fraction)
         self.y_deriv = DerivativeBox()
-        self.bdse_estimator = BDSEEstimator()
+        self.bdse_estimator = BDSEEstimator(self.rcond)
         self.y_stats = MeanCovariance()
 
         self.explorer.init(boot_spec)
