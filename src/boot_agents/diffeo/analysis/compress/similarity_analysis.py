@@ -10,7 +10,7 @@ from geometry import formatm # XXX: dep
 
 
 def zoom(M, factor=10):
-    return np.kron(M, np.ones((10, 10)))
+    return np.kron(M, np.ones((factor, factor)))
 
 
 def describe_info(sec, actions, info):

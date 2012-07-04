@@ -64,8 +64,8 @@ class BDSEmodel:
 
 
 # TODO: move away
-def expect_shape(self, name, vector, shape):
+def expect_shape(name, vector, shape):
     if vector.shape != shape:
         msg = ('Expected shape %s for %r but found %s' %
-               (shape, vector, vector.shape))
+               (shape, name, vector.shape))
         raise ValueError(msg)

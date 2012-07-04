@@ -1,5 +1,5 @@
 from boot_agents.diffeo import diffeo_apply
-from bootstrapping_olympics.library import popcode
+from bootstrapping_olympics.library.nuisances import popcode
 from contracts import contract
 from geometry import SE2, SE3, SE2_from_SE3, translation_angle_from_SE2
 from geometry.yaml import from_yaml

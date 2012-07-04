@@ -1,10 +1,10 @@
 from . import np, contract
 from ..utils import Expectation, outer, MeanCovariance
+from boot_agents.utils import PredictionStats
 from contracts import new_contract
 from geometry import printm
 from numpy.linalg.linalg import LinAlgError
 import scipy.linalg
-from boot_agents.utils.prediction_stats import PredictionStats
 
 
 @contract(M='array[KxNxN]', y='array[N]', u='array[K]')

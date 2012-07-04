@@ -91,12 +91,26 @@ class BDSEAgent(AgentInterface):
         self.bdse_estimator.publish(publisher.section('estimator'))
         self.stats.publish(publisher.section('stats'))
 
-#    def get_predictor(self):
-#        from boot_agents.bds.bds_predictor import BDSPredictor
-#        return BDSPredictor(self.bds_estimator)
+    def get_predictor(self):
+        model = self.bdse_estimator.get_model()
+        return BDSEPredictor(model)
 #
 #    def get_servo(self):
 #        return BDSServo(self.bds_estimator, self.commands_spec, **self.servo)
+
+
+class BDSEPredictor():
+
+    def __init__(self, model):
+        self.model = model
+
+    def process_observations(self, obs):
+        self.u = obs['commands']
+        self.y = obs['observations']
+
+    def predict_y(self, dt):
+        y_dot = self.model.get_y_dot(y=self.y, u=self.u)
+        return self.y + y_dot * dt
 
 
 class MiscStatistics:

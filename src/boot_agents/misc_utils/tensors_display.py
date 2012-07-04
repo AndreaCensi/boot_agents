@@ -50,13 +50,17 @@ def pub_tensor2_cov(pub, name, V, rcond=None):
     # TODO: add stats
 
     with section.plot('svd') as pylab:
-        u, s, v = np.linalg.svd(V) #@UnusedVariable
-        s /= s[0]
-        pylab.semilogy(s, 'bx-')
-        if rcond is not None:
-            pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
+        plot_matrix_svd(pylab, V, rcond=rcond)
 
     pub_stats(section, V)
+
+
+def plot_matrix_svd(pylab, M, rcond=None):
+    u, s, v = np.linalg.svd(M) #@UnusedVariable
+    s /= s[0]
+    pylab.semilogy(s, 'bx-')
+    if rcond is not None:
+        pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
 
 
 @contract(V='array[NxM]')
