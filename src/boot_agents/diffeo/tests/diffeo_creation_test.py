@@ -1,7 +1,7 @@
 from . import np
 from .. import diffeomorphism_from_function, diffeomorphism_to_rgb
 from ..library import for_all_diffeos
-from reprep.plot_utils.axes import turn_all_axes_off
+from reprep.plot_utils import turn_all_axes_off
 
 
 @for_all_diffeos

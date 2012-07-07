@@ -26,6 +26,7 @@ diffeomorphism_identity = diffeo_identity
 
 
 def coords_to_X(c, shape):
+    """ Maps cell coordinates to [(-1,1),(-1,1)] coordinates. """
     a, b = c
     assert 0 <= a <= shape[0]
     assert 0 <= b <= shape[1]
@@ -43,6 +44,7 @@ def coords_to_X(c, shape):
 
 
 def X_to_coords(X, shape):
+    """ Inverse of coords_to_X """
     x, y = X
     assert -1 <= x <= +1, 'outside bounds: %s' % x
     assert -1 <= y <= +1, 'outside bounds: %s' % y
@@ -57,8 +59,12 @@ def X_to_coords(X, shape):
 
 @contract(shape='valid_2d_shape', returns='valid_diffeomorphism')
 def diffeo_from_function(shape, f):
-    ''' f must be a function from M=[-1,1]x[-1,1] to itself. '''
-    # let X = (x,y) \in M
+    ''' 
+        This creates a diffeomorphism from a function f
+        from =[-1,1]x[-1,1] to itself:
+        
+          f : [-1,1]x[-1,1] -> [-1,1]x[-1,1]   
+    '''
 
     M = shape[0]
     N = shape[1]
@@ -77,7 +83,7 @@ diffeomorphism_from_function = diffeo_from_function
           b='valid_diffeomorphism,array[MxNx2]',
           returns='valid_diffeomorphism,array[MxNx2]')
 def diffeo_compose(a, b):
-#    M, N = a.shape[0], a.shape[1]
+    """ Composition of two diffeomorphisms. """
     c = np.empty_like(a)
     c[:, :, 0] = diffeo_apply(b, a[:, :, 0])
     c[:, :, 1] = diffeo_apply(b, a[:, :, 1])
@@ -87,6 +93,7 @@ def diffeo_compose(a, b):
 @contract(a='valid_diffeomorphism,array[MxNx2]',
           returns='valid_diffeomorphism,array[MxNx2]')
 def diffeo_inverse(a):
+    """ Inverse of a diffeomorphism """
     M, N = a.shape[0], a.shape[1]
     result = np.empty_like(a)
     result.fill(-1) # fill invalid data
@@ -128,49 +135,13 @@ def fill_invalid(x, invalid_value):
 def most_frequent(a):
     return max(map(lambda val: (a.count(val), val), set(a)))[-1]
 
-#
-#def iterate(M0, modN, information, link_weight):
-#    
-#    print information
-#    print M0
-#    fixed = information > 0
-#    M = M0.astype('float32')
-#    Mprev = M
-#    for k in range(10000):
-##        print 'k=%s' % k
-##        print M.astype('int32')
-#        deriv = np.zeros(M.shape)
-#        deriv += information * (M - M0)
-#        deriv += 0.25 * link_weight * dmod(M - rot_L(M), modN) 
-#* rot_L(information) 
-#        deriv += 0.25 * link_weight * dmod(M - rot_R(M), modN)
-# * rot_R(information)
-#        deriv += 0.25 * link_weight * dmod(M - rot_U(M), modN)
-# * rot_U(information)
-#        deriv += 0.25 * link_weight * dmod(M - rot_D(M), modN)
-# * rot_D(information)
-#        
-#        dM = -0.2 * deriv
-#        dM[fixed] = 0
-#        
-#        print np.sign(dM)
-#        
-#        M = M + dM
-##        M[fixed] = M0[fixed]
-##        time.sleep(4)
-#        diff = np.abs(M - Mprev).max()
-#        if diff < 0.001:
-#            break
-#        print ('%s Diff %s' % (k, diff)) 
-#        Mprev = M
-#    print M.astype('int32')
-#    return M
-#    
-
 
 @contract(diffeo='valid_diffeomorphism,array[MxNx2]',
           template='array[MxNx...]')
 def diffeo_apply(diffeo, template):
+    """ diffeo is a diffeomoprhims, and template is an image,
+        returns diffeo(template) 
+    """
     M, N = diffeo.shape[0], diffeo.shape[1]
     result = np.empty_like(template)
     for i, j in coords_iterate((M, N)):
@@ -227,28 +198,5 @@ def diffeo_norm_L2(a):
 def dmod(x, N):
     ''' Normalizes between [-N, +N-1] '''
     return ((x + N) % (2 * N)) - N
-#    
-#
-#def rot_L(X):
-#    Y = np.empty_like(X)
-#    Y[1:, :] = X[:-1, :]
-#    Y[0, :] = X[-1, :]
-#    return Y
-#
-#def rot_R(X):
-#    Y = np.empty_like(X)
-#    Y[:-1, :] = X[1:, :]
-#    Y[-1, :] = X[0, :]
-#    return Y
-#
-#def rot_U(X):
-#    Y = np.empty_like(X)
-#    Y[:, 1:] = X[:, :-1]
-#    Y[:, 0] = X[:, -1]
-#    return Y
-#
-#def rot_D(X):
-#    Y = np.empty_like(X)
-#    Y[:, :-1] = X[:, 1:]
-#    Y[:, -1] = X[:, 0]
-#    return Y
+
+

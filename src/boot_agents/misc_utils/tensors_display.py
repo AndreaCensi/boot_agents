@@ -1,4 +1,5 @@
 from . import np, contract
+from reprep.plot_utils import y_axis_set
 
 
 def pub_text_stats(pub, V):
@@ -34,9 +35,18 @@ def pub_tensor3_slice2(pub, name, V):
     params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
     section = pub.section(name)
+    section.array('value', V)
+    
+    sub = section.section('slices')
+    y_min = np.min(V)
+    y_max = np.max(V)
+
     for i in range(V.shape[2]):
-        section.array_as_image('%d' % (i), V[:, :, i],
-                               **params)
+        s = sub.section('%d' % i)
+        # TODO: do not save value
+        s.array_as_image('value', V[:, :, i], **params)
+        # TODO: make one normalized and one not
+        
     pub_stats(section, V)
 
 
@@ -45,27 +55,32 @@ def pub_tensor2_cov(pub, name, V, rcond=None):
     """ Publishes a tensor which is supposed to represent a covariance. """
     params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
-    section = pub.section(name)
-    section.array_as_image('value', V, **params) # TODO
-    # TODO: add stats
+    sub = pub.section(name)
+    sub.array_as_image('value', V, **params) # TODO
 
-    with section.plot('svd') as pylab:
-        plot_matrix_svd(pylab, V, rcond=rcond)
-
-    pub_stats(section, V)
+    sub1 = sub.section('svd')
+    with sub1.plot('plot') as pylab:
+        u, s, v = plot_matrix_svd(pylab, V, rcond=rcond)
+        
+    sub1.array('sv', s)
+    sub1.array('U', u)
+    sub1.array('V', v)
+        
+    pub_stats(sub, V)
 
 
 def plot_matrix_svd(pylab, M, rcond=None):
     u, s, v = np.linalg.svd(M) #@UnusedVariable
-    s /= s[0]
-    pylab.semilogy(s, 'bx-')
+    sn = s / s[0]
+    pylab.semilogy(sn, 'bx-')
     if rcond is not None:
-        pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
+        pylab.semilogy(np.ones(sn.shape) * rcond, 'k--')
+    return u, s, v
 
 
 @contract(V='array[NxM]')
 def pub_tensor2(pub, name, V):
-    """ Publishes a generic tensor """
+    """ Publishes a generic 2D tensor """
     params = dict(filter=pub.FILTER_POSNEG, filter_params={})
     section = pub.section(name)
     section.array_as_image('value', V, **params) # TODO
@@ -75,9 +90,22 @@ def pub_tensor2(pub, name, V):
 
 @contract(V='array[NxK]')
 def pub_tensor2_comp1(pub, name, V):
-    """ Publishes a generic tensor, plotting along the last component. """
+    """ Publishes a generic NxK tensor, plotting along the last component. """
     section = pub.section(name)
-    with section.plot('values') as pylab:
+    section.array('value', V)
+    
+    sub = section.section('slices')
+    y_min = np.min(V)
+    y_max = np.max(V)
+    
+    for i in range(V.shape[1]):
+        sub2 = sub.section('%d' % i)
+        sub2.array('value', V[:, i])
+        with sub2.plot('plot') as pylab:
+            pylab.plot(V[:, i])
+            y_axis_set(pylab, y_min, y_max)
+        
+    with sub.plot('plot') as pylab:
         for i in range(V.shape[1]):
             Vi = V[:, i]
             pylab.plot(Vi)
