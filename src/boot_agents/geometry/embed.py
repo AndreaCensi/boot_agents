@@ -11,7 +11,7 @@ __all__ = ['Embed']
 
 class Embed(ExpSwitcher):
 
-    def __init__(self, statistic='y_corr', scale_score=False, **kwargs):
+    def __init__(self, statistic='y_corr', scale_score=False, **kwargs): #@UnusedVariable
         ExpSwitcher.__init__(self, **kwargs)
         self.statistic = statistic
         self.scale_score = False
@@ -83,7 +83,7 @@ class Embed(ExpSwitcher):
             #            plot_spectrum(pub, 'P', P)
             plot_spectrum(pub, 'B', B)
 
-        S = mds(D, ndim=2)
+        S = mds(D, ndim=dimensions)
 #        S = inner_product_embedding(similarity, 3)
 #        S = S[1:3, :]
         return S
@@ -100,7 +100,7 @@ class Embed(ExpSwitcher):
             pub.array_as_image('R', R)
             pub.array_as_image('C', C)
 
-        S = inner_product_embedding(Dis, 2)
+        S = inner_product_embedding(Dis, dimensions)
 #        for i in range(R.shape[0]):
 #            R[i, i] = np.NaN
 #            C[i, i] = np.NaN

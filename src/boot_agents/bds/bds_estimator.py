@@ -161,18 +161,15 @@ class BDSEstimator2:
             self.M = np.tensordot(uu_inv, self.MP, ([0], [0]))
         return self.M
 
-    def get_M2(self, rcond=1e-5):
+    def get_M2(self):
         T = self.get_T()
         M2 = np.empty_like(T)
         M2info = np.empty_like(M2)
-#        yy = self.get_yy()
         u2y2 = self.u2y2.get_value()
         for k in range(self.num_commands):
             for v in range(self.num_sensels):
                 M2[k, :, v] = T[k, v, :] / u2y2[k, v]
                 M2info[k, :, v] = u2y2[k, v]
-#            Tk = T[k, :, :]
-#            M2[k, :, :] = Tk / uy[k, :, :]  # note transpose
         return M2, M2info
 
     def get_T(self):
@@ -209,7 +206,7 @@ class BDSEstimator2:
                 invalid = var_noise == 0
                 var_noise[invalid] = 0
                 var_prediction[invalid] = 1
-                corrected_corr = measured_corr * np.sqrt(1 + var_noise /
+                corrected_corr = measured_corr * np.sqrt(1 + var_noise / 
                                                          var_prediction)
                 with pub.plot('correlation') as pylab:
                     pylab.plot(measured_corr, 'bx', label='raw')

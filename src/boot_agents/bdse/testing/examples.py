@@ -59,7 +59,7 @@ def check_instantiation(mid, model):
 
 
 @for_all_bdse_examples
-def check_simulation(mid, model):
+def check_simulation(mid, model): #@UnusedVariable
     y0 = lambda: np.random.rand(model.get_y_shape())
     u_dist = lambda: np.random.rand(model.get_u_shape())
     simulator = BDSSimulator(model, y0, u_dist)
@@ -68,7 +68,7 @@ def check_simulation(mid, model):
 
 
 @for_all_bdse_examples
-def check_learning(mid, model):
+def check_learning(mid, model): #@UnusedVariable
     y0 = lambda: np.random.rand(model.get_y_shape())
     u = lambda: np.random.rand(model.get_u_shape())
     simulator = BDSSimulator(model, y0, u)

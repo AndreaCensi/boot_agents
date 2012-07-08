@@ -62,7 +62,7 @@ def diffeo_distance_test_L2_1():
 
 #@attr('slow') # XXX: this does not return the name
 @for_all_diffeo_pairs
-def diffeo_inverse_check(fid, f, fidinv, f_inv):
+def diffeo_inverse_check(fid, f, fidinv, f_inv): #@UnusedVariable
     shape = (20, 20)
     # They all rotate by 0.1 in [-1,1]; so maximum will be 0.05
     d = diffeo_from_function(shape, f)
@@ -86,7 +86,7 @@ def diffeo_inverse_check(fid, f, fidinv, f_inv):
 
 
 @for_all_diffeos
-def inverse_suite(fid, f):
+def inverse_suite(fid, f): #@UnusedVariable
     shape = (30, 30)
     # They all rotate by 0.1 in [-1,1]; so maximum will be 0.05
     d = diffeo_from_function(shape, f)

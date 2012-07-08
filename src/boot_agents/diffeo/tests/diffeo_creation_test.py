@@ -5,7 +5,7 @@ from reprep.plot_utils import turn_all_axes_off
 
 
 @for_all_diffeos
-def creation_suite(fid, f):
+def creation_suite(fid, f): #@UnusedVariable
     shape = [50, 50]
     D = diffeomorphism_from_function(shape, f)
     from reprep import Report

@@ -1,8 +1,8 @@
 from . import (compute_gradient_information_matrix, contract,
-    generalized_gradient, outer_first_dim, np, BGDS)
+    generalized_gradient, outer_first_dim, np, BGDSmodel)
+from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tensor,
+    display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
-import itertools
-from boot_agents.misc_utils.pylab_axis import y_axis_balanced
 
 
 __all__ = ['BGDSEstimator']
@@ -11,17 +11,17 @@ __all__ = ['BGDSEstimator']
 class BGDSEstimator:
     '''
 
-Dimensions of G:
-- for 1D signals:  (K x 1 x N )
-- for 2D signals:  (K x 2 x H x W )
-Dimensions of P (covariance of gradient):  
-    (ndim x ndim x H x W )    
-Dimensions of Q:
-    (K x K)
-
-Dimensions of C:
-- for 1D signals:  (K x N )
-- for 2D signals:  (K x H x W )
+    Dimensions of G:
+    - for 1D signals:  (K x 1 x N )
+    - for 2D signals:  (K x 2 x H x W )
+    Dimensions of P (covariance of gradient):  
+        (ndim x ndim x H x W )    
+    Dimensions of Q:
+        (K x K)
+    
+    Dimensions of C:
+    - for 1D signals:  (K x N )
+    - for 2D signals:  (K x H x W )
 
 
 '''
@@ -41,7 +41,7 @@ Dimensions of C:
         self.H_needs_update = True
 
     def get_model(self):
-        return BGDS(self.get_H())
+        return BGDSmodel(self.get_H(), self.get_C())
 
     @contract(y='(array[M]|array[MxN]),shape(x)',
             y_dot='shape(x)', u='array[K]', dt='>0')
@@ -151,7 +151,6 @@ Dimensions of C:
         return np.linalg.pinv(Q)
 
     def publish(self, pub):
-        # FIXME: add 2d case
         if self.is2D:
             self.publish_2d(pub)
         else:
@@ -162,9 +161,7 @@ Dimensions of C:
         G = self.get_G()
         P = self.get_P()
         R = self.get_R()
-        H = self.get_H()
         B = self.get_B()
-        C = self.get_C()
 
         # TODO: use names from boot spec
         u_labels = ['cmd%s' % k for k in range(K)]
@@ -178,9 +175,8 @@ Dimensions of C:
         display_4d_tensor(acc, 'R', R, xlabels=grad_labels,
                           ylabels=grad_labels)
 
-        est = pub.section('estimated')
-        display_4d_tensor(est, 'H', H, xlabels=u_labels, ylabels=grad_labels)
-        display_3d_tensor(acc, 'C', C, labels=u_labels)
+        model = self.get_model()
+        model.publish(pub.section('model'))
 
         data = pub.section('last_data')
         data.array_as_image('last_y', self.last_y, filter='scale')
@@ -189,29 +185,10 @@ Dimensions of C:
         data.array_as_image('last_gy_v', self.last_gy[1, :, :])
 
     def publish_1d(self, pub):
-#        K = self.last_u.size
         G = self.get_G()
         P = self.get_P()
         R = self.get_R()
-        H = self.get_H()
         B = self.get_B()
-        C = self.get_C()
-
-        @contract(value='array[Kx1xN]|array[KxN]')
-        def display_1d_tensor(pub, name, value):
-            with pub.plot(name) as pylab:
-                for k in range(value.shape[0]):
-                    x = value[k, ...].squeeze()
-                    assert x.ndim == 1
-                    pylab.plot(x, label='%s%s' % (name, k))
-
-                y_axis_balanced(pylab, show0=True)
-                pylab.legend()
-
-        @contract(value='array[N]')
-        def display_1d_field(pub, name, value):
-            with pub.plot(name) as pylab:
-                pylab.plot(value)
 
         accum = pub.section('accumulators')
         display_1d_tensor(accum, 'G', G)
@@ -219,9 +196,8 @@ Dimensions of C:
         display_1d_tensor(accum, 'P', P)
         display_1d_tensor(accum, 'R', R)
 
-        estim = pub.section('inferred')
-        display_1d_tensor(estim, 'H', H)
-        display_1d_tensor(estim, 'C', C)
+        model = self.get_model()
+        model.publish(pub.section('model'))
 
         data = pub.section('last_data')
         display_1d_field(data, 'last_y', self.last_y)
@@ -244,31 +220,3 @@ Dimensions of C:
                 pylab.plot(H[k, ...].squeeze())
 
 
-def iterate_indices(shape):
-    if len(shape) == 2:
-        for i, j in itertools.product(range(shape[0]), range(shape[1])):
-            yield i, j
-    else:
-        assert(False)
-
-
-@contract(G='array[AxBxHxW]',
-          xlabels='list[A](str)', ylabels='list[B](str)')
-def display_4d_tensor(pub, name, G, xlabels, ylabels):
-    A = G.shape[0]
-    B = G.shape[1]
-    section = pub.section(name, cols=A)
-    for b, a in iterate_indices((B, A)):
-        value = G[a, b, :, :].squeeze()
-        label = '%s_%s_%s' % (name, xlabels[a], ylabels[b])
-        section.array_as_image(label, value)
-
-
-@contract(G='array[AxHxW]', labels='list[A](str)')
-def display_3d_tensor(pub, name, G, labels):
-    A = G.shape[0]
-    section = pub.section(name, cols=A)
-    for a in range(A):
-        value = G[a, :, :].squeeze()
-        label = '%s_%s' % (name, labels[a])
-        section.array_as_image(label, value)

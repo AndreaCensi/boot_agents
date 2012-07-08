@@ -1,4 +1,6 @@
 from . import Expectation, np, contract, MeanVariance, Publisher
+from boot_agents.misc_utils import style_1d_sensel_func, BV1Style
+from reprep.plot_utils import x_axis_set, y_axis_set
 
 
 __all__ = ['PredictionStats']
@@ -69,12 +71,29 @@ class PredictionStats:
                 m = 0.1 * (a[3] - a[2])
                 pylab.axis((a[0], a[1], a[2] - m, a[3] + m))
                 pylab.legend()
-
+            
             with pub.plot('vs') as pylab:
                 pylab.plot(self.last_a, self.last_b, '.')
                 pylab.xlabel(self.label_a)
                 pylab.ylabel(self.label_b)
                 pylab.axis('equal')
+                
+            with pub.plot('comp_balanced') as pylab:
+                pylab.plot(self.last_a, 'g.', label=self.label_a) # XXX: colors
+                pylab.plot(self.last_b, 'm.', label=self.label_b)
+                comparison_balanced(pylab, self.last_a, self.last_b, perc=0.9, M=1.1)
+                style_1d_sensel_func(pylab, n=R.size, y_max=1)
+
+            with pub.plot('comp_balanced_lines') as pylab:
+                pylab.plot(self.last_a, 'g-', label=self.label_a) # XXX: colors
+                pylab.plot(self.last_b, 'm-', label=self.label_b)
+                comparison_balanced(pylab, self.last_a, self.last_b, perc=0.9, M=1.1)
+                style_1d_sensel_func(pylab, n=R.size, y_max=1)
+                
+            with pub.plot('correlationB', figsize=BV1Style.figsize) as pylab:
+                pylab.plot(R, **BV1Style.dots_format)
+                style_1d_sensel_func(pylab, n=R.size, y_max=1)
+                
         elif R.ndim == 2:
             pass
             pub.text('warning', 'not implemented yet for ndim == 2')
@@ -82,3 +101,21 @@ class PredictionStats:
         self.Ea.publish(pub.section('%s_stats' % self.label_a))
         self.Eb.publish(pub.section('%s_stats' % self.label_b))
 
+
+def comparison_balanced(pylab, a, b, perc=0.95, M=1.1):
+    """
+        Computes 1-perc and perc percentiles, and fits only as much.
+        
+    """
+    values = np.hstack((a, b))
+    
+    level = np.percentile(np.abs(values), perc * 100)
+    limit = M * level
+    y_axis_set(pylab, -limit, limit)
+    
+    n = a.size
+    x_axis_set(pylab, -1, n)
+
+
+    
+    

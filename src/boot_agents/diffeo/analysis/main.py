@@ -20,7 +20,7 @@ def actions_analysis(args):
     parser.disable_interspersed_args()
     parser.add_option("-o", dest='outdir')
     parser.add_option("--actions", dest='actions', help="Saved actions")
-    (options, args) = parser.parse_args()
+    (options, args) = parser.parse_args(args=args)
 
     if not args:
         msg = ('Please supply command. Available: %s'

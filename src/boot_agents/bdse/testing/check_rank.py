@@ -1,10 +1,8 @@
-from vehicles.library.sensors.utils import get_uniform_directions
-import geometry
-import numpy as np
-from geometry.distances.spherical import distances_from_angles
+from boot_agents.misc_utils import plot_matrix_svd
+from geometry import distances_from_angles
 from reprep import Report
-import reprep
-from boot_agents.misc_utils.tensors_display import plot_matrix_svd
+from vehicles.library.sensors.utils import get_uniform_directions
+import numpy as np
 
 
 def main():

@@ -1,10 +1,10 @@
 from . import BGDSEstimator, smooth2d, np, contract
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, Expectation, RemoveDoubles
+from .bgds_predictor import BGDSPredictor
 from bootstrapping_olympics import UnsupportedSpec
-
 from reprep import MIME_PDF
-from reprep.plot_utils.axes import x_axis_set, y_axis_set
+from reprep.plot_utils import x_axis_set, y_axis_set
 
 
 __all__ = ['BGDSAgent']
@@ -228,6 +228,10 @@ class BGDSAgent(ExpSwitcher):
                     y_axis_set(pylab, -2, 2)
                     x_axis_set(pylab, episode_bounds[0], episode_bounds[1])
 
+    def get_predictor(self):
+        model = self.bgds_estimator.get_model()
+        return BGDSPredictor(model)
+
 
 def plot_with_colors(pylab,
                      timestamps, values, values_giving_colors,
@@ -238,8 +242,9 @@ def plot_with_colors(pylab,
                                     label='estimated', **kwargs)
 
 
-def create_scales(y='array[HxW]', scales='list[M](float,>=0)',
-                  returns='array[Hx(W*M)]'):
+@contract(y='array[HxW]', scales='list[M](float,>=0)',
+                  returns='array[Hx(W*M)]')
+def create_scales(y, scales):
     data = []
     for s in scales:
         if s == 0:

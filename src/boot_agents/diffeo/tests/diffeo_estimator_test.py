@@ -29,7 +29,7 @@ def generate_input(shape, K, diffeo, epsilon=0.5):
 
 
 @for_all_diffeos
-def estimation(fid, f):
+def estimation(fid, f): #@UnusedVariable
     shape = [50, 50]
     diffeo = diffeomorphism_from_function(shape, f)
 
