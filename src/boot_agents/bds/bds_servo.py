@@ -18,27 +18,17 @@ class BDSServo():
 
     @contract(goal='array')
     def set_goal_observations(self, goal):
-#        print('goal shape: %s' % str(goal.shape))
         self.goal = goal
         self.initial_error = None
 
     def process_observations(self, obs):
         self.u = obs['commands']
         self.y = obs['observations']
-#        print('self.y shape: %s' % str(self.y.shape))
         if self.initial_error is None:
             self.initial_error = np.linalg.norm(self.y - self.goal)
 
     def choose_commands(self):
-        if self.y is None:
-            msg = ('Warning: choose_commands() before process_observations()')
-            raise Exception(msg)
-
-        if self.goal is None:
-            msg = ('Warning: choose_commands() before set_goal_observations()')
-            raise Exception(msg)
-
-        if self.initial_error is None:
+        if self.y is None or self.goal is None or self.initial_error is None:
             msg = ('Warning: choose_commands() before process_observations()')
             raise Exception(msg)
 
@@ -81,7 +71,7 @@ class BDSServo():
         return u
 
 
-def clip(x, stream_spec):
+def clip(x, stream_spec): # TODO: move away
     x = np.maximum(x, stream_spec.streamels['lower'])
     x = np.minimum(x, stream_spec.streamels['upper'])
     return x
