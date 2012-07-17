@@ -62,7 +62,13 @@ def angle2rgb(angle, nan_color=[0, 0, 0]):
     for k in range(3):
         hsv[:, :, k][isnan] = nan_color[k]
 
-    from scikits.image.color import hsv2rgb #@UnresolvedImport
+    try:
+    # Try old interface
+        from scikits.image.color import hsv2rgb
+    except:
+        # Try new interface
+        from skimage.color import hsv2rgb
+
     rgb = (hsv2rgb(hsv) * 255).astype('uint8')
     return rgb
 
