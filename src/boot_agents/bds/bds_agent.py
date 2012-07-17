@@ -84,39 +84,13 @@ class BDSAgent(ExpSwitcher):
         if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
-
-#      params = dict(filter=publisher.FILTER_POSNEG, filter_params={'skim':2})
-
-#        T = self.bds_estimator.get_T()
-#        T0 = T[0, :, :]
-#        T1 = T[1, :, :]
-#        Tplus = T0 + T1
-#        Tminus = T0 - T1 
-        self.bds_estimator.publish(publisher)
-
-#        P = self.y_stats.get_covariance()
-#        if self.Pinv0 is not None:
-#            publisher.array_as_image('P', P, **params)
-#            publisher.array_as_image('Pinv0', self.Pinv0, **params)
-#            M0 = np.dot(self.Pinv0, T0)
-#            M1 = np.dot(self.Pinv0, T1)                
-#            publisher.array_as_image(('M', 'M0'), M0, **params)
-#            publisher.array_as_image(('M', 'M1'), M1, **params)
-#            Mplus = M0 + M1
-#            Mminus = M0 - M1
-#            publisher.array_as_image(('M', 'Mplus'), Mplus, **params)
-#            publisher.array_as_image(('M', 'Mminus'), Mminus, **params)
-
-#        publisher.array('rand', np.random.rand(10))
+ 
+        self.bds_estimator.publish(publisher) 
 
         self.y_stats.publish(publisher.section('y_stats'))
         self.u_stats.publish(publisher.section('u_stats'))
         self.y_dot_stats.publish(publisher.section('y_dot_stats'))
-        self.y_dot_abs_stats.publish(publisher.section('y_dot_abs_stats'))
-        #        self.dt_stats.publish(publisher, 'dt')
-
-        # publisher.array_as_image('Tplus', Tplus, **params)
-        # publisher.array_as_image('Tminus', Tminus, **params)
+        self.y_dot_abs_stats.publish(publisher.section('y_dot_abs_stats')) 
 
     def get_predictor(self):
         from boot_agents.bds.bds_predictor import BDSPredictor

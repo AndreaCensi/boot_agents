@@ -58,6 +58,10 @@ class PredictionStats:
         pub.text('stats', 'Num samples: %s' % self.num_samples)
 
         R = self.get_correlation()
+        
+        pub.array('R', R)
+        pub.array('last_a', self.last_a)
+        pub.array('last_b', self.last_b)
 
         if R.ndim == 1:
             with pub.plot('correlation') as pylab:

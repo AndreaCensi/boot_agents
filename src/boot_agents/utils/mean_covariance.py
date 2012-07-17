@@ -15,6 +15,7 @@ from bootstrapping_olympics.utils import check_all_finite
 from reprep.plot_utils.styles import style_ieee_fullcol_xy
 
 
+
 class MeanCovariance:
     ''' Computes mean and covariance of a quantity '''
     def __init__(self, max_window=None):
@@ -116,7 +117,11 @@ class MeanCovariance:
                 y_axis_extra_space(pylab)
                 pylab.legend()
 
-            pub.array_as_image('covariance', P)
+            from boot_agents.misc_utils.tensors_display import pub_tensor2_cov
+            pub_tensor2_cov(pub, 'covariance', P)
+            #pub.array_as_image('covariance', P)
+            
+            # TODO: get rid of this?
             R = R.copy()
             np.fill_diagonal(R, np.nan)
             pub.array_as_image('correlation', R)

@@ -3,6 +3,7 @@ from .. import BDSEEstimator
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
 from bootstrapping_olympics import (AgentInterface, BootOlympicsConfig,
     UnsupportedSpec)
+from boot_agents.bdse.agent.bdse_servo import BDSEServo
 
 
 __all__ = ['BDSEAgent']
@@ -97,6 +98,10 @@ class BDSEAgent(AgentInterface):
 #
 #    def get_servo(self):
 #        return BDSServo(self.bds_estimator, self.commands_spec, **self.servo)
+
+    def get_servo(self):
+        model = self.bdse_estimator.get_model()
+        return BDSEServo(model, self.commands_spec, **self.servo)
 
 
 class BDSEPredictor():
