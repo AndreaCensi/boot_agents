@@ -1,5 +1,5 @@
 from PIL import Image
-import numpy
+import numpy as np
 
 
 def imread(filename):
@@ -15,10 +15,10 @@ def imread(filename):
     try:
         im = Image.open(filename)
     except Exception as e:
-        raise Exception('Could not open filename "%s": %s' % \
+        raise Exception('Could not open filename "%s": %s' % 
                         (filename, e))
 
-    data = numpy.array(im)
+    data = np.array(im)
 
     return data
 
@@ -54,7 +54,7 @@ def resize(value, width=None, height=None, mode=Image.NEAREST):
 
     # TODO: RGBA?
     image = image.resize((width, height), mode)
-    return numpy.asarray(image.convert("RGB"))
+    return np.asarray(image.convert("RGB"))
 
 
 def Image_from_array(a):
@@ -70,7 +70,7 @@ def Image_from_array(a):
 
     if len(a.shape) == 2:
         height, width = a.shape
-        rgba = numpy.zeros((height, width, 4), dtype='uint8')
+        rgba = np.zeros((height, width, 4), dtype='uint8')
         rgba[:, :, 0] = a
         rgba[:, :, 1] = a
         rgba[:, :, 2] = a
@@ -78,7 +78,7 @@ def Image_from_array(a):
     elif len(a.shape) == 3:
         height, width = a.shape[0:2]
         depth = a.shape[2]
-        rgba = numpy.zeros((height, width, 4), dtype='uint8')
+        rgba = np.zeros((height, width, 4), dtype='uint8')
         if not depth in [3, 4]:
             raise ValueError('Unexpected shape "%s".' % str(a.shape))
         rgba[:, :, 0:depth] = a[:, :, 0:depth]

@@ -32,7 +32,7 @@ def pow3x_inv(X):
 
 from numpy import cos, pi
 
-
+# http://en.wikipedia.org/wiki/Diffeomorphism
 def twirlop(X, epsilon=0.1):
     x = X[0]
     y = X[1]
