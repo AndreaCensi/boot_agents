@@ -33,13 +33,18 @@ def diffeomorphism_to_rgb_cont(D):
 @contract(D='valid_diffeomorphism')
 def diffeo_to_rgb_norm(D, max_value=None):
     stats = diffeo_stats(D)
-    return scale(stats.norm, min_value=0, max_value=max_value)
+    return scale(stats.norm, min_value=0, max_value=max_value,
+                 min_color=[1, 1, 1],
+                 max_color=[0, 0, 1])
 
 
 @contract(D='valid_diffeomorphism', returns='array[HxWx3](uint8)')
 def diffeo_to_rgb_angle(D):
     stats = diffeo_stats(D)
-    return angle2rgb(stats.angle)
+    zero_norm = stats.norm == 0
+    angle = stats.angle.copy()
+    angle[zero_norm] = np.nan
+    return angle2rgb(stats.angle, nan_color=[0.5, 0.5, 0.5])
 
 
 @contract(D='valid_diffeomorphism', returns='array[HxWx3](uint8)')
@@ -62,7 +67,6 @@ def angle2rgb(angle, nan_color=[0, 0, 0]):
     for k in range(3):
         hsv[:, :, k][isnan] = nan_color[k]
 
-    #from scikits.image.color import hsv2rgb
     try:
     # Try old interface
         from scikits.image.color import hsv2rgb
@@ -104,6 +108,8 @@ def diffeo_stats(D):
     dydx, dydy = np.gradient(dy)
     curv = (dxdx * dydy - dxdy * dydx) / 4.0
     return DiffeoStats(norm=norm, angle=angle, dx=dx, dy=dy, curv=curv)
+
+
 
 
 @contract(D='valid_diffeomorphism')

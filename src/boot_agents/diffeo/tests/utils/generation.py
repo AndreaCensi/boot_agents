@@ -43,7 +43,7 @@ def add_to_module(function, module_name):
 
     if not 'test' in module_name:
         raise Exception('While adding %r in %r: module does not have "test"'
-                        ' in it, so nose will not find the test.' %
+                        ' in it, so nose will not find the test.' % 
                         (name, module_name))
 
     if name in module.__dict__:
@@ -88,7 +88,8 @@ def add_checker_f(f, x, arguments, attributes, naming):
 def fancy_test_decorator(lister,
                        arguments=lambda x: x,
                        attributes=lambda x: {'id': str(x)},
-                       naming=lambda x: str(x)):
+                       naming=lambda x: str(x),
+                       debug=False):
     ''' 
         Creates a fancy decorator for adding checks.
         
@@ -102,7 +103,10 @@ def fancy_test_decorator(lister,
 
     def for_all_stuff(check):
         for x in lister():
+            if debug:
+                logger.info('add test %s / %s ' % (check, x))
             add_checker_f(check, x, arguments, attributes, naming)
-
+        return check
+    
     return for_all_stuff
 

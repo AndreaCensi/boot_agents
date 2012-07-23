@@ -1,7 +1,11 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening,
                contract, np, diffeo_to_rgb_norm, diffeo_to_rgb_angle,
                angle_legend, diffeo_to_rgb_curv, diffeo_text_stats)
+
 import pdb
+
+from boot_agents.diffeo.diffeo_basic import diffeo_apply
+
 
 class Diffeomorphism2D:
     @contract(d='valid_diffeomorphism')
@@ -26,6 +30,18 @@ class Diffeomorphism2D:
             assert variance.shape == d.shape[:2]
             assert np.isfinite(variance).all()
         self.variance = variance
+
+    @contract(im='array[HxWx...]', var='None|array[HxW]',
+              returns='tuple(array[HxWx...], array[HxW])')
+    def apply(self, im, var=None):
+        im2 = diffeo_apply(self.d, im)
+        if var is None:
+            var2 = np.ones((im.shape[0], im.shape[1]))
+        else:
+            # XXX: not sure
+            var2 = self.variance * diffeo_apply(self.d, var)
+        return im2, var2
+
 
 
 # TODO: remove "print" statements
