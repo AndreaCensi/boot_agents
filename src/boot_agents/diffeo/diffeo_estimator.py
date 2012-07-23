@@ -1,7 +1,7 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening,
                contract, np, diffeo_to_rgb_norm, diffeo_to_rgb_angle,
                angle_legend, diffeo_to_rgb_curv, diffeo_text_stats)
-
+import pdb
 
 class Diffeomorphism2D:
     @contract(d='valid_diffeomorphism')
@@ -30,7 +30,8 @@ class Diffeomorphism2D:
 
 # TODO: remove "print" statements
 def sim_continuous(a, b):
-    diff = np.abs(a - b)
+    diff = np.abs(a - b.astype(np.int16))
+    #diff = np.abs(a - b)
     return -diff
 
 
@@ -103,12 +104,16 @@ class DiffeomorphismEstimator():
             
             # values of the neighbors 
             b = y0_flat[self.neighbor_indices_flat[k]]
-            
+            #pdb.set_trace() # python debuger breakpoint
             # compute similarity
             neighbor_sim = similarity(a, b)
-            
+            #print neighbor_sim
             # keep track of which neighbors are more similar on average
             self.neighbor_similarity_flat[k] += neighbor_sim
+            ## Debuging code /Adam
+            #check_k = 34
+            #if k == check_k:
+            #    print self.neighbor_similarity_flat[k]
 
     def init_structures(self, y):
         self.shape = y.shape

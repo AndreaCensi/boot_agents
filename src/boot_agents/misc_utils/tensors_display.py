@@ -5,7 +5,8 @@ import itertools
 from reprep.plot_utils.spines import set_thick_ticks, set_left_spines_outward, \
     turn_off_left_and_right, turn_off_right
 from reprep.graphics.filter_posneg import posneg
-from reprep.constants import MIME_JPG, MIME_PNG
+#from reprep.constants import MIME_JPG, MIME_PNG
+from reprep.constants import MIME_PNG
 from reprep.graphics.zoom import rgb_zoom
 
 
