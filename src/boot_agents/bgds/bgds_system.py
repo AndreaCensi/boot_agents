@@ -1,4 +1,5 @@
-from . import generalized_gradient, np, contract
+from ..utils import generalized_gradient 
+from . import  np, contract
 
 
 class BGDS(object):

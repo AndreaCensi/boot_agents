@@ -14,3 +14,7 @@ from .derivative import *
 from .commands import *
 from .remove_doubles import *
 from .symbols_statistics import *
+
+from .gradients import *
+
+from .image_stats import *

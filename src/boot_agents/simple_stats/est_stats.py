@@ -19,8 +19,6 @@ class EstStats(ExpSwitcher):
 
         self.y_stats = MeanCovariance()
 
-        self.info('Agent %s initialized.' % self)
-
     def process_observations(self, obs):
         y = obs['observations']
         dt = obs['dt'].item()

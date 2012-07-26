@@ -59,9 +59,15 @@ def add_checker_f(f, x, arguments, attributes, naming):
 
     @istest
     def caller():
-        try:
-            args = None
+        try: 
             args = arguments(x)
+        except Exception as e:
+            msg = 'Error while preparing test case: %s.\n' % e
+            msg += 'Error while calling %s with argument %r' % (arguments, x)
+            logger.error(msg)
+            raise  
+         
+        try:
             f(*args)
         except:
             msg = 'Error while executing test %r.\n' % name

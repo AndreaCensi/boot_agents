@@ -1,7 +1,7 @@
-from . import contract, np, generalized_gradient
+from . import contract, np
 from ..misc_utils import display_1d_tensor, display_4d_tensor, display_3d_tensor
 from boot_agents.bdse.model.bdse_model import expect_shape
-
+from ..utils import generalized_gradient
 
 class BGDSmodel:
     """

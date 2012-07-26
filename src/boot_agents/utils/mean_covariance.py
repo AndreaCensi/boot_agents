@@ -12,7 +12,7 @@ from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
 from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
 from bootstrapping_olympics.utils import check_all_finite
-from reprep.plot_utils.styles import style_ieee_fullcol_xy
+from reprep.plot_utils import style_ieee_fullcol_xy
 
 
 
