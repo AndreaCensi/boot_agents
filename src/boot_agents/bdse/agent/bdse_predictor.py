@@ -1,10 +1,10 @@
 from boot_agents.utils import DerivativeBox2
 
 
-class BGDSPredictor():
-    
-    def __init__(self, bgds_model):
-        self.model = bgds_model 
+class BDSEPredictor():
+
+    def __init__(self, model):
+        self.model = model
         self.comp_y_dot = DerivativeBox2()
         
     def process_observations(self, obs):
@@ -24,3 +24,4 @@ class BGDSPredictor():
         y, y_dot = self.comp_y_dot.get_value()
         u_est = self.model.estimate_u(y=y, y_dot=y_dot)
         return u_est
+        

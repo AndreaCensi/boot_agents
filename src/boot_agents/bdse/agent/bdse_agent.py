@@ -1,9 +1,8 @@
-from . import np
+from . import BDSEPredictor, BDSEServo, MiscStatistics
 from .. import BDSEEstimator
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
 from bootstrapping_olympics import (AgentInterface, BootOlympicsConfig,
     UnsupportedSpec)
-from boot_agents.bdse.agent.bdse_servo import BDSEServo
 
 
 __all__ = ['BDSEAgent']
@@ -11,13 +10,14 @@ __all__ = ['BDSEAgent']
 
 class BDSEAgent(AgentInterface):
     '''
-        Skip: only consider every $skip observations. 
+        An agent that uses a BDS model.
     '''
     def __init__(self, explorer, rcond=1e-10, skip=1,
                  change_fraction=0.0, servo={}):
         """
             :param explorer: ID of the explorer agent.
             :param servo: extra parameters for servo.
+            :param skip: only used one every skip observations.
         """
         agents = BootOlympicsConfig.agents
         self.explorer = agents.instance(explorer) #@UndefinedVariable
@@ -95,49 +95,9 @@ class BDSEAgent(AgentInterface):
     def get_predictor(self):
         model = self.bdse_estimator.get_model()
         return BDSEPredictor(model)
-#
-#    def get_servo(self):
-#        return BDSServo(self.bds_estimator, self.commands_spec, **self.servo)
 
     def get_servo(self):
         model = self.bdse_estimator.get_model()
         return BDSEServo(model, self.commands_spec, **self.servo)
-
-
-class BDSEPredictor():
-
-    def __init__(self, model):
-        self.model = model
-
-    def process_observations(self, obs):
-        self.u = obs['commands']
-        self.y = obs['observations']
-
-    def predict_y(self, dt):
-        y_dot = self.model.get_y_dot(y=self.y, u=self.u)
-        return self.y + y_dot * dt
-
-
-class MiscStatistics:
-    def __init__(self):
-        self.y_stats = MeanCovariance()
-        self.y_dot_stats = MeanCovariance()
-        self.y_dot_abs_stats = MeanCovariance()
-        self.u_stats = MeanCovariance()
-        self.dt_stats = MeanCovariance()
-
-    def update(self, y, y_dot, u, dt):
-        self.y_stats.update(y, dt)
-        self.dt_stats.update(np.array([dt]))
-        self.u_stats.update(u, dt)
-        self.y_dot_stats.update(y_dot, dt)
-        self.y_dot_abs_stats.update(np.abs(y_dot), dt)
-
-    def publish(self, pub):
-        self.y_stats.publish(pub.section('y_stats'))
-        self.u_stats.publish(pub.section('u_stats'))
-        self.y_dot_stats.publish(pub.section('y_dot_stats'))
-        self.y_dot_abs_stats.publish(pub.section('y_dot_abs_stats'))
-        self.dt_stats.publish(pub.section('dt_stats'))
 
 

@@ -157,6 +157,12 @@ class BGDSEstimator:
             self.publish_2d(pub)
         else:
             self.publish_1d(pub)
+            
+        pub.array('G', self.get_G())
+        pub.array('B', self.get_B())
+        pub.array('P', self.get_P())
+        pub.array('R', self.get_R())
+        pub.array('Q', self.get_Q())
 
     def publish_2d(self, pub):
         K = self.last_u.size

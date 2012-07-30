@@ -1,4 +1,3 @@
-
 from numpy import multiply
 outer = multiply.outer
 

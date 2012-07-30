@@ -39,7 +39,6 @@ class ImageStats:
         stats += 'Num samples: %s' % self.num_samples
         pub.text('stats', stats)
 
-
         mean, stddev = self.mv.get_mean_stddev()         
         pub.array_as_image('mean', mean)
         pub.array_as_image('stddev', stddev)
