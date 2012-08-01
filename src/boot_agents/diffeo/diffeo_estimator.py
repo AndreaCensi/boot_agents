@@ -39,6 +39,11 @@ class Diffeomorphism2D:
             # XXX: not sure
             var2 = self.variance * diffeo_apply(self.d, var)
         return im2, var2
+    
+    def get_shape(self):
+        return (self.d.shape[0], self.d.shape[1])
+    
+    
 
 
 
