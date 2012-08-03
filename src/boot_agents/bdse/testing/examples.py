@@ -33,16 +33,16 @@ def bdse_examples():
     """ Returns some examples of BDSe systems. """
     examples = {}
     # works ok
-#    examples['rand21'] = dict(model=bdse_random(n=2, k=1),
-#                              desc="")
+    examples['rand21'] = dict(model=bdse_random(n=2, k=1),
+                              desc="")
 
     examples['rand32'] = dict(model=bdse_random(n=3, k=2),
                               desc="")
 
-#    examples['indip1'] = dict(model=bdse_ex_one_command_indip(n=1),
-#                              desc="")
-#    examples['indip3'] = dict(model=bdse_ex_one_command_indip(n=3),
-#                              desc="")
+    examples['indip1'] = dict(model=bdse_ex_one_command_indip(n=1),
+                              desc="")
+    examples['indip3'] = dict(model=bdse_ex_one_command_indip(n=3),
+                              desc="")
     return examples
 
 all_bdse_examples = bdse_examples()

@@ -33,6 +33,10 @@ class MeanVariance:
 
     def get_std_dev(self):
         return np.sqrt(self.get_var())
+    
+    def get_mean_stddev(self):
+        """ returns a tuple (mean, stddev) """
+        return self.get_mean(), self.get_std_dev()
 
     @contract(pub=Publisher)
     def publish(self, pub):

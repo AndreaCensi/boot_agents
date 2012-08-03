@@ -1,9 +1,9 @@
 from . import ExpSwitcher
 from ..utils import SymbolsStatistics
 from bootstrapping_olympics import UnsupportedSpec, ValueFormats
-import numpy as np
 from contracts import contract
 from geometry import mds, euclidean_distances
+import numpy as np
 
 __all__ = ['SymbolsStats']
 

@@ -73,8 +73,7 @@ class BDSEServo():
         u = clip(u, self.commands_spec)
 
         u = u * self.gain
-
-#        print self.gain, u
+ 
         u = clip(u, self.commands_spec)
         return u
 

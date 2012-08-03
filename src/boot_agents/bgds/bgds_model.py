@@ -1,7 +1,6 @@
-from . import contract, np, generalized_gradient
+from . import contract, np
 from ..misc_utils import display_1d_tensor, display_4d_tensor, display_3d_tensor
-from boot_agents.bdse.model.bdse_model import expect_shape
-
+from ..utils import expect_shape, generalized_gradient
 
 class BGDSmodel:
     """
@@ -61,8 +60,39 @@ class BGDSmodel:
         y_dot = (uH * gy).sum(axis=0)
         return y_dot
 
-    @contract(y='array[AxB]', y_dot='array[AxB]')
     def estimate_u(self, y, y_dot, gy=None):
+        self.check_valid_y(y)
+        self.check_valid_y(y_dot)
+    
+        if self.is2D:
+            return self.estimate_u_2d(y, y_dot, gy)
+        else:
+            return self.estimate_u_1d(y, y_dot, gy)
+    
+    
+    @contract(y='array[N]', y_dot='array[N]')
+    def estimate_u_1d(self, y, y_dot, gy=None):
+        GyB = self.get_lin_op_1d(y, gy)
+        u_est, _, _, _ = np.linalg.lstsq(GyB, y_dot)
+        return u_est
+
+    @contract(y='array[N]', gy='None|array[1xN]', returns='array[NxK]')
+    def get_lin_op_1d(self, y, gy=None):
+        """ Returns G (nabla)y + B, in the 1D case. """
+        if gy is None:
+            gy = generalized_gradient(y) 
+        # gy: (1 x N)
+        # self.G: array[Kx1xN]
+        # self.B: array[KxN]
+        
+        # FIXME: I am not sure of this, should be tested
+        Ggy = (self.G * gy).squeeze() # K x N 
+        L = Ggy + self.B # K x N
+        return L.T # N x K
+            
+    @contract(y='array[AxB]', y_dot='array[AxB]')
+    def estimate_u_2d(self, y, y_dot, gy=None):
+        # FIXME: this must be fixed, still uses old conventions
         if gy is None:
             gy = generalized_gradient(y)
 
@@ -70,12 +100,13 @@ class BGDSmodel:
         n = A * B
         K = self.H.shape[0]
 
+        # FIXME: G
         H = self.H
         # H = (K x 2 x H x W )
         # gy = (2 x H x W )
         Hgy = np.tensordot(H * gy, [1, 1], axes=(1, 0))
 
-        # This was the slow system
+        # This was the slower implementation:
         #        a = np.zeros((n, K))
         #        b = np.zeros(n)
         #        s = 0

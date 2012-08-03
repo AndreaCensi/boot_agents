@@ -1,7 +1,7 @@
 from . import contract, np
-from geometry.formatting import formatm
-from boot_agents.misc_utils.tensors_display import pub_tensor3_slice2, \
-    pub_tensor2_comp1
+from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
+from boot_agents.utils import expect_shape
+from geometry import formatm
 
 __all__ = ['BDSEmodel']
 
@@ -25,15 +25,33 @@ class BDSEmodel:
 
     @contract(y='array[N]', u='array[K]', returns='array[N]')
     def get_y_dot(self, y, u):
+        """ Predicts y_dot given u and y. """
         self.check_valid_u(u)
         self.check_valid_y(y)
         MyN = self.get_MyN(y)
         y_dot = np.tensordot(MyN, u, axes=(1, 0))
         self.check_valid_y_dot(y_dot)
         return y_dot
-
+    
+    @contract(y='array[N]', y_dot='array[N]', returns='array[K]')
+    def estimate_u(self, y, y_dot):
+        """ Infers u given y and y_dot. """
+        self.check_valid_y(y)
+        self.check_valid_y(y_dot)
+        
+        # Size (N x K)
+        MyN = self.get_MyN(y)
+        
+        # We have the system y_dot = MyN u
+        # which is overdetermined (if we have more observations than commands)
+        u, residuals, rank, st = np.linalg.lstsq(MyN, y_dot) #@UnusedVariable
+        
+        # TODO: not tested
+        return u
+    
     @contract(y='array[N]', returns='array[NxK]')
     def get_MyN(self, y):
+        """ Returns (My + N) """
         My = np.tensordot(self.M, y, axes=(1, 0))
         MyN = My + self.N
         return MyN
@@ -48,6 +66,8 @@ class BDSEmodel:
         direction = np.tensordot(MyN, e, axes=(0, 0))
         return direction
     
+    # From now on, just visualization and other boring stuff
+     
     def publish(self, pub):
         pub_tensor3_slice2(pub, 'M', self.M)
         pub_tensor2_comp1(pub, 'N', self.N)
@@ -77,10 +97,3 @@ class BDSEmodel:
     def check_valid_y_dot(self, y_dot):
         expect_shape('y_dot', y_dot, (self.n,))
 
-
-# TODO: move away
-def expect_shape(name, vector, shape):
-    if vector.shape != shape:
-        msg = ('Expected shape %s for %r but found %s' % 
-               (shape, name, vector.shape))
-        raise ValueError(msg)

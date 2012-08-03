@@ -2,9 +2,7 @@ from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening,
                contract, np, diffeo_to_rgb_norm, diffeo_to_rgb_angle,
                angle_legend, diffeo_to_rgb_curv, diffeo_text_stats)
 
-import pdb
-
-from boot_agents.diffeo.diffeo_basic import diffeo_apply
+from .diffeo_basic import diffeo_apply
 
 
 class Diffeomorphism2D:
@@ -46,6 +44,11 @@ class Diffeomorphism2D:
             # XXX: not sure
             var2 = self.variance * diffeo_apply(self.d, var)
         return im2, var2
+    
+    def get_shape(self):
+        return (self.d.shape[0], self.d.shape[1])
+    
+    
 
 
 

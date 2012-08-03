@@ -2,6 +2,7 @@ from bootstrapping_olympics import Publisher
 
 from .. import logger, np, contract
 
+from .shape_utils import *
 from .outerproduct import *
 from .cov2corr import *
 from .nonparametric import *
@@ -14,3 +15,8 @@ from .derivative import *
 from .commands import *
 from .remove_doubles import *
 from .symbols_statistics import *
+
+from .gradients import *
+
+from .image_stats import *
+

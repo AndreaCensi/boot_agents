@@ -1,7 +1,6 @@
-from . import BGDSEstimator, smooth2d, np, contract
+from . import BGDSEstimator, smooth2d, np, contract, BGDSPredictor
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, Expectation, RemoveDoubles
-from .bgds_predictor import BGDSPredictor
 from bootstrapping_olympics import UnsupportedSpec
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
@@ -128,7 +127,7 @@ class BGDSAgent(ExpSwitcher):
             self.info('Skipping publishing as count=%d' % self.count)
             return
 
-        self.bgds_estimator.publish(publisher)
+        self.bgds_estimator.publish(publisher.section('model'))
 
         if False and self.is2D: # TODO: implement separately
             sec = publisher.section('preprocessing')

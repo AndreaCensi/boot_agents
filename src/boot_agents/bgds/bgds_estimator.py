@@ -1,8 +1,10 @@
+
 from . import (compute_gradient_information_matrix, contract,
-    generalized_gradient, outer_first_dim, np, BGDSmodel)
+     outer_first_dim, np, BGDSmodel)
 from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tensor,
     display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
+from boot_agents.utils.gradients import generalized_gradient
 
 
 __all__ = ['BGDSEstimator']
@@ -155,6 +157,12 @@ class BGDSEstimator:
             self.publish_2d(pub)
         else:
             self.publish_1d(pub)
+            
+        pub.array('G', self.get_G())
+        pub.array('B', self.get_B())
+        pub.array('P', self.get_P())
+        pub.array('R', self.get_R())
+        pub.array('Q', self.get_Q())
 
     def publish_2d(self, pub):
         K = self.last_u.size

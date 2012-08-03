@@ -1,19 +1,11 @@
 from . import np, contract
 from ..misc_utils import y_axis_balanced
-from reprep import MIME_JPG, MIME_PNG, posneg, rgb_zoom
+from reprep import MIME_JPG, posneg, rgb_zoom, MIME_PNG
 from reprep.plot_utils import (set_thick_ticks, set_left_spines_outward,
     turn_off_left_and_right, turn_off_right, turn_off_bottom_and_top, x_axis_set,
     y_axis_set)
 import itertools
-
-from reprep.plot_utils.spines import set_thick_ticks, set_left_spines_outward, \
-    turn_off_left_and_right, turn_off_right
-from reprep.graphics.filter_posneg import posneg
-#from reprep.constants import MIME_JPG, MIME_PNG
-from reprep.constants import MIME_PNG
-from reprep.graphics.zoom import rgb_zoom
-
-
+ 
 
 def pub_text_stats(pub, V):
     """ Create statistics for the tensor """
