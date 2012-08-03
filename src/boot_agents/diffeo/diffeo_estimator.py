@@ -34,6 +34,11 @@ class Diffeomorphism2D:
     @contract(im='array[HxWx...]', var='None|array[HxW]',
               returns='tuple(array[HxWx...], array[HxW])')
     def apply(self, im, var=None):
+        """
+            apply(self, im, var=None). Apply diffeomorphism <self> to image <im>. 
+            <im> is array[HxWx...]
+            <var> is the variance of diffeomorphism
+        """
         im2 = diffeo_apply(self.d, im)
         if var is None:
             var2 = np.ones((im.shape[0], im.shape[1]))
@@ -46,7 +51,7 @@ class Diffeomorphism2D:
 
 # TODO: remove "print" statements
 def sim_continuous(a, b):
-    diff = np.abs(a - b.astype(np.int16))
+    diff = np.abs(a.astype(np.int16) - b.astype(np.int16))
     #diff = np.abs(a - b)
     return -diff
 
@@ -181,6 +186,7 @@ class DiffeomorphismEstimator():
         maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
         variance = np.zeros(self.shape, dtype='float32')
         num_problems = 0
+        #pdb.set_trace()
         # for each coordinate
         for c in coords_iterate(self.shape):
             # find index in flat array
