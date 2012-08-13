@@ -39,9 +39,15 @@ class Diffeomorphism2D:
         """
         im2 = diffeo_apply(self.d, im)
         if var is None:
-            var2 = np.ones((im.shape[0], im.shape[1]))
+            '''
+            var tells how certain we are about the map from pigel (i,j) in var.
+            which results in an uncertainty of the corresponding mapped pixel in 
+            the new image.  
+            '''
+            var = np.ones((im.shape[0], im.shape[1]))
+            var2 = diffeo_apply(self.d, var)
         else:
-            # XXX: not sure
+            # XXX: not sure ## looks good to me/Adam
             var2 = self.variance * diffeo_apply(self.d, var)
         return im2, var2
     
