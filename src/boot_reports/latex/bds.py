@@ -45,6 +45,7 @@ def display_3tensor(fig, V, gid_pattern, label_patterns, caption_patterns,
             fig.hfill()
 
 
+
 @contract(V='array[NxK]')
 def display_k_tensor(fig, V, gid_pattern, label_patterns, caption_patterns,
                      width, xlabel, ylabel):
@@ -92,20 +93,30 @@ def template_bds_T(frag, id_set, id_robot, id_agent, k, width='3cm'):
     report = load_report_phase(id_set=id_set, agent=id_agent,
                                robot=id_robot, phase='learn')
     gid = '%s-%s-%s-T%d' % (id_set, id_robot, id_agent, k)
-    V = report['estimator/tensors/T/value'].raw_data
+    V = get_bds_T(report)
     Vk = V[:, :, k]
     label = '\TTe^{s\,v\,%d}' % k
     xlabel = 's'
     ylabel = 'v'
     display_tensor_with_zoom(frag, Vk, gid, label, width, xlabel, ylabel,
                              zoom=16, x=0.15, w=0.03)
+
                              
+
+def get_bds_M(report):
+    return report['estimator/model/M/value'].raw_data
+
+def get_bds_T(report):
+    return report['estimator/tensors/T/value'].raw_data
+
+def get_bds_P(report):
+    return report['estimator/tensors/P/value'].raw_data
 
 def template_bds_M(frag, id_set, id_robot, id_agent, k, width='3cm'):
     report = load_report_phase(id_set=id_set, agent=id_agent,
                                robot=id_robot, phase='learn')
     gid = '%s-%s-%s-M%d' % (id_set, id_robot, id_agent, k)
-    V = report['estimator/model/M/value'].raw_data
+    V = get_bds_M(report)
     Vk = V[:, :, k]
     label = '\TMe^s_{v\,%d}' % k
     xlabel = 's'

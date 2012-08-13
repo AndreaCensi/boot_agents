@@ -41,3 +41,5 @@ from .servo_stat import *
 from .templates import *
 from .templates_table import *
 
+# tmp fix
+from ..exp1208gl import *
