@@ -3,6 +3,8 @@ from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening,
                angle_legend, diffeo_to_rgb_curv, diffeo_text_stats)
 
 from .diffeo_basic import diffeo_apply
+from reprep.graphics.filter_scale import scale
+from boot_agents.diffeo.diffeo_display import diffeo_stats
 
 
 class Diffeomorphism2D:
@@ -54,8 +56,43 @@ class Diffeomorphism2D:
     def get_shape(self):
         return (self.d.shape[0], self.d.shape[1])
     
-    
+    def display(self, report, full=False, nbins=100):
+        """ Displays this diffeomorphism. """
+        stats = diffeo_stats(self.d)
+        angle = stats.angle
+        norm = stats.norm
+        
+        norm_rgb = diffeo_to_rgb_norm(self.d)
+        angle_rgb = diffeo_to_rgb_angle(self.d)
+        info_rgb = scalaruncertainty2rgb(self.variance)
+        
+        f = report.figure(cols=3)
+        f.data_rgb('norm_rgb', norm_rgb,
+                    caption="Norm(D). white=0, blue=maximum. "
+                            "Note: wrong in case of wraparound")
+        f.data_rgb('phase_rgb', angle_rgb,
+                    caption="Phase(D). Note: wrong in case of wraparound")
+        
+        f.data_rgb('var_rgb', info_rgb,
+                    caption='Uncertainty (green=sure, red=unknown)')
 
+        with f.plot('norm_hist', caption='histogram of norm values') as pylab:
+            pylab.hist(norm.flat, nbins)
+
+        angles = np.array(angle.flat)
+        valid_angles = angles[np.logical_not(np.isnan(angles))]
+        with f.plot('angle_hist',
+                    caption='histogram of angle values (excluding where norm=0)') as pylab:
+            pylab.hist(valid_angles, nbins)
+
+        with f.plot('var_hist', caption='histogram of certainty values') as pylab:
+            pylab.hist(self.variance.flat, nbins)
+
+
+def scalaruncertainty2rgb(x):
+    """ Converts the scalar uncertainty (in [0,1]) to rgb. (green=1, red=0) """
+    return scale(x, max_value=1, min_value=0,
+                 min_color=[1, 0, 0], max_color=[0, 1, 0])
 
 
 # TODO: remove "print" statements
@@ -127,23 +164,19 @@ class DiffeomorphismEstimator():
             # Look at its value "a"
             a = y1_flat[k]
             # Look which originally was closer
-            
             # these values: self.neighbor_indices_flat[k] 
             # give you which indices in the flat vectors are 
             # close to k-th pixel
             
             # values of the neighbors 
             b = y0_flat[self.neighbor_indices_flat[k]]
-            #pdb.set_trace() # python debuger breakpoint
+            
             # compute similarity
             neighbor_sim = similarity(a, b)
-            #print neighbor_sim
+            
             # keep track of which neighbors are more similar on average
             self.neighbor_similarity_flat[k] += neighbor_sim
-            ## Debuging code /Adam
-            #check_k = 34
-            #if k == check_k:
-            #    print self.neighbor_similarity_flat[k]
+
 
     def init_structures(self, y):
         self.shape = y.shape
@@ -195,7 +228,7 @@ class DiffeomorphismEstimator():
         maximum_likelihood_index = np.zeros(self.shape, dtype='int32')
         variance = np.zeros(self.shape, dtype='float32')
         num_problems = 0
-        #pdb.set_trace()
+        
         # for each coordinate
         for c in coords_iterate(self.shape):
             # find index in flat array
