@@ -1,3 +1,4 @@
+*.py~
 *.pyc
 *.egg-info
 bds_estimator_test_learn.html*
@@ -8,3 +9,6 @@ src/boot_agents/out
 *.transferred
 out
 *.pgc
+.project
+.pydevproject
+.gitignore
