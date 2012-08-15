@@ -3,7 +3,8 @@ from boot_agents.misc_utils.tensors_display import (pub_tensor2_cov,
     pub_tensor3_slice2, pub_tensor2_comp1)
 from boot_agents.utils import Expectation, MeanCovariance, outer
 from geometry import printm
-from numpy.linalg.linalg import LinAlgError
+from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q
+
 
 
 __all__ = ['BDSEEstimator']
@@ -76,25 +77,32 @@ class BDSEEstimator:
             printm('Q_inv', Q_inv)
             printm('P_inv', P_inv)
 
-        if True:
-            TP_inv = obtain_TP_inv_from_TP(T, P)            
-        else:
-            TP_inv = np.tensordot(T, P_inv, axes=(0, 0))
-            TP_inv = np.transpose(TP_inv, (0, 2, 1))
-
-        M = np.tensordot(TP_inv, Q_inv, axes=(2, 0))
+        M = get_M_from_P_T_Q(P, T, Q)
+        
         UQ_inv = np.tensordot(U, Q_inv, axes=(1, 0))
-
         # This works but badly conditioned
-        # Myav = np.tensordot(M, self.y_stats.get_mean(), axes=(1, 0))
-        # This works but perhaps worth checking indices formally
-        y2 = np.linalg.solve(P, self.y_stats.get_mean())
-        Myav = np.tensordot(T, y2, axes=(1, 0))
-
+        Myav = np.tensordot(M, self.y_stats.get_mean(), axes=(1, 0))
         N = UQ_inv - Myav
         
+        
+        # Note: this does not work, don't know why
+        if False:
+            printm('MYav1', Myav)
+            y2 = np.linalg.solve(P, self.y_stats.get_mean())
+            Myav2 = np.tensordot(T, y2, axes=(0, 0))
+            #Myav = np.tensordot(T, y2, axes=(1, 0))
+            printm('MYav2', Myav2)
+
+        if False:
+            printm('U', U, 'Q_inv', Q_inv)
+            printm('UQ_inv', UQ_inv, 'Myav', Myav, 'N', N)
+            printm('u_mean', self.u_stats.get_mean())
+            printm('u_std', np.sqrt(Q.diagonal()))
+            printm('y_mean', self.y_stats.get_mean())
+            
         self.Myav = Myav
         self.UQ_inv = UQ_inv
+            
         return BDSEmodel(M, N)
 
     def publish(self, pub):
@@ -110,6 +118,10 @@ class BDSEEstimator:
         P_inv = np.linalg.pinv(P)
         P_inv_cond = self.get_P_inv_cond()
         Q_inv = np.linalg.pinv(Q)
+#
+#        TP_inv2 = obtain_TP_inv_from_TP_2(T, P)  
+#        M2 = np.tensordot(TP_inv2, Q_inv, axes=(2, 0))
+
         pub_tensor3_slice2(pub, 'T', T)
         pub_tensor2_comp1(pub, 'U', U)
         pub_tensor2_cov(pub, 'P', P, rcond=self.rcond)
@@ -120,14 +132,3 @@ class BDSEEstimator:
         pub_tensor2_comp1(pub, 'Myav', self.Myav)
         pub_tensor2_comp1(pub, 'UQ_inv', self.UQ_inv)
 
-
-def obtain_TP_inv_from_TP(T, P):
-    M = np.empty_like(T)
-    for k in range(T.shape[2]):
-        Tk = T[:, :, k]
-        try:
-            Mk = np.linalg.solve(P, Tk) #@UndefinedVariable
-        except LinAlgError:
-            raise
-        M[:, :, k] = Mk.T # note transpose (to check)
-    return M

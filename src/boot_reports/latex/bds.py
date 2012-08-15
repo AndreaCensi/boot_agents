@@ -112,6 +112,9 @@ def get_bds_T(report):
 def get_bds_P(report):
     return report['estimator/tensors/P/value'].raw_data
 
+def get_bds_Q(report):
+    return report['estimator/tensors/Q/value'].raw_data
+
 def template_bds_M(frag, id_set, id_robot, id_agent, k, width='3cm'):
     report = load_report_phase(id_set=id_set, agent=id_agent,
                                robot=id_robot, phase='learn')

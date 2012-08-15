@@ -2,6 +2,7 @@ from . import contract, np
 from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
 from boot_agents.utils import expect_shape
 from geometry import formatm
+from boot_agents.bdse.model.bdse_tensors import get_expected_T_from_M_P_Q
 
 __all__ = ['BDSEmodel']
 
@@ -97,3 +98,39 @@ class BDSEmodel:
     def check_valid_y_dot(self, y_dot):
         expect_shape('y_dot', y_dot, (self.n,))
 
+
+    @contract(P='array[NxN]', Q='array[KxK]', returns='array[NxNxK]')
+    def get_expected_T(self, P, Q):
+        """ Expected value of the T statistics. """
+        return get_expected_T_from_M_P_Q(self.M, P, Q)
+    
+    @contract(y_mean='array[N]', Q='array[KxK]', returns='array[NxK]')
+    def get_expected_U(self, y_mean, Q):
+        """ 
+            Expected value of the U statistics. 
+        
+                U^{sj} =  (M^s_vi ym^v + N^s_i) Q^ij 
+        """
+        MyN = self.get_MyN(y_mean)
+        # MyN^s_i 
+        return np.einsum('si,ij->sj', MyN, Q)
+    
+    
+    @contract(A='array[NxN]')
+    def conjugate(self, A):
+        """ 
+            Returns the dynamics of z = Ay. 
+        
+            Mz^{x}_{qi} = A^{x}_{s}  M^{s}_{vi} (A^{-1})^{v}_{q}
+            
+            N^{x}_{i} = A^{x}_{s} N^{s}_{i}
+            
+        """
+        Ainv = np.linalg.inv(A)
+        Mz = np.einsum('xs, svi, vq -> xqi', A, self.M, Ainv)
+        Nz = np.einsum('xs, si  -> xi', A, self.N)
+        return BDSEmodel(Mz, Nz)
+        
+        
+        
+    

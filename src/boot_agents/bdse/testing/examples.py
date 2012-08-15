@@ -1,8 +1,8 @@
 from .. import BDSEmodel
 from . import np, contract
 from bootstrapping_olympics.unittests.utils import fancy_test_decorator
-from boot_agents.bdse.testing.simulate import BDSSimulator
-from boot_agents.bdse.model.bdse_estimator import BDSEEstimator
+from .simulate import BDSSimulator
+from ..model.bdse_estimator import BDSEEstimator
 
 
 @contract(n='int,>=1', k='int,>=1')
@@ -13,11 +13,10 @@ def get_bds_M_N(n, k):
 
 
 @contract(n='int,>=1')
-def bdse_ex_one_command_indip(n):
-    k = n
+def bdse_ex_one_command_indip(n, k):
     M, N = get_bds_M_N(n=n, k=k)
     for i in range(n):
-        M[i, i, i] = 1
+        M[i, i, :] = 1
     return BDSEmodel(M=M, N=N)
 
 
@@ -27,21 +26,30 @@ def bdse_random(n, k):
     N = np.random.randn(*N.shape)
     return BDSEmodel(M=M, N=N)
 
+def bdse_zero(n, k):
+    M, N = get_bds_M_N(n=n, k=k)
+    return BDSEmodel(M=M, N=N)
 
 @contract(returns='dict')
 def bdse_examples():
     """ Returns some examples of BDSe systems. """
     examples = {}
     # works ok
+    # How about checkings for zeros?
+    examples['zero31'] = dict(model=bdse_zero(n=3, k=1), desc="")
+
     examples['rand21'] = dict(model=bdse_random(n=2, k=1),
                               desc="")
 
     examples['rand32'] = dict(model=bdse_random(n=3, k=2),
                               desc="")
 
-    examples['indip1'] = dict(model=bdse_ex_one_command_indip(n=1),
+    examples['indip1'] = dict(model=bdse_ex_one_command_indip(n=1, k=1),
                               desc="")
-    examples['indip3'] = dict(model=bdse_ex_one_command_indip(n=3),
+    examples['indip3'] = dict(model=bdse_ex_one_command_indip(n=3, k=3),
+                              desc="")
+    
+    examples['indip_3_1'] = dict(model=bdse_ex_one_command_indip(n=3, k=1),
                               desc="")
     return examples
 
@@ -69,25 +77,36 @@ def check_simulation(mid, model): #@UnusedVariable
 
 @for_all_bdse_examples
 def check_learning(mid, model): #@UnusedVariable
-    y0 = lambda: np.random.rand(model.get_y_shape())
-    u = lambda: np.random.rand(model.get_u_shape())
+    if False:
+        # Everything zero mean
+        y0 = lambda: np.random.randn(model.get_y_shape())
+        u = lambda: np.random.randn(model.get_u_shape())
+    elif False:
+        y0 = lambda: np.random.rand(model.get_y_shape())
+        u = lambda: 5 * np.random.randn(model.get_u_shape())
+    else:
+        # everything in [0,1]
+        y0 = lambda: 20 * np.random.rand(model.get_y_shape())
+        u = lambda: 5 * np.random.rand(model.get_u_shape())
     simulator = BDSSimulator(model, y0, u)
 
     estimator = BDSEEstimator()
+#    nsteps = 1
+#    nstart = 50000
     nsteps = 1
     nstart = 50000
-#    nsteps = 10
-#    nstart = 5000
+#    nstart = 5000000
     dt = 0.1
+    count = 0
     for _ in range(nstart):
         for  y, u, y_dot in simulator.get_simulation(nsteps, dt):
             #printm('u', u)
             estimator.update(y, u, y_dot)
-
-    model2 = estimator.get_model()
-
-    print("Model:\n%s" % model.description())
-
-    print("Learned:\n%s" % model2.description())
+            count += 1
+            if count % 500 == 0: 
+                model2 = estimator.get_model()
+    
+                print("Model:\n%s" % model.description())
+                print("Learned:\n%s" % model2.description())
 
 

@@ -68,6 +68,7 @@ class Flattening:
         #    return res
         
 #        return image.flatten()[self.cell2index_flat]
+        #return image.take(self.cell2index_flat, mode='clip')
         return image.take(self.cell2index_flat)
         
     @contract(values='array[N]', returns='array[HxW]')
