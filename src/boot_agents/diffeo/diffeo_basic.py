@@ -165,10 +165,11 @@ def diffeo_local_differences(a, b):
           b='valid_diffeomorphism,array[MxNx2]',
           returns='>=0,<=0.5')
 def diffeo_distance_Linf(a, b):
-    ''' Computes the distance between two diffeomorphism.
+    ''' 
+        Computes the distance between two diffeomorphism.
         This is the maximum difference between the two. 
         The minimum is 0 (of course);
-        the maximum is 0.5
+        the maximum is 0.5.
     '''
     x, y = diffeo_local_differences(a, b)
     dx = np.abs(x).max()

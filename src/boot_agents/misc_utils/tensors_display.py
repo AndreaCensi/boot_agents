@@ -267,6 +267,7 @@ def iterate_indices(shape):
         for i, j in itertools.product(range(shape[0]), range(shape[1])):
             yield i, j
     else:
+        raise NotImplementedError
         assert(False)
 
 

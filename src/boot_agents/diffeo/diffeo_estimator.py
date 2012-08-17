@@ -1,98 +1,10 @@
-from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening,
-               contract, np, diffeo_to_rgb_norm, diffeo_to_rgb_angle,
-               angle_legend, diffeo_to_rgb_curv, diffeo_text_stats)
-
-from .diffeo_basic import diffeo_apply
-from reprep.graphics.filter_scale import scale
-from boot_agents.diffeo.diffeo_display import diffeo_stats
+from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
+    np, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv,
+    diffeo_text_stats, Diffeomorphism2D)
 
 
-class Diffeomorphism2D:
-    @contract(d='valid_diffeomorphism')
-    def __init__(self, d, variance=None):
-        ''' 
-            This is a diffeomorphism + variance.
-            
-            d: [M, N, 2]
-            variance: [M, N]
-            
-            d: discretized version of what we called phi
-               phi : S -> S
-               
-               d: [1,W]x[1,H] -> [1,W]x[1,H]
-                
-            variance: \Gamma in the paper 
-        '''
-        self.d = d
-        if variance is None:
-            variance = np.ones((d.shape[0], d.shape[1]))
-        else:
-            assert variance.shape == d.shape[:2]
-            assert np.isfinite(variance).all()
-        self.variance = variance
-
-    @contract(im='array[HxWx...]', var='None|array[HxW]',
-              returns='tuple(array[HxWx...], array[HxW])')
-    def apply(self, im, var=None):
-        """
-            apply(self, im, var=None). Apply diffeomorphism <self> to image <im>. 
-            <im> is array[HxWx...]
-            <var> is the variance of diffeomorphism
-        """
-        im2 = diffeo_apply(self.d, im)
-        if var is None:
-            '''
-            var tells how certain we are about the map from pigel (i,j) in var.
-            which results in an uncertainty of the corresponding mapped pixel in 
-            the new image.  
-            '''
-            var = np.ones((im.shape[0], im.shape[1]))
-            var2 = diffeo_apply(self.d, var)
-        else:
-            # XXX: not sure ## looks good to me/Adam
-            var2 = self.variance * diffeo_apply(self.d, var)
-        return im2, var2
-    
-    def get_shape(self):
-        return (self.d.shape[0], self.d.shape[1])
-    
-    def display(self, report, full=False, nbins=100):
-        """ Displays this diffeomorphism. """
-        stats = diffeo_stats(self.d)
-        angle = stats.angle
-        norm = stats.norm
-        
-        norm_rgb = diffeo_to_rgb_norm(self.d)
-        angle_rgb = diffeo_to_rgb_angle(self.d)
-        info_rgb = scalaruncertainty2rgb(self.variance)
-        
-        f = report.figure(cols=3)
-        f.data_rgb('norm_rgb', norm_rgb,
-                    caption="Norm(D). white=0, blue=maximum. "
-                            "Note: wrong in case of wraparound")
-        f.data_rgb('phase_rgb', angle_rgb,
-                    caption="Phase(D). Note: wrong in case of wraparound")
-        
-        f.data_rgb('var_rgb', info_rgb,
-                    caption='Uncertainty (green=sure, red=unknown)')
-
-        with f.plot('norm_hist', caption='histogram of norm values') as pylab:
-            pylab.hist(norm.flat, nbins)
-
-        angles = np.array(angle.flat)
-        valid_angles = angles[np.logical_not(np.isnan(angles))]
-        with f.plot('angle_hist',
-                    caption='histogram of angle values (excluding where norm=0)') as pylab:
-            pylab.hist(valid_angles, nbins)
-
-        with f.plot('var_hist', caption='histogram of certainty values') as pylab:
-            pylab.hist(self.variance.flat, nbins)
 
 
-def scalaruncertainty2rgb(x):
-    """ Converts the scalar uncertainty (in [0,1]) to rgb. (green=1, red=0) """
-    return scale(x, max_value=1, min_value=0,
-                 min_color=[1, 0, 0], max_color=[0, 1, 0])
 
 
 # TODO: remove "print" statements
