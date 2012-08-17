@@ -1,6 +1,6 @@
 from . import (diffeo_apply, contract, np, diffeo_to_rgb_norm,
-    diffeo_to_rgb_angle, diffeo_distance_L2, diffeo_stats, scalaruncertainty2rgb)
-from boot_agents.diffeo.diffeo_basic import diffeo_local_differences
+    diffeo_to_rgb_angle, diffeo_distance_L2, diffeo_stats, scalaruncertainty2rgb,
+    diffeo_local_differences)
 
 
 class Diffeomorphism2D:
@@ -103,8 +103,13 @@ class Diffeomorphism2D:
         info_sum = info.sum()
         if info_sum == 0:
             raise NotImplementedError
+        
+        # not sure what's happening here
         wdist = (dist * info) / info_sum
-        return float(wdist.mean())
+        
+        res = wdist.sum()
+        #print('res: %s  but unweighted: %s' % (res, dist.mean()))
+        return res
          
     def get_shape(self):
         return (self.d.shape[0], self.d.shape[1])

@@ -3,10 +3,6 @@ from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract
     diffeo_text_stats, Diffeomorphism2D)
 
 
-
-
-
-
 # TODO: remove "print" statements
 def sim_continuous(a, b):
     diff = np.abs(a.astype(np.int16) - b.astype(np.int16))
