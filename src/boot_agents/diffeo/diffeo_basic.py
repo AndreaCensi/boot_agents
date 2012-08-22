@@ -151,13 +151,19 @@ def diffeo_apply(diffeo, template):
     return result
 
 
+@contract(a='valid_diffeomorphism,array[MxNx2]',
+          b='valid_diffeomorphism,array[MxNx2]')
 def diffeo_local_differences(a, b):
     ''' returns tuple (x,y) with normalized difference fields.
         Each entry is normalized in [-0.5,0.5]  '''
-    x = (dmod(a[:, :, 0] - b[:, :, 0], a.shape[0] / 2).astype('float32')
-         / (a.shape[0]))
-    y = (dmod(a[:, :, 1] - b[:, :, 1], a.shape[1] / 2).astype('float32')
-         / (a.shape[1]))
+    diff = a - b    
+    diffmod0 = dmod(diff[:, :, 0], a.shape[0] / 2) 
+    diffmod1 = dmod(diff[:, :, 1], a.shape[1] / 2)    
+    M, N = a.shape[:2]
+    x = np.empty((M, N), 'float32')
+    y = np.empty((M, N), 'float32')
+    np.multiply(diffmod0, 1.0 / a.shape[0], out=x)
+    np.multiply(diffmod1, 1.0 / a.shape[1], out=y)
     return x, y
 
 
@@ -196,8 +202,15 @@ def diffeo_norm_L2(a):
     return diffeo_distance_L2(a, b)
 
 
+#def dmod(x, N):
+#    ''' Normalizes between [-N, +N-1] '''
+#    out = x.copy()
+#    out += N
+#    np.mod(out, 2 * N, out)
+#    out -= N
+#    return out
+
 def dmod(x, N):
     ''' Normalizes between [-N, +N-1] '''
     return ((x + N) % (2 * N)) - N
-
 
