@@ -27,6 +27,7 @@
 
         
 """
+from contracts import describe_value
 __all__ = ['fancy_test_decorator']
 
 from nose.tools import istest, nottest
@@ -75,7 +76,9 @@ def add_checker_f(f, x, arguments, attributes, naming):
             msg += ' f.__module__ = %s\n' % f.__module__
             msg += ' x = %s\n' % str(x)
             msg += ' arguments() = %s\n' % str(arguments)
-            msg += ' arguments(x) = %s\n' % str(args)
+            msg += ' arguments(x) has size %d\n' % len(args)
+            for i, a in enumerate(args):
+                msg += '  arg %d = %s\n' % (i, describe_value(a))
             logger.error(msg)
             raise
 

@@ -1,10 +1,11 @@
 from . import contract, coords_iterate, np
-from geometry.utils.numpy_backport import assert_allclose
+from diffeoplan.utils.memoization import memoize
 
 
 class Flattening:
     ''' A Flattening is a way to assign a 1D index to each cell of a 
         2D array. '''
+    
     @contract(cell2index='array[MxN](int32,>=0,<M*N)',
               index2cell='array[(M*N)x2](int32,>=0)')
     def __init__(self, cell2index, index2cell):
@@ -14,6 +15,10 @@ class Flattening:
         self.cell2index = cell2index
         self.cell2index_flat = np.array(self.cell2index.flat)
         self.index2cell = index2cell
+        
+    @contract(returns='array[MxN](int32,>=0,<M*N)')
+    def get_cell2index(self):
+        return self.cell2index.copy()
         
     @staticmethod
     @contract(cell2index='array[MxN](int32,>=0,<M*N)',
@@ -26,7 +31,9 @@ class Flattening:
             assert index2cell[k, 0] == c[0]
             assert index2cell[k, 1] == c[1]
 
+
     @staticmethod
+    @memoize
     @contract(shape='seq[2](>0)')
     def by_rows(shape):
         M = shape[0]
@@ -67,31 +74,25 @@ class Flattening:
         #            res[k] = image[tuple(self.index2cell[k])]
         #    return res
         
-#        return image.flatten()[self.cell2index_flat]
-        #return image.take(self.cell2index_flat, mode='clip')
-        return image.take(self.cell2index_flat)
+        if image.shape != self.shape:
+            msg = ('I expect the shape to be (%s,) but got %s.' 
+                   % (self.size, image.shape))
+            raise ValueError(msg)
+        
+        # return image.flatten()[self.cell2index_flat]
+        # return image.take(self.cell2index_flat, mode='clip')
+        result = image.take(self.cell2index_flat)
+        
+        assert result.shape == (self.size,)
+        return result
         
     @contract(values='array[N]', returns='array[HxW]')
     def flat2rect(self, values):
-        return values[self.cell2index]
-
-
-
-def test_flattening1():
-    """ Make sure that image2flat and flat2image are invertible """
-    shape = (120, 160)
-    flattening = Flattening.by_rows(shape)
-    image = np.random.randn(*shape)
-    flat = flattening.rect2flat(image)
-    image2 = flattening.flat2rect(flat)
-    assert_allclose(image, image2)
-
-def test_flattening2():
-    """ Make sure that image2flat and flat2image are invertible """
-    shape = (120, 160)
-    flattening = Flattening.by_rows(shape)
-    flat = np.random.randn(shape[0] * shape[1])    
-    image = flattening.flat2rect(flat)
-    flat2 = flattening.rect2flat(image)
-    assert_allclose(flat, flat2)
+        if values.shape != (self.size,):
+            msg = ('I expect the shape to be (%s,) but got %s.' 
+                   % (self.size, values.shape))
+            raise ValueError(msg)
+        result = values[self.cell2index]
+        assert result.shape == self.shape
+        return result
     

@@ -2,7 +2,7 @@ package=boot_agents
 include pypackage.mk
 
 # XXX: maybe this does not work
-test: test-local test-bo
+#test:: test-bo
 	
 test-local:
 	nosetests -a '!slow' boot_agents
