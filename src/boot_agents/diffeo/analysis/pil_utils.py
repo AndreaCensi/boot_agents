@@ -30,7 +30,7 @@ def resize(value, width=None, height=None, mode=Image.NEAREST):
         You should pass at least one of ``width`` or ``height``.
         
         :param value: The image to resize.
-        :type value: image
+        :type value: rgb
         
         :param width: Target image width.
         :type width: int,>0
@@ -62,8 +62,6 @@ def Image_from_array(a):
         Accepts:  h x w      255  interpreted as grayscale
         Accepts:  h x w x 3  255  rgb  
         Accepts:  h x w x 4  255  rgba '''
-
-    #require_array(a)
 
     if not a.dtype == 'uint8':
         raise ValueError('I expect dtype to be uint8, got "%s".' % a.dtype)

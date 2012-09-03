@@ -8,7 +8,7 @@ from geometry.utils.numpy_backport import assert_allclose
 
 class Diffeomorphism2D:
                 
-    @contract(d='valid_diffeomorphism,array[HxWx2]', variance='None|array[HxW]')
+    @contract(d='valid_diffeomorphism,array[HxWx2]', variance='None|array[HxW](>=0,<=1)')
     def __init__(self, d, variance=None):
         ''' 
             This is a diffeomorphism + variance.
@@ -21,7 +21,10 @@ class Diffeomorphism2D:
                
                d: [1,W]x[1,H] -> [1,W]x[1,H]
                 
-            variance: \Gamma in the paper 
+            variance: \Gamma in the paper.
+                1: certain
+                0: completely unknown
+                
         '''
         self.d = d
         
@@ -32,11 +35,17 @@ class Diffeomorphism2D:
             assert np.isfinite(variance).all()
             self.variance = variance.astype('float32')
 
+        # Make them immutable
+        self.variance = self.variance.copy()
+        self.variance.setflags(write=False)
+        self.d = self.d.copy()
+        self.d.setflags(write=False)
+
     @staticmethod
     def identity(shape):
         return Diffeomorphism2D(diffeo_identity(shape))
 
-    @contract(returns='array[HxW]')
+    @contract(returns='array[HxW](>=0,<=1)')
     def get_scalar_info(self):
         """ 
             Returns a scalar value which has the interpretation
@@ -51,12 +60,14 @@ class Diffeomorphism2D:
         """
         return self.d
 
+    @contract(template='array,finite,shape(x)', returns='finite,shape(x)')
     def _d_apply(self, template):
         if not 'fda' in self.__dict__:
             self.fda = FastDiffeoApply(self.d)
         result = self.fda(template) 
         if False:
             assert_allclose(result, diffeo_apply(self.d, template))
+        
         return result
     
     @contract(im='array[HxWx...]', var='None|array[HxW]',
@@ -68,6 +79,8 @@ class Diffeomorphism2D:
             <var> is the variance of diffeomorphism
         """
         dd_info = self.get_scalar_info()
+        if True: # XX: redundant
+            assert np.isfinite(dd_info).all()
         
         im2 = self._d_apply(im)
         
@@ -80,8 +93,16 @@ class Diffeomorphism2D:
             var = np.ones((im.shape[0], im.shape[1]))
             var2 = self._d_apply(var)
         else:
-            var2 = dd_info * self._d_apply(var)
+            dvar = self._d_apply(var)
             
+            var2 = dd_info * dvar
+            
+        if True: # XX: redundant
+            assert np.isfinite(dd_info).all()
+            assert np.isfinite(var).all()
+            assert np.isfinite(im2).all()
+            assert np.isfinite(var2).all()
+                                             
         return im2, var2
     
     @staticmethod
@@ -169,10 +190,9 @@ class Diffeomorphism2D:
         
         f = report.figure(cols=6)
         f.data_rgb('norm_rgb', norm_rgb,
-                    caption="Norm(D). white=0, blue=maximum. "
-                            "Note: wrong in case of wraparound")
+                    caption="Norm(D). white=0, blue=maximum (%.2f). " % np.max(norm))
         f.data_rgb('phase_rgb', angle_rgb,
-                    caption="Phase(D). Note: wrong in case of wraparound")
+                    caption="Phase(D).")
         
         f.data_rgb('var_rgb', info_rgb,
                     caption='Uncertainty (green=sure, red=unknown)')

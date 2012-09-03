@@ -2,6 +2,7 @@ from . import contract, np, diffeo_identity
 from collections import namedtuple
 from reprep import posneg, scale
 import itertools
+from boot_agents.diffeo.diffeo_basic import dmod
 
 
 @contract(D='valid_diffeomorphism')
@@ -101,6 +102,9 @@ def diffeo_stats(D):
     identity = diffeo_identity(D.shape[0:2])
     dx = (D - identity)[:, :, 0]
     dy = (D - identity)[:, :, 1]
+    
+    dx = dmod(dx, D.shape[0] / 2)
+    dy = dmod(dy, D.shape[1] / 2)
     angle = np.arctan2(dy, dx)
     norm = np.hypot(dx, dy)
     angle[norm == 0] = np.nan

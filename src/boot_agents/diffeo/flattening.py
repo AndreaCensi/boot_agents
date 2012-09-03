@@ -1,5 +1,5 @@
 from . import contract, coords_iterate, np
-from diffeoplan.utils.memoization import memoize
+from diffeoplan.utils.memoization import memoize_simple as memoize
 
 
 class Flattening:
@@ -33,8 +33,8 @@ class Flattening:
 
 
     @staticmethod
+    @contract(shape='seq[2](int,>0)')
     @memoize
-    @contract(shape='seq[2](>0)')
     def by_rows(shape):
         M = shape[0]
         N = shape[1]
@@ -66,19 +66,11 @@ class Flattening:
 
     @contract(image='array[HxW]', returns='array[H*W]')
     def rect2flat(self, image):
-        # ok, we are going to be slow
-        #        H, W = image.shape
-        #        N = H * W
-        #        res = np.zeros(N, image.dtype)
-        #        for k in range(N):
-        #            res[k] = image[tuple(self.index2cell[k])]
-        #    return res
-        
         if image.shape != self.shape:
-            msg = ('I expect the shape to be (%s,) but got %s.' 
-                   % (self.size, image.shape))
+            msg = ('I expect the shape to be %s but got %s.' 
+                   % (self.shape, image.shape))
             raise ValueError(msg)
-        
+        # Several alternatives:
         # return image.flatten()[self.cell2index_flat]
         # return image.take(self.cell2index_flat, mode='clip')
         result = image.take(self.cell2index_flat)
