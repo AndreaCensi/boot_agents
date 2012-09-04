@@ -3,7 +3,7 @@ import itertools
 
 from bootstrapping_olympics import StreamSpec
 
-__all__ = ['RandomCanonicalCommand', 'RandomCommand']
+__all__ = ['RandomCanonicalCommand', 'RandomCommand', 'get_canonical_commands']
 
 
 class RandomCanonicalCommand:

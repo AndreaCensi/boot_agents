@@ -9,7 +9,7 @@ from geometry.utils.numpy_backport import assert_allclose
 class Diffeomorphism2D:
                 
     @contract(d='valid_diffeomorphism,array[HxWx2]', variance='None|array[HxW](>=0,<=1)')
-    def __init__(self, d, variance=None):
+    def __init__(self, d, variance=None, E2=None, E3=None, E4=None):
         ''' 
             This is a diffeomorphism + variance.
             
@@ -34,6 +34,14 @@ class Diffeomorphism2D:
             assert variance.shape == d.shape[:2]
             assert np.isfinite(variance).all()
             self.variance = variance.astype('float32')
+            
+        if not E2 is None:
+            self.E2 = E2
+        if not E3 is None:
+            self.E3 = E3
+        if not E4 is None:
+            self.E4 = E4
+            
 
         # Make them immutable
         self.variance = self.variance.copy()

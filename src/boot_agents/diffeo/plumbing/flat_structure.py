@@ -12,8 +12,8 @@ class FlatStructure():
         """
             Suppose 
                 shape = (H, W)
-                nighborarea = (h, w)
-                A = h * w
+                nighborarea = (X, Y)
+                A = X * Y
                 N = H * W
             Then 
                 self.neighbor_indices_flat  
@@ -23,16 +23,16 @@ class FlatStructure():
     
         # for each sensel, create an area 
         cmg = cmap(np.array(neighborarea))
-        area_shape = cmg.shape[0], cmg.shape[1]
-        
-        self.area_shape = area_shape
+        self.area_shape = cmg.shape[0], cmg.shape[1]
         self.shape = shape
-        H, W = shape
-        N = H * W
-        A = area_shape[0] * area_shape[1]
+        self.H, self.W = shape
+        self.X = self.area_shape[0]
+        self.Y = self.area_shape[1]
+        self.N = self.H * self.W
+        self.A = self.X * self.Y
         
 #        neighbor_coords = [None] * N
-        self.neighbor_indices_flat = np.zeros((N, A), 'int32')
+        self.neighbor_indices_flat = np.zeros((self.N, self.A), 'int32')
     
         logger.info('Creating Flattening..')
         self.flattening = Flattening.by_rows(tuple(shape))
@@ -48,14 +48,14 @@ class FlatStructure():
             cm[:, :, 0] = cm[:, :, 0] % shape[0]  
             cm[:, :, 1] = cm[:, :, 1] % shape[1]
             #  neighbor_coords[k] = cm
-            indices = np.zeros(area_shape, 'int32')
-            for a, b in coords_iterate(area_shape):
+            indices = np.zeros(self.area_shape, 'int32')
+            for a, b in coords_iterate(self.area_shape):
                 c = tuple(cm[a, b, :])
                 indices[a, b] = self.flattening.cell2index[c]
     
             self.neighbor_indices_flat[k, :] = np.array(indices.flat) # using numpy's flattening
 
-    
+    @contract(k='int,>=0,<N', neighbor_index='int,>=0,<A', returns='seq[2](int)')
     def neighbor_cell(self, k, neighbor_index):
         j = self.neighbor_indices_flat[k][neighbor_index]
         return self.flattening.index2cell[j]
@@ -81,6 +81,7 @@ class FlatStructure():
         # first convert the array to unrolled N
         valueflat = self.flattening.rect2flat(value)
         warnings.warn('Not tested yet')
+        # Alternative:
         #  return valueflat[self.neighbor_indices_flat]
         return valueflat.take(self.neighbor_indices_flat, out=out)
 
@@ -102,8 +103,7 @@ class FlatStructure():
     @contract(value='array[HxWxC]', returns='array[NxAxC]')
     def image2repeated(self, value):
         _, _, C = value.shape
-        N, A = self.neighbor_indices_flat.shape
-        res = np.zeros((N, A, C), value.dtype)
+        res = np.zeros((self.N, self.A, C), value.dtype)
         for c in range(C):
             res[:, :, c] = self.values2repeated(value[:, :, c])
         return res
@@ -111,11 +111,10 @@ class FlatStructure():
     @memoize_simple
     @contract(returns='array[NxA]')
     def get_distances(self):
-        N, A = self.neighbor_indices_flat.shape
-        D = np.zeros((N, A))
-        for i in range(N):
+        D = np.zeros((self.N, self.A))
+        for i in xrange(self.N):
             pi = self.flattening.index2cell[i]
-            for jj in range(A):
+            for jj in xrange(self.A):
                 j = self.neighbor_indices_flat[i, jj]
                 pj = self.flattening.index2cell[j]
                 dx = pi[0] - pj[0]
@@ -129,15 +128,12 @@ class FlatStructure():
     @memoize_simple
     @contract(returns='array[NxA]')
     def get_distances_to_area_border(self):
-        N, A = self.neighbor_indices_flat.shape
-        D = np.zeros((N, A))
-        self.area_shape = self.cmg.shape[:2] # TODO remove
-        X, Y = self.area_shape
-        Xd = np.floor(X / 2.0)
-        Yd = np.floor(Y / 2.0)
-        for i in range(N):
+        D = np.zeros((self.N, self.A))
+        Xd = np.floor(self.X / 2.0)
+        Yd = np.floor(self.Y / 2.0)
+        for i in xrange(self.N):
             pi = self.flattening.index2cell[i]
-            for jj in range(A):
+            for jj in xrange(self.A):
                 j = self.neighbor_indices_flat[i, jj]
                 pj = self.flattening.index2cell[j]
                 dx = pi[0] - pj[0]
@@ -155,29 +151,20 @@ class FlatStructure():
     @contract(v='array[NxA]', returns='array[HxWxXxY],N=H*W,A=X*Y')
     def unrolled2multidim(self, v):
         """ De-unrolls both dimensions to obtain a 4d vector. """
-        N, A = self.neighbor_indices_flat.shape
-        H, W = self.shape
-        self.area_shape = self.cmg.shape[:2] # TODO remove
-        X, Y = self.area_shape
         # Let's make sure we understand what's going on...
-        assert X * Y == A
-        assert H * W == N
-        assert_allclose((N, A), v.shape)
-        res = np.zeros((H, W, X, Y), v.dtype)
-        for i, j in coords_iterate((H, W)):
+        assert_allclose((self.N, self.A), v.shape)
+        res = np.zeros((self.H, self.W, self.X, self.Y), v.dtype)
+        for i, j in coords_iterate((self.H, self.W)):
             k = self.flattening.cell2index[i, j]
             res[i, j, :, :] = self.neighbor2area(int(k), v[k, :])
         return res
         
-    @contract(k='int', x='array[A]')
+    @contract(k='int', x='array[A]', returns='array[HxW]')
     def neighbor2area(self, k, x):
-        N, A = self.neighbor_indices_flat.shape
-        assert 0 <= k < N
-        assert x.size == A
-        self.area_shape = self.cmg.shape[:2]# TODO remove
+        assert 0 <= k < self.N
+        assert x.size == self.A
         # Using numpy's flattening convention (see also above)
         return np.reshape(x, self.area_shape)
-        #indices = self.neighbor_indices_flat[k, :]
         
 
 @contract(x='array[HxWxXxY]', returns='array[(H*X)x(W*Y)]')

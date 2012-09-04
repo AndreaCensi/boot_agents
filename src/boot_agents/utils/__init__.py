@@ -12,7 +12,7 @@ from .mean_covariance import *
 from .prediction_stats import *
 from .queue import *
 from .derivative import *
-from .commands import *
+from .commands_utils import *
 from .remove_doubles import *
 from .symbols_statistics import *
 
@@ -20,3 +20,7 @@ from .gradients import *
 
 from .image_stats import *
 
+
+from .expectation_test import *
+from .nonparametric_test import *
+from .gradients_test import *

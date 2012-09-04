@@ -5,6 +5,8 @@ from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
 from boot_agents.diffeo.diffeo_basic import diffeo_identity
 from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
 from reprep.plot_utils import plot_vertical_line
+import time
+from boot_agents.utils.nonparametric import scale_score
 
 
 class DiffeomorphismEstimatorFaster():
@@ -13,9 +15,8 @@ class DiffeomorphismEstimatorFaster():
     @contract(max_displ='seq[2](>0,<1)', inference_method='str')
     def __init__(self, max_displ, inference_method):
         """ 
-            :param max_displ: Maximum displacement 
-            :param match_method: Either "continuous" or "binary" (to compute the 
-                error function).
+            :param max_displ: Maximum displacement  
+            :param inference_method: order, sim
         """
         self.shape = None
         self.max_displ = np.array(max_displ)
@@ -27,6 +28,8 @@ class DiffeomorphismEstimatorFaster():
         
         self.num_samples = 0
 
+        self.buffer_NA = None
+        
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
         if y0.dtype == np.uint8:
@@ -47,17 +50,52 @@ class DiffeomorphismEstimatorFaster():
         self.last_y0 = y0
         self.last_y1 = y1
         
+        
+        ts = []
+        ts.append(time.time())
+        #self._update_vectorial(y0, y1)
+        ts.append(time.time())
+        self._update_scalar(y0, y1)
+        ts.append(time.time())
+        delta = np.diff(ts)
+        #logger.info('Update times: vect %5.3f scal %5.3f seconds' % 
+        #            (delta[0], delta[1]))
+        
+    def _update_scalar(self, y0, y1):
+        # unroll the Y1 image
+        Y1 = self.flat_structure.values2unrolledneighbors(y1, out=self.buffer_NA)
+        y0_flat = self.flat_structure.flattening.rect2flat(y0)
+        
+        for k in xrange(self.nsensels):
+            diff = np.abs(y0_flat[k] - Y1[k, :])
+            
+            if self.inference_method == 'order':
+                diff_order = scale_score(diff, kind='quicksort')
+                self.neig_eord_score[k, :] += diff_order
+            
+            if self.inference_method == 'sim':
+                self.neig_esim_score[k, :] += diff
+                
+            self.neig_esimmin_score[k] += np.min(diff)
+            
+            
+    def _update_vectorial(self, y0, y1):
         Y0 = self.flat_structure.values2repeated(y0)
-        Y1 = self.flat_structure.values2unrolledneighbors(y1)
+        Y1 = self.flat_structure.values2unrolledneighbors(y1, out=self.buffer_NA)
         
         difference = np.abs(Y0 - Y1)
-        self.neig_esim_score += difference
-        # Yes, double argsort(). This is correct.
-        simorder = np.argsort(np.argsort(difference, axis=1), axis=1)
-         
-        self.neig_eord_score += simorder
+        
+        if self.inference_method == 'order':
+            # Yes, double argsort(). This is correct.
+            simorder = np.argsort(np.argsort(difference, axis=1), axis=1)
+            self.neig_eord_score += simorder
+        
+        if self.inference_method == 'sim':
+            self.neig_esim_score += difference
+                    
         self.neig_esimmin_score += np.min(difference, axis=1)
-
+        
+        
     def init_structures(self, y):
         self.shape = y.shape
         # for each sensel, create an area
@@ -78,19 +116,20 @@ class DiffeomorphismEstimatorFaster():
         self.flat_structure = flat_structure_cache(self.shape, self.area)
         logger.debug('done creating')
 
-        self.neig_esim_score = np.zeros((self.nsensels, self.area_size), 'float32')
-        self.neig_eord_score = np.zeros((self.nsensels, self.area_size), 'float32')
+        if self.inference_method == 'sim':   
+            self.neig_esim_score = np.zeros((self.nsensels, self.area_size), 'float32')
+        if self.inference_method == 'score':
+            self.neig_eord_score = np.zeros((self.nsensels, self.area_size), 'float32')
+            
         self.neig_esimmin_score = np.zeros(self.nsensels)
-
+        
+        # initialize a buffer of size NxA
+        self.buffer_NA = np.zeros((self.nsensels, self.area_size), 'float32') 
     
     def display(self, report):
         report.data('num_samples', self.num_samples)
         f = report.figure(cols=4)
-        esim = self.make_grid(self.neig_esim_score)
-        eord = self.make_grid(self.neig_eord_score)
         
-        report.data('neig_esim_score_rect', esim).display('scale').add_to(f, caption='sim')
-        report.data('neig_eord_score_rect', eord).display('scale').add_to(f, caption='order')
         
         def make_best(x):
             return x == np.min(x, axis=1)
@@ -121,35 +160,42 @@ class DiffeomorphismEstimatorFaster():
                                      np.floor(self.area[1] / 2.0))))
         safe_d = int(np.floor(np.min(self.area) / 2.0))
         
-        eord_bdist = distance_to_border_for_best(self.neig_eord_score)
-        esim_bdist = distance_to_border_for_best(self.neig_esim_score)
-        eord_cdist = distance_from_center_for_best(self.neig_eord_score)
-        esim_cdist = distance_from_center_for_best(self.neig_esim_score)
         bdist_scale = dict(min_value=0, max_value=max_d, max_color=[0, 1, 0])
         cdist_scale = dict(min_value=0, max_value=max_d, max_color=[1, 0, 0])
-        report.data('eord_bdist', eord_bdist).display('scale', **bdist_scale).add_to(f, caption='eord_bdist')
-        report.data('esim_bdist', esim_bdist).display('scale', **bdist_scale).add_to(f, caption='esim_bdist')
-        report.data('eord_cdist', eord_cdist).display('scale', **cdist_scale).add_to(f, caption='eord_cdist')
-        report.data('esim_cdist', esim_cdist).display('scale', **cdist_scale).add_to(f, caption='esim_cdist')
-        
         bins = range(max_d + 2)
-        with f.plot('eord_bdist_hist') as pylab:
-            pylab.hist(eord_bdist.flat, bins)
-        with f.plot('esim_bdist_hist') as pylab:
-            pylab.hist(esim_bdist.flat, bins)
-            
         def plot_safe(pylab):
             plot_vertical_line(pylab, safe_d, 'g--')
             plot_vertical_line(pylab, max_d, 'r--')
             
-        with f.plot('eord_cdist_hist') as pylab:
-            pylab.hist(eord_cdist.flat, bins)
-            plot_safe(pylab)
-            
-        with f.plot('esim_cdist_hist') as pylab:
-            pylab.hist(esim_cdist.flat, bins)
-            plot_safe(pylab)
+        if self.inference_method == 'score':
+            eord = self.make_grid(self.neig_eord_score)
+            report.data('neig_eord_score_rect', eord).display('scale').add_to(f, caption='order')
+            eord_bdist = distance_to_border_for_best(self.neig_eord_score)
+            eord_cdist = distance_from_center_for_best(self.neig_eord_score)
+            report.data('eord_bdist', eord_bdist).display('scale', **bdist_scale).add_to(f, caption='eord_bdist')
+            report.data('eord_cdist', eord_cdist).display('scale', **cdist_scale).add_to(f, caption='eord_cdist')
+            with f.plot('eord_bdist_hist') as pylab:
+                pylab.hist(eord_bdist.flat, bins)
+            with f.plot('eord_cdist_hist') as pylab:
+                pylab.hist(eord_cdist.flat, bins)
+                plot_safe(pylab)
 
+        
+        if self.inference_method == 'sim':
+            esim = self.make_grid(self.neig_esim_score)
+            report.data('neig_esim_score_rect', esim).display('scale').add_to(f, caption='sim')
+            esim_bdist = distance_to_border_for_best(self.neig_esim_score)
+            esim_cdist = distance_from_center_for_best(self.neig_esim_score)
+            report.data('esim_bdist', esim_bdist).display('scale', **bdist_scale).add_to(f, caption='esim_bdist')
+            report.data('esim_cdist', esim_cdist).display('scale', **cdist_scale).add_to(f, caption='esim_cdist')
+        
+            with f.plot('esim_bdist_hist') as pylab:
+                pylab.hist(esim_bdist.flat, bins)
+            with f.plot('esim_cdist_hist') as pylab:
+                pylab.hist(esim_cdist.flat, bins)
+                plot_safe(pylab)
+    
+        
         
     @contract(score='array[NxA]', returns='array[UxV]') # ,U*V=N*A') not with border
     def make_grid(self, score):
@@ -169,20 +215,25 @@ class DiffeomorphismEstimatorFaster():
         dd = diffeo_identity(self.shape)
         dd[:] = -1
         for i in range(self.nsensels):
-            esim_score = self.neig_esim_score[i, :]
-            eord_score = self.neig_eord_score[i, :]
+            
             if self.inference_method == 'order':
+                eord_score = self.neig_eord_score[i, :]
                 best = np.argmin(eord_score)
+            
             if self.inference_method == 'sim':
+                esim_score = self.neig_esim_score[i, :]
                 best = np.argmin(esim_score)
                 
             jc = self.flat_structure.neighbor_cell(i, best)
             ic = self.flat_structure.flattening.index2cell[i]
             
             if self.inference_method == 'order':
-                certain = -np.min(eord_score)
+                certain = -np.min(eord_score) / np.mean(eord_score)
+                
             if self.inference_method == 'sim':
-                certain = -np.min(esim_score)
+                first = np.sort(esim_score)[:10]
+                certain = -(first[0] - np.mean(first[1:]))
+                #certain = -np.min(esim_score) / np.mean(esim_score)
 #            certain = np.min(esim_score) / self.num_samples
 #            certain = -np.mean(esim_score) / np.min(esim_score)
             

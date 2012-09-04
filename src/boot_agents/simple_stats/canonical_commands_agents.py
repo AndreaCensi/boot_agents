@@ -1,5 +1,5 @@
 from bootstrapping_olympics import AgentInterface
-from ..utils.commands import get_canonical_commands
+from ..utils import get_canonical_commands
 
 
 class CanonicalCommandsAgent(AgentInterface):
