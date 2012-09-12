@@ -4,14 +4,17 @@ from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
     Diffeomorphism2D)
 from boot_agents.diffeo.diffeo_basic import diffeo_identity
 from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
+from boot_agents.utils.nonparametric import scale_score
 from reprep.plot_utils import plot_vertical_line
 import time
-from boot_agents.utils.nonparametric import scale_score
 
-
+Order = 'order'
+Similarity = 'sim' 
+InferenceMethods = [Order, Similarity]
+    
 class DiffeomorphismEstimatorFaster():
     ''' Learns a diffeomorphism between two 2D fields. '''
-
+    
     @contract(max_displ='seq[2](>0,<1)', inference_method='str')
     def __init__(self, max_displ, inference_method):
         """ 
@@ -24,7 +27,10 @@ class DiffeomorphismEstimatorFaster():
         self.last_y1 = None
         self.inference_method = inference_method
         
-        assert self.inference_method in ['order', 'sim']
+        if self.inference_method not in InferenceMethods:
+            msg = ('I need one of %s; foudnd %s' % 
+                   (InferenceMethods, inference_method))
+            raise ValueError(msg)
         
         self.num_samples = 0
 
@@ -58,23 +64,27 @@ class DiffeomorphismEstimatorFaster():
         self._update_scalar(y0, y1)
         ts.append(time.time())
         delta = np.diff(ts)
-        #logger.info('Update times: vect %5.3f scal %5.3f seconds' % 
-        #            (delta[0], delta[1]))
+        logger.info('Update times: vect %5.3f scal %5.3f seconds' % 
+                    (delta[0], delta[1]))
         
     def _update_scalar(self, y0, y1):
         # unroll the Y1 image
         Y1 = self.flat_structure.values2unrolledneighbors(y1, out=self.buffer_NA)
         y0_flat = self.flat_structure.flattening.rect2flat(y0)
         
+        order_comp = np.array(range(self.area_size), dtype='float32')
+        
         for k in xrange(self.nsensels):
             diff = np.abs(y0_flat[k] - Y1[k, :])
             
-            if self.inference_method == 'order':
-                diff_order = scale_score(diff, kind='quicksort')
-                self.neig_eord_score[k, :] += diff_order
-            
-            if self.inference_method == 'sim':
+            if self.inference_method == Order:
+                order = np.argsort(diff)
+                #diff_order = scale_score(diff, kind='quicksort')
+                self.neig_eord_score[k, order] += order_comp 
+            elif self.inference_method == Similarity:
                 self.neig_esim_score[k, :] += diff
+            else:
+                assert False
                 
             self.neig_esimmin_score[k] += np.min(diff)
             
@@ -85,13 +95,16 @@ class DiffeomorphismEstimatorFaster():
         
         difference = np.abs(Y0 - Y1)
         
-        if self.inference_method == 'order':
+        if self.inference_method == Order:
             # Yes, double argsort(). This is correct.
+            # (but slow; seee update_scalar above)
             simorder = np.argsort(np.argsort(difference, axis=1), axis=1)
             self.neig_eord_score += simorder
         
-        if self.inference_method == 'sim':
+        elif self.inference_method == Similarity:
             self.neig_esim_score += difference
+        else:
+            assert False
                     
         self.neig_esimmin_score += np.min(difference, axis=1)
         
@@ -116,15 +129,18 @@ class DiffeomorphismEstimatorFaster():
         self.flat_structure = flat_structure_cache(self.shape, self.area)
         logger.debug('done creating')
 
-        if self.inference_method == 'sim':   
-            self.neig_esim_score = np.zeros((self.nsensels, self.area_size), 'float32')
-        if self.inference_method == 'score':
-            self.neig_eord_score = np.zeros((self.nsensels, self.area_size), 'float32')
-            
+        buffer_shape = (self.nsensels, self.area_size)
+        if self.inference_method == Similarity:   
+            self.neig_esim_score = np.zeros(buffer_shape, 'float32')
+        elif self.inference_method == Order:
+            self.neig_eord_score = np.zeros(buffer_shape, 'float32')
+        else:
+            assert False
+              
         self.neig_esimmin_score = np.zeros(self.nsensels)
         
         # initialize a buffer of size NxA
-        self.buffer_NA = np.zeros((self.nsensels, self.area_size), 'float32') 
+        self.buffer_NA = np.zeros(buffer_shape, 'float32') 
     
     def display(self, report):
         report.data('num_samples', self.num_samples)
@@ -163,11 +179,12 @@ class DiffeomorphismEstimatorFaster():
         bdist_scale = dict(min_value=0, max_value=max_d, max_color=[0, 1, 0])
         cdist_scale = dict(min_value=0, max_value=max_d, max_color=[1, 0, 0])
         bins = range(max_d + 2)
+        
         def plot_safe(pylab):
             plot_vertical_line(pylab, safe_d, 'g--')
             plot_vertical_line(pylab, max_d, 'r--')
             
-        if self.inference_method == 'score':
+        if self.inference_method == Order:
             eord = self.make_grid(self.neig_eord_score)
             report.data('neig_eord_score_rect', eord).display('scale').add_to(f, caption='order')
             eord_bdist = distance_to_border_for_best(self.neig_eord_score)
@@ -180,8 +197,7 @@ class DiffeomorphismEstimatorFaster():
                 pylab.hist(eord_cdist.flat, bins)
                 plot_safe(pylab)
 
-        
-        if self.inference_method == 'sim':
+        if self.inference_method == Similarity:
             esim = self.make_grid(self.neig_esim_score)
             report.data('neig_esim_score_rect', esim).display('scale').add_to(f, caption='sim')
             esim_bdist = distance_to_border_for_best(self.neig_esim_score)
@@ -249,10 +265,8 @@ class DiffeomorphismEstimatorFaster():
         return Diffeomorphism2D(dd, certainty)
     
     def publish(self, pub):
-        diffeo = self.summarize()
-#        diffeo = self.summarize_averaged(10, 0.02) # good for camera
-#        diffeo = self.summarize_averaged(2, 0.1)
-
+        diffeo = self.summarize() 
+        
         pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))
         pub.array_as_image('angle', diffeo_to_rgb_angle(diffeo.d))
         pub.array_as_image('norm', diffeo_to_rgb_norm(diffeo.d, max_value=10))

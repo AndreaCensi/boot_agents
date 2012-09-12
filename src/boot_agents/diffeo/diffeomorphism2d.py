@@ -1,9 +1,8 @@
 from . import (diffeo_apply, contract, np, diffeo_to_rgb_norm,
     diffeo_to_rgb_angle, diffeo_distance_L2, diffeo_stats, scalaruncertainty2rgb,
-    diffeo_local_differences)
-from boot_agents.diffeo.diffeo_basic import diffeo_identity
+    diffeo_local_differences, diffeo_identity)
+from geometry.utils import assert_allclose
 from boot_agents.diffeo.diffeo_apply_quick import FastDiffeoApply
-from geometry.utils.numpy_backport import assert_allclose
 
 
 class Diffeomorphism2D:
@@ -35,19 +34,27 @@ class Diffeomorphism2D:
             assert np.isfinite(variance).all()
             self.variance = variance.astype('float32')
             
-        if not E2 is None:
+        if E2 is not None:
             self.E2 = E2
-        if not E3 is None:
+        if E3 is not None:
             self.E3 = E3
-        if not E4 is None:
+        if E4 is not None:
             self.E4 = E4
             
-
         # Make them immutable
         self.variance = self.variance.copy()
         self.variance.setflags(write=False)
         self.d = self.d.copy()
         self.d.setflags(write=False)
+
+    def __sizeof__(self):
+        """ Returns approximate memory usage in bytes. """
+        def sizeof_array(a):
+            return a.size * a.itemsize
+        m = 0
+        m += sizeof_array(self.variance)
+        m += sizeof_array(self.d)
+        return m
 
     @staticmethod
     def identity(shape):
@@ -61,16 +68,28 @@ class Diffeomorphism2D:
         """
         return self.variance
     
+    @contract(returns='>=0,<=1')
+    def get_visibility(self):
+        """ 
+            Returns a rough scalar measure of how much visibility
+            is preserved by this diffeomorphism. 
+        """
+        info = self.get_scalar_info()
+        visibility = np.mean(info) 
+        return visibility
+    
     @contract(returns='valid_diffeomorphism')
     def get_discretized_diffeo(self):
         """ 
-            Returns a valid_diffeomorphism (discrete cell-to-cell map)
+            Returns a valid_diffeomorphism (discrete cell-to-cell map).
         """
         return self.d
 
     @contract(template='array,finite,shape(x)', returns='finite,shape(x)')
     def _d_apply(self, template):
         if not 'fda' in self.__dict__:
+            # print('Initializing fast diffeo apply')
+            # note that we do one of this for each new diffeomorphism
             self.fda = FastDiffeoApply(self.d)
         result = self.fda(template) 
         if False:
@@ -147,19 +166,11 @@ class Diffeomorphism2D:
         info = dd1_info * dd2_info
         info_sum = info.sum()
         if info_sum == 0:
-            #print('dd1_info.mean() = %g' % dd1_info.mean())
-            #print('dd2_info.mean() = %g' % dd2_info.mean())
-            #print('info.mean() = %g' % info.mean())
-            return 1.0 # FIXME, need to check it is the bound
-            
-            # raise NotImplementedError
-        
-        # not sure what's happening here
+            return 1.0 # XXX, need to check it is the bound
+                    
         wdist = (dist * info) / info_sum
         
         res = wdist.sum()
-        #print('res: %s  but unweighted: %s' % (res, dist.mean()))
-        #print('res: %s' % res)
         return res
     
     @staticmethod
