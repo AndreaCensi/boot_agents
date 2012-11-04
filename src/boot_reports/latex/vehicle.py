@@ -7,15 +7,26 @@ import sys
 
 def bvvehicleimage(id_set, id_robot, width_em=3.5):
     with latex_fragment(sys.stdout, graphics_path=get_resources_dir()) as frag:
-        create_robot_figure(frag, id_set, id_robot, width_em)
+        create_robot_figure(frag, id_set, id_robot, width_em, write_world=False)
 
-def create_robot_figure(frag, id_set, id_robot, width=3.5):
+def create_robot_figure(frag, id_set, id_robot, width=3.5, write_world=False):
     width_mine = width * 2
     with frag.minipage_bottom('%sem' % width_mine) as m:
-        create_robot_figure_inside(m, id_set, id_robot, width)
+        create_robot_figure_inside(m, id_set, id_robot, width=width,
+                                   write_world=write_world)
+
+def create_robot_figure2(frag, id_set, id_robot, width=3.5):
+    width_mine = width * 2
+    with frag.minipage_bottom('%sem' % width_mine) as m:
+        m.tex('\\centering\n')
+        create_robot_figure_inside(m, id_set, id_robot, width,
+                                      write_world=False)
+        m.parbreak()
+        m.medskip()
+        m.tex('\\footnotesize\\bvid{%s}' % id_robot)
 
 
-def create_robot_figure_inside(frag, id_set, id_robot, width=3.5):
+def create_robot_figure_inside(frag, id_set, id_robot, width=3.5, write_world=True):
     report = load_report_robot(id_set, id_robot)
     
     id_world = report['environment/id_world'].raw_data
@@ -46,6 +57,7 @@ def create_robot_figure_inside(frag, id_set, id_robot, width=3.5):
         for cmd_id in cmd_nuisances:
             frag.tex('$ \\cdot \\bvid{%s}$' % cmd_id)
     
-    frag.tex('$ \\leftrightarrow \\bvid{%s} $' % id_world)
+    if write_world:
+        frag.tex('$ \\leftrightarrow \\bvid{%s} $' % id_world)
     
     

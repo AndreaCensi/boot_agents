@@ -42,7 +42,7 @@ def display_3tensor(fig, V, gid_pattern, label_patterns, caption_patterns,
                                      gid=gid_pattern % i,
                                      label=label % i, xlabel=xlabel,
                                      ylabel=ylabel)
-            fig.hfill()
+        fig.hfill()
 
 
 
@@ -66,7 +66,7 @@ def display_k_tensor(fig, V, gid_pattern, label_patterns, caption_patterns,
             sub.tex('\\tensorOnePlot{%s}{%s}{%s}{%s}{%s}' % 
                   (gid, width, xlabel, ylabel, ''))
 
-            sub.hfill()
+        fig.hfill()
       
 
 def template_bds_P(frag, id_set, id_robot, id_agent, width='3cm'):
@@ -165,11 +165,14 @@ def bds_learn_reportA(id_set, agent, robot, width='3cm'):
         fig.save_graphics_data(node.raw_data, node.mime, gid)
 
     with latex_fragment(sys.stdout, graphics_path=get_resources_dir()) as frag:
-        caption = 'Report for robot %r, agent %r. ' % (robot, agent)
+        caption = ("BDS learning and prediction statistics for the agent "
+                   "\\bvid{%r} interacting with the robot \\bvid{%r}. \\bvseelegend" 
+                   % (agent, robot))
         label = 'fig:%s-%s-%s-learn-rA' % (id_set, robot, agent)
         
         with frag.figure(caption=caption, label=label, placement="p") as fig:
             tsize = '3cm'
+            height = '3cm'
 
             fig.hfill()
             with fig.subfigure(caption="\\texttt{%s}" % robot,
@@ -186,7 +189,7 @@ def bds_learn_reportA(id_set, agent, robot, width='3cm'):
                              caption_patterns='$\TUe^{s}_{%d}$',
                              width=tsize, xlabel='s', ylabel='\TUe^{s}')
 
-            fig.hfill()
+            # fig.hfill() # added by display_k_tensor
             fig.parbreak()
             
             fig.hfill()
@@ -206,13 +209,15 @@ def bds_learn_reportA(id_set, agent, robot, width='3cm'):
                             label='\TTe^{s\,v\,%d}',
                             xlabel='s', ylabel='v')
                                  
+            # fig.hfill() # added by display_3_tensor
             fig.parbreak()
             
             fig.hfill()
-            from .prediction import fig_predict_u_corr
-            with fig.subfigure(caption="correlation",
-                               label='%s-%s' % (label, 'corr'))  as sub:
-                fig_predict_u_corr(sub, id_set, agent, robot, "1cm")
+            from .prediction import fig_predict_u_corr, tab_predict_u_corr
+            with fig.subfigure(caption="\\labelpredu",
+                               label='%s-%s' % (label, 'ucorr'))  as sub:
+                # fig_predict_u_corr(sub, id_set, agent, robot, "1cm")
+                tab_predict_u_corr(sub, id_set, agent, robot)
             
             display_k_tensor(fig, report['estimator/model/N/value'].raw_data,
                              gid_pattern=prefix + '-N%d',
@@ -220,13 +225,15 @@ def bds_learn_reportA(id_set, agent, robot, width='3cm'):
                              caption_patterns='$\TNe^{s}_{%d}$',
                              width=tsize, xlabel='s', ylabel='\TNe^{s}')
 
+            fig.hfill()
             fig.parbreak()
             
             fig.hfill()
             from .prediction import fig_predict_corr
-            with fig.subfigure(caption="correlation",
+            with fig.subfigure(caption="\\labelpredydot",
                                label='%s-%s' % (label, 'corr'))  as sub:
-                fig_predict_corr(sub, id_set, agent, robot, width)
+                fig_predict_corr(sub, id_set, agent, robot,
+                                 width=width, height=height)
             
             display_3tensor(fig, V=report['estimator/model/M/value'].raw_data,
                             gid_pattern=prefix + '-M%d',
@@ -247,7 +254,8 @@ def get_bds_summary(id_set, agent, robot):
     data['M'] = report['estimator/model/M/value'].raw_data
     data['N'] = report['estimator/model/N/value'].raw_data
     data['P'] = report['estimator/tensors/P/value'].raw_data
-    data['P_inv_cond'] = report['estimator/tensors/P_inv_cond/value/posneg'].raw_data
+    data['P_inv_cond'] = \
+        report['estimator/tensors/P_inv_cond/value/posneg'].raw_data
 #                mat = StringIO()
 #                scipy.io.savemat(mat, data, oned_as='row')
 #                matdata = mat.getvalue()

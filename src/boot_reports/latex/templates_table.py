@@ -54,10 +54,70 @@ def write_table(nrows, ncols, allcells={},
                 with tabular.row() as tex_row:
                     for c, param_cell in enumerate(param_row):
                         with tex_row.cell() as cell:
-                            #print r, c, param_cell
+                            # print r, c, param_cell
                             logger.debug('%s %s : %s' % (r, c, param_cell))
                             call_template(cell, param_cell)
     
+@contract(nrows='R', ncols='C',
+          introws='None|list[R](dict|str)',
+          firstrow='None|dict|list[C](dict|str)',
+          firstcol='None|dict|list[R](dict|str)',
+          allcols='None|list[C](dict|str)',
+          allrows='None|list[R](dict|str)',
+          intcols='None|list[C](dict|str)',
+          intcells='dict',
+          allcells='dict')
+def write_table_subfig(nrows, ncols, allcells={},
+                allcols=None, allrows=None, introws=None, intcols=None,
+                firstrow=None, firstcol=None, intcells={},
+                label_prefix=None):
+    """ Like write_table(), but use subfigures """
+    
+    param_table = get_param_table(nrows, ncols, allcells, allcols, allrows,
+                                  introws, intcols, firstrow, firstcol, intcells)
+
+#    with latex_fragment(sys.stdout, graphics_path=get_resources_dir()) as frag:
+#        for r, param_row in enumerate(param_table):
+#            for c, param_cell in enumerate(param_row):
+#                internal = c > 0 and r > 0
+#                if internal:
+#                    if label_prefix is not None:
+#                        label = '%s-%s' % (r, c)
+#                        label = label_prefix + '-' + label
+#                    else:
+#                        label = None
+#                        
+#                    with frag.subfigure(caption="", label=label) as subfigure:
+#                        call_template(subfigure, param_cell)                    
+#                else:
+# #                    with frag.minipage() as minip:
+#                    call_template(frag, param_cell)
+#            frag.parbreak()
+    
+    
+    alignment = ['r'] + ['c'] * ncols   
+    with latex_fragment(sys.stdout, graphics_path=get_resources_dir()) as frag:
+        with frag.tabular(alignment=alignment) as tabular:
+            for r, param_row in enumerate(param_table):
+                with tabular.row() as tex_row:
+                    for c, param_cell in enumerate(param_row):
+                        with tex_row.cell() as cell:
+                            # print r, c, param_cell
+                            logger.debug('%s %s : %s' % (r, c, param_cell))
+#                            call_template(cell, param_cell)
+                            internal = c > 0 and r > 0
+                            if label_prefix is not None:
+                                label = '%s-%s' % (r, c)
+                                label = label_prefix + '-' + label
+                            else:
+                                label = None
+                            if internal:
+                                with cell.subfigure(caption="", label=label) as subfigure:
+                                    call_template(subfigure, param_cell)
+                            else:
+                                call_template(cell, param_cell)
+ 
+
     
 def update(a, b):
     for k in b:
