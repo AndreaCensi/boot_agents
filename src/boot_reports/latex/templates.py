@@ -44,20 +44,22 @@ AllTemplates['robot_figure2'] = Template(create_robot_figure2,
                                         ['id_set', 'id_robot'], ['width'])
 
 AllTemplates['predict_y_dot_corr'] = \
-    Template(fig_predict_corr, ['id_set', 'id_robot', 'id_agent'], ['width', 'height'])
+    Template(fig_predict_corr, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
 
 AllTemplates['predict_u_corr'] = \
-    Template(fig_predict_u_corr, ['id_set', 'id_robot', 'id_agent'], ['width', 'height'])
+    Template(fig_predict_u_corr, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
 
 AllTemplates['predict_u_corr_table'] = \
     Template(tab_predict_u_corr, ['id_set', 'id_robot', 'id_agent'], [])
-
 
 AllTemplates['predict_u_corr_avg'] = \
     Template(val_predict_u_corr_avg, ['id_set', 'id_robot', 'id_agent'], [])
 
 AllTemplates['servo_L2'] = \
-    Template(template_servo_stats_L2, ['id_set', 'id_robot', 'id_agent'], ['width', 'height'])
+    Template(template_servo_stats_L2, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
 
 
 def call_template(frag, params):
@@ -96,8 +98,8 @@ def call_template(frag, params):
         return function(**final)
     except:
         logger.error('Error while considering cell %r' % params)
-        logger.error('Template: %r' % str(t)) #@UndefinedVariable
-        logger.error('Error while calling function %r with params %r' % #@UndefinedVariable
+        logger.error('Template: %r' % str(t))  # @UndefinedVariable
+        logger.error('Error while calling function %r with params %r' %  # @UndefinedVariable
                      (function, final))
         raise
     
