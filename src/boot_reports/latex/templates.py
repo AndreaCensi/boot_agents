@@ -1,8 +1,11 @@
 from . import (bvid, logger, fig_predict_corr, create_robot_figure,
     template_servo_stats_L2, template_bds_P, template_bds_T, template_bds_M,
-    template_bds_N, fig_predict_u_corr, val_predict_u_corr_avg)
+    template_bds_N, fig_predict_u_corr, val_predict_u_corr_avg, create_robot_figure2,
+    get_resources_dir, tab_predict_u_corr)
 from bootstrapping_olympics.utils import x_not_found
 from collections import namedtuple
+from latex_gen import latex_fragment
+import sys
  
 
 Template = namedtuple('Template', 'function necessary optional')
@@ -37,17 +40,26 @@ AllTemplates['bds_N'] = Template(template_bds_N,
 AllTemplates['string'] = Template(template_string, ['string'], [])
 AllTemplates['robot_figure'] = Template(create_robot_figure,
                                         ['id_set', 'id_robot'], ['width'])
+AllTemplates['robot_figure2'] = Template(create_robot_figure2,
+                                        ['id_set', 'id_robot'], ['width'])
 
 AllTemplates['predict_y_dot_corr'] = \
-    Template(fig_predict_corr, ['id_set', 'id_robot', 'id_agent'], ['width'])
+    Template(fig_predict_corr, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
+
 AllTemplates['predict_u_corr'] = \
-    Template(fig_predict_u_corr, ['id_set', 'id_robot', 'id_agent'], ['width'])
+    Template(fig_predict_u_corr, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
+
+AllTemplates['predict_u_corr_table'] = \
+    Template(tab_predict_u_corr, ['id_set', 'id_robot', 'id_agent'], [])
 
 AllTemplates['predict_u_corr_avg'] = \
     Template(val_predict_u_corr_avg, ['id_set', 'id_robot', 'id_agent'], [])
 
 AllTemplates['servo_L2'] = \
-    Template(template_servo_stats_L2, ['id_set', 'id_robot', 'id_agent'], ['width'])
+    Template(template_servo_stats_L2, ['id_set', 'id_robot', 'id_agent'],
+             ['width', 'height'])
 
 
 def call_template(frag, params):
@@ -86,9 +98,16 @@ def call_template(frag, params):
         return function(**final)
     except:
         logger.error('Error while considering cell %r' % params)
-        logger.error('Template: %r' % str(t)) #@UndefinedVariable
-        logger.error('Error while calling function %r with params %r' % #@UndefinedVariable
+        logger.error('Template: %r' % str(t))  # @UndefinedVariable
+        logger.error('Error while calling function %r with params %r' %  # @UndefinedVariable
                      (function, final))
         raise
     
+def bvtemplate(name, **params):
+    """ Prints a string. Can be used from TeX code. """    
+    with latex_fragment(sys.stdout, graphics_path=get_resources_dir()) as frag:
+        params['template'] = name
+        call_template(frag, params)
+
+
   
