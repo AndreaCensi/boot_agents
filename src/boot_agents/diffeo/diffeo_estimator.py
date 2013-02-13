@@ -4,11 +4,12 @@ from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract
 from PIL import Image #@UnresolvedImport
 from matplotlib import cm
 import numpy.linalg as la
-
+from scipy.signal import convolve2d
+from scipy.special import erf
 # TODO: remove "print" statements
 
 def sim_continuous(a, b):
-    diff = np.abs(a.astype(np.int16) - b.astype(np.int16))
+    diff = np.abs(a.astype(np.int16) - b.astype(np.int16))**2
     #diff = np.abs(a - b)
     return diff
 
@@ -19,7 +20,7 @@ def sim_binary(a, b): # good for 0-1
 
 MATCH_CONTINUOUS = 'continuous'
 MATCH_BINARY = 'binary'
-
+diff2_kern = [[0, .5, 0], [.5, -1, .5], [0, .5, 0]]
 
 class DiffeomorphismEstimator():
     ''' Learns a diffeomorphism between two 2D fields. '''
@@ -43,7 +44,7 @@ class DiffeomorphismEstimator():
 
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
-        
+        ydd += convolve2d(y0, diff2_kern, mode='same')
         self.num_samples += 1
 
         # init structures if not already
@@ -101,6 +102,8 @@ class DiffeomorphismEstimator():
     def init_structures(self, y):
         self.shape = y.shape
         self.nsensels = y.size
+
+        self.ydd = np.zeros(y.shape, dtype='float32')
 
         # for each sensel, create an area
         self.lengths = np.ceil(self.max_displ * 
@@ -204,6 +207,12 @@ class DiffeomorphismEstimator():
         if num_problems > 0:
             print('Warning, %d were not informative.' % num_problems)
             pass
+        
+        sqrt_2_sigma2 = np.sqrt(2 * variance / self.num_samples)
+        
+        eps = 1
+        P0 = (erf(-1 / sqrt_2_sigma2) - erf(1 / sqrt_2_sigma2)) / 2
+#        pdb.set_trace()
         
         # normalization for this variance measure
         vmin = variance.min()
