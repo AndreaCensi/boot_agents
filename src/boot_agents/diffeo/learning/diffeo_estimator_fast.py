@@ -9,8 +9,9 @@ from reprep.plot_utils import plot_vertical_line
 import time
 
 Order = 'order'
-Similarity = 'sim' 
-InferenceMethods = [Order, Similarity]
+Similarity = 'sim'
+Cont = 'quad'
+InferenceMethods = [Order, Similarity, Cont]
     
 class DiffeomorphismEstimatorFaster():
     ''' Learns a diffeomorphism between two 2D fields. '''
@@ -28,7 +29,7 @@ class DiffeomorphismEstimatorFaster():
         self.inference_method = inference_method
         
         if self.inference_method not in InferenceMethods:
-            msg = ('I need one of %s; foudnd %s' % 
+            msg = ('I need one of %s; found %s' % 
                    (InferenceMethods, inference_method))
             raise ValueError(msg)
         
@@ -309,8 +310,18 @@ class DiffeomorphismEstimatorFaster():
         logger.info('merging %s + %s' % (self.num_samples, other.num_samples)) 
         self.num_samples += other.num_samples
         self.neig_esim_score += other.neig_esim_score
-        self.neig_eord_score += other.neig_eord_score
-        self.neig_esimmin_score = other.neig_esimmin_score
+        
+        if hasattr(self, 'neig_eord_score') and hasattr(other, 'neig_eord_score'):
+            self.neig_eord_score += other.neig_eord_score
+        else:
+            logger.warn(('neig_eord_score is missing in at least one estimator.' + 
+            'Merged estimator will not have neig_eord_score.'))
+            
+        if hasattr(self, 'neig_esimmin_score') and hasattr(other, 'neig_esimmin_score'):
+            self.neig_esimmin_score = other.neig_esimmin_score
+        else:
+            logger.warn(('neig_esimmin_score is missing in at least one estimator.' + 
+            'Merged estimator will not have neig_eord_score.'))
 
 
         
