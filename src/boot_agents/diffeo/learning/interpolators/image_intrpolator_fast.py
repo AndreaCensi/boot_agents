@@ -14,7 +14,7 @@ from . import Interpolator
 
 
 class ImageInterpolatorFast():
-    def __init__(self, method=Image.BILINEAR):
+    def __init__(self, method):
         self.method = method
         
     def set_resolution(self, search_grid, area_size):
@@ -28,9 +28,13 @@ class ImageInterpolatorFast():
 #        if index in [420, 421, 422]:
 #            pdb.set_trace()
         res = self.search_grid
-        XY = list(itertools.product(np.linspace(0, self.area_size[0] - 1, res[0]),
-                                    np.linspace(0, self.area_size[1] - 1, res[1])))
-        local_coord = np.array(XY[index]) - self.area_size / 2
+        XY = list(itertools.product(np.linspace(0, self.area_size[1] - 1, res[1]),
+                                    np.linspace(0, self.area_size[0] - 1, res[0])))
+        
+#        steps = self._steps(self.area_size, res)
+#        coord_offs = np.array(XY[index]) % steps
+        
+        local_coord = np.array(XY[index]) - self.area_size / 2 
         print('image_interpolator returns local_coord = ' + str(local_coord))
         return local_coord
 #        return Interpolator().get_local_coord(self.area_size, self.search_grid, index)
@@ -38,36 +42,44 @@ class ImageInterpolatorFast():
     def reshape_image(self, array):
         area_size = self.area_size
         border_size = self.area_size / 2
-        factor = self._factor(area_size, self.search_grid)
+        array_shape = np.array(array.shape)
+        steps = self._steps(area_size, self.search_grid)
         self.arrays = {}
-        img = Image.fromarray(array)
+        img = Image.fromarray(array.astype('float'))
         border_img = self._add_border_pil(img, border_size)
-        print('  border image size is ' + str(border_img.size))
+        border_array = np.array(border_img)
+#        print('  border image size is ' + str(border_img.size))
+#        new_shape = border_array.shape * np.array(self.search_grid) / np.array(area_size) + [1, 1]
+
+        # shape of croped image before resize
+        temp_shape = array_shape - array_shape % steps + self.area_size + [1, 1]
         
-        for (fx, fy) in itertools.product(range(factor[0]), range(factor[1])):
+        # final shape of croped resized image
+        new_shape = temp_shape * np.array(self.search_grid) / np.array(area_size) + [1, 1]
+        
+        for (fx, fy) in itertools.product(range(steps[0]), range(steps[1])):
 #            print('Processing image for ' + str((fx, fy)))
-            
-            full_size = border_img.size
-            this_img = border_img.crop((fy, fx,
-                                        full_size[0] + fy - factor[0],
-                                        full_size[1] + fx - factor[1]))
-            
-            
+                
+#            full_size = border_img.size
+#            this_img = border_img.crop((fy, fx,
+#                                        full_size[0] + fy - steps[0],
+#                                        full_size[1] + fx - steps[1]))
+            this_array = border_array[fx:fx + temp_shape[0], fy:fy + temp_shape[1]]
+            out_img = Image.fromarray(this_array).resize(np.flipud(new_shape))
 #            print('  this image size is ' + str(this_img.size))
             
             
             
 #            border_img = ImageChops.offset(border_img, -fy, -fx)
 #            border_img.show()
-            this_size = np.array(this_img.size)
 #            print('  resized border image size is : ' + str(this_size))
 #            print('  scaling image by: ' + str(1. * np.flipud(self.search_grid) / np.flipud(area_size)))
-            new_size = this_size * np.flipud(self.search_grid) / np.flipud(area_size) + [1, 1]
             
-            out_img = border_img.resize(new_size)
+            
+#            out_img = border_img.resize(new_size, self.method)
 #            out_img.show()
             self.arrays[fx, fy] = np.array(out_img)
-#            pdb.set_trace()
+#        pdb.set_trace()
     
     def _show_reshaped_images(self):
         for ar in self.arrays.values():
@@ -76,24 +88,24 @@ class ImageInterpolatorFast():
     
     def extract_around(self, coord):
         area_size = self.area_size
-        factor = self._factor(area_size, self.search_grid)
-        new_coord, coord_image = self._coord_to_array_index_and_coord(coord, factor)
-        
+        steps = self._steps(area_size, self.search_grid)
+#        pdb.set_trace()
+        new_coord, coord_image = self._coord_to_array_index_and_coord(coord, steps)
         image = self.arrays[tuple(coord_image)]
         border = self.search_grid / 2
-        sub_ai = image[new_coord[0] - border[0]:new_coord[0] + border[0] + 1,
-                       new_coord[1] - border[1]:new_coord[1] + border[1] + 1]
+        sub_ai = image[new_coord[0] - border[0]:new_coord[0] + border[0] + 1, new_coord[1] - border[1]:new_coord[1] + border[1] + 1]
         return sub_ai
     
-    def _factor(self, area, res):
+    def _steps(self, area, res):
         '''
         :param area:
         :param res:
         '''
-        return np.array((area[0] / gcd(area[0], res[0]), area[1] / gcd(area[1], res[1])))
+        return np.array(((area[0] - 1) / gcd(area[0] - 1, res[0] - 1), (area[1] - 1) / gcd(area[1] - 1, res[1] - 1)))
     
     def _coord_to_array_index_and_coord(self, coord, factor):
-        new_coord = (coord - coord % factor) / (factor) + self.search_grid / 2
+        new_coord = coord / factor * self.search_grid / 2 + self.search_grid / 2
+#        new_coord = (coord - coord % factor) / (factor) + self.search_grid / 2
         coord_image = coord % factor
         return new_coord, coord_image
     

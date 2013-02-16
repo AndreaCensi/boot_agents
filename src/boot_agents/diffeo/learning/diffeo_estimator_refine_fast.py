@@ -37,22 +37,26 @@ class DiffeomorphismEstimatorRefineFast():
         self.last_y1 = None
         self.res = tuple(resolution)
         self.refine_factor = refine_factor
+        
             
         # Fast methods
         if refine_method == REFINE_FAST_BILINEAR:
-            self.interpolator = ImageInterpolatorFast(Image.BILINEAR)
+            self.intp_method = Image.BILINEAR
             
         elif refine_method == REFINE_FAST_BICUBIC:
-            self.interpolator = ImageInterpolatorFast(Image.BICUBIC)
+            self.intp_method = Image.BICUBIC
             
         elif refine_method == REFINE_FAST_ANTIALIAS:
-            self.interpolator = ImageInterpolatorFast(Image.ANTIALIAS)
+            self.intp_method = Image.ANTIALIAS
             
 #        elif refine_method == REFINE_FFT:
 #            self.interpolator = FourierInterpolator()
             
         else:
             assert False
+            
+        self.interpolator = ImageInterpolatorFast(self.intp_method)
+        
         self.num_refined = 0
         self.num_samples = 0
         self.buffer_NA = None
@@ -70,6 +74,7 @@ class DiffeomorphismEstimatorRefineFast():
         if self.shape is None:
             logger.info('Initiating structure from update()')
             self.init_structures(y0)
+        
         
         res = self.res
         res_size = np.prod(res)
@@ -98,6 +103,26 @@ class DiffeomorphismEstimatorRefineFast():
 
             self.neig_esim_score[i] += diff
         self.num_samples += 1
+#        self.show_interp_images(y0)
+#        self.show_subimages(y0)
+#        pdb.set_trace()
+
+    def show_interp_images(self, y0, outdir='out/subim/'):
+        arrays = self.interpolator.arrays
+        for key, array in arrays.items():
+            im = Image.fromarray(array.astype('uint8'))
+            im.resize(np.array(im.size) * 10).save(outdir + 'fullimage' + str(key) + '.png')
+#        pdb.set_trace()
+
+    def show_subimages(self, y0, outdir='out/subim/'):
+        i = 0
+        for cy in range(y0.shape[0]):
+            for cx in range(y0.shape[1]):
+                sub_ai = self.interpolator.extract_around((cy, cx))
+                sub_ai = (sub_ai - np.min(sub_ai)) / (np.max(sub_ai) - np.min(sub_ai)) * 255
+                Image.fromarray(sub_ai.astype('uint8')).resize((300, 300)).save(outdir + 'subim' + str(i) + '.png')
+                i += 1
+#        pdb.set_trace()
 
     def init_structures(self, y):
         self.shape = y.shape
@@ -124,7 +149,7 @@ class DiffeomorphismEstimatorRefineFast():
         self.area_size = self.area[0] * self.area[1]
         self.res_size = self.res[0] * self.res[1]
         
-        self.interpolator = ImageInterpolatorFast(self.res)
+        self.interpolator = ImageInterpolatorFast(self.intp_method)
         self.interpolator.set_resolution(self.res, self.area)
         
         logger.debug(' Field Shape: %s' % str(self.shape))
