@@ -4,12 +4,13 @@ from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract
 from PIL import Image #@UnresolvedImport
 from matplotlib import cm
 import numpy.linalg as la
-from scipy.signal import convolve2d
-from scipy.special import erf
+# from scipy.signal import convolve2d
+# from scipy.special import erf
 # TODO: remove "print" statements
 
 def sim_continuous(a, b):
-    diff = np.abs(a.astype(np.int16) - b.astype(np.int16))**2
+    # XXX strange conversions
+    diff = np.abs(a.astype(np.int16) - b.astype(np.int16)) ** 2
     #diff = np.abs(a - b)
     return diff
 
@@ -44,7 +45,7 @@ class DiffeomorphismEstimator():
 
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
-        ydd += convolve2d(y0, diff2_kern, mode='same')
+#        ydd += convolve2d(y0, diff2_kern, mode='same')
         self.num_samples += 1
 
         # init structures if not already
@@ -210,8 +211,8 @@ class DiffeomorphismEstimator():
         
         sqrt_2_sigma2 = np.sqrt(2 * variance / self.num_samples)
         
-        eps = 1
-        P0 = (erf(-1 / sqrt_2_sigma2) - erf(1 / sqrt_2_sigma2)) / 2
+#        eps = 1
+#        P0 = (erf(-1 / sqrt_2_sigma2) - erf(1 / sqrt_2_sigma2)) / 2
 #        pdb.set_trace()
         
         # normalization for this variance measure
@@ -458,7 +459,7 @@ def get_cm(sim_arr):
 #    pdb.set_trace()
     shape = np.array(sim_arr.shape)
     cent = (shape.astype('float') - [1, 1]) / 2
-    size = sim_arr.size
+#    size = sim_arr.size
     # center of mass
     torque = np.array([0.0, 0.0])
     mass = 0.0
