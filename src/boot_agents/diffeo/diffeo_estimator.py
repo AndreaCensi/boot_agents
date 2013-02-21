@@ -32,6 +32,8 @@ class DiffeomorphismEstimator():
             :param match_method: Either "continuous" or "binary" (to compute the 
                 error function).
         """
+        print('diffeo_estimator.py in boot_agents.diffeo is deprecated')
+        assert False
         self.shape = None
         self.max_displ = np.array(max_displ)
         self.last_y0 = None
@@ -44,7 +46,8 @@ class DiffeomorphismEstimator():
 
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
-        ydd += convolve2d(y0, diff2_kern, mode='same')
+        ydd = convolve2d(y0, diff2_kern, mode='same') #@UnusedVariable
+        
         self.num_samples += 1
 
         # init structures if not already

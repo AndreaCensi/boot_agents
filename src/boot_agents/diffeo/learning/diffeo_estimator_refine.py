@@ -49,7 +49,7 @@ class DiffeomorphismEstimatorRefine():
             self.interpolator = Interpolator(Image.ANTIALIAS)
             
         # Fast methods
-        if refine_method == REFINE_FAST_BILINEAR:
+        elif refine_method == REFINE_FAST_BILINEAR:
             self.interpolator = ImageInterpolatorFast(Image.BILINEAR)
             
         elif refine_method == REFINE_FAST_BICUBIC:
@@ -125,7 +125,7 @@ class DiffeomorphismEstimatorRefine():
         
         res = self.res
         res_size = np.prod(res)
-        pdb.set_trace()
+#        pdb.set_trace()
         for i in range(self.nsensels): 
             a = self.A[i]
             b = self.B[i]
