@@ -1,25 +1,26 @@
 
 from . import logger
 from .. import (contract, np)
-from PIL import Image #@UnresolvedImport
+from PIL import Image, ImageDraw #@UnresolvedImport
 from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
 
-from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
-from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
-from reprep.plot_utils import plot_vertical_line 
-import pdb
-from .interpolators import Interpolator, ImageInterpolatorFast, FourierInterpolator
-#interpolators = {'standard-bilinear':{'class':Interpolator, 'args': 'bilinear'},
-#                 'standard-antialias':{'class':Interpolator, 'args': 'antialias'},
-#                 'standard-bicubic':{'class':Interpolator, 'args': 'bicubic'},
-#                 'fft':{'class':FourierInterpolator, 'args': []}
-#                 }
+from boot_agents.diffeo.plumbing import togrid, add_border
 
+from reprep.plot_utils import plot_vertical_line 
+from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
+import pdb
+import itertools
+from geometry.utils import assert_allclose
+from boot_agents.diffeo import coords_iterate
+from matplotlib.ticker import MultipleLocator
 
 REFINE_FAST_BILINEAR = 'fast-bilinear'
 REFINE_FAST_BICUBIC = 'fast-bicubic'
 REFINE_FAST_ANTIALIAS = 'fast-antialias'
-#REFINE_FFT = 'fft'
+
+
+
+
 
 class DiffeomorphismEstimatorRefineFast():
     '''
@@ -35,7 +36,7 @@ class DiffeomorphismEstimatorRefineFast():
         self.max_displ = np.array(max_displ)
         self.last_y0 = None
         self.last_y1 = None
-        self.res = tuple(resolution)
+        self.grid_shape = tuple(resolution)
         self.refine_factor = refine_factor
         
             
@@ -49,70 +50,178 @@ class DiffeomorphismEstimatorRefineFast():
         elif refine_method == REFINE_FAST_ANTIALIAS:
             self.intp_method = Image.ANTIALIAS
             
-#        elif refine_method == REFINE_FFT:
-#            self.interpolator = FourierInterpolator()
-            
         else:
             assert False
             
-        self.interpolator = ImageInterpolatorFast(self.intp_method)
         
         self.num_refined = 0
         self.num_samples = 0
         self.buffer_NA = None
         
+    def set_search_areas(self, areas_position, area_shape):
+        self.area_positions_coarse = areas_position
+        self.area = tuple(area_shape)
+
         
-    def refine_init(self):
-        self.summarize()
-        self.num_refined += 1
-        self.area = self.area / self.refine_factor
-        self.interpolator.set_resolution(self.res, self.area)
+    def calculate_areas(self, diffeo, nrefine):
+        area_positions_coarse = np.zeros((self.nsensels, 2))
+        area = tuple(np.ceil(np.array(self.area) / self.refine_factor ** nrefine).astype('int'))
+        
+        for i in range(self.nsensels):
+            if i == 620:
+#                pdb.set_trace()
+                pass
+            cx, cy = self.index2cell(i)
+            s = np.array(diffeo.d[cx, cy, :])
+            s_coarse = s * np.array(self.grid_shape) / np.array(area)
+            area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2)
+            area_positions_coarse[i, :] = area_pos_coarse.astype('int')           
+        return (area_positions_coarse, area)
+    
+    def update_areas(self, diffeo, nrefine):
+        self.area_positions_coarse , self.area = self.calculate_areas(diffeo, nrefine)
         
         
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
+        # Initiate structures at the first update
         if self.shape is None:
             logger.info('Initiating structure from update()')
             self.init_structures(y0)
         
+        grid_size = np.product(self.grid_shape)
         
-        res = self.res
-        res_size = np.prod(res)
-#        pdb.set_trace()
+        reduced_shape = np.array(self.shape) * self.grid_shape / np.array(self.area)
         
-        self.interpolator.reshape_image(y0)
-#        pdb.set_trace()
-        for i in range(self.nsensels): 
-#            a = self.A[i]
-#            b = self.B[i]
-            c = self.C[i]
-                        
-#            xl = c[0] + a[0]
-#            xu = c[0] + a[0] + b[0]
-#            yl = c[1] + a[1]
-#            yu = c[1] + a[1] + b[1]
-#            logger.debug('    c = :               ' + str(c))
-#            logger.debug('    extracting around : ' + str(self.dd[c[0], c[1]]))
-#            Yi_ref = self.interpolator.extract_around((self.dd[c[0], c[1]]))
-#            if (i == 29):
-#                pdb.set_trace()
-            Yi_ref = self.interpolator.extract_around(c)
-            
-                
-            diff = np.abs(Yi_ref.astype('float') - y1[tuple(c)]).reshape(res_size)
+        PImage = Image.fromarray(y0.astype('float'))
+        PImage_resized = PImage.resize(np.flipud(reduced_shape), self.intp_method)
+        y0_resized = np.array(PImage_resized)
+        
+#        logger.info('update(): looping over all sensels')
+        for i in range(self.nsensels):
+            xl, yl = self.area_positions_coarse[i]
+            xu, yu = self.area_positions_coarse[i] + self.grid_shape
 
+            Yi_ref = extract_wraparound(y0_resized, ((xl, xu), (yl, yu)))
+            
+#            c = self.flat_structure.flattening.index2cell[i]
+            c = self.index2cell(i)
+            diff = np.abs(Yi_ref.astype('float') - y1[tuple(c)]).reshape(grid_size)
             self.neig_esim_score[i] += diff
         self.num_samples += 1
-#        self.show_interp_images(y0)
-#        self.show_subimages(y0)
+
+    def init_structures(self, y):
+        self.shape = y.shape
+        # for each sensel, create an area
+        if not hasattr(self, 'area'):
+            self.area = np.ceil(self.max_displ * np.array(self.shape)).astype('int32')
+            # ensure it's an odd number of pixels
+            for i in range(2):
+                if self.area[i] % 2 == 0:
+                    self.area[i] += 1
+            self.area = (int(self.area[0]), int(self.area[1]))
+            self.area = tuple(self.area)
+        
+        self.nsensels = y.size
+#        area_size = self.area[0] * self.area[1]
+        grid_size = self.grid_shape[0] * self.grid_shape[1]
+        
+        
+        logger.debug(' Field Shape: %s' % str(self.shape))
+        logger.debug('    Fraction: %s' % str(self.max_displ))
+        logger.debug(' Search area: %s' % str(self.area))
+
+        logger.debug('done creating')
+        
+        
+#        assert(self.num_refined == 0)
+        if not hasattr(self, 'area_positions_coarse'):
+#            pdb.set_trace()
+            logger.debug('First time estimator is initiated, area definitions')
+            
+            # Start with phi estimate as identity
+            dd = np.zeros((self.shape[0], self.shape[1], 2)).astype('float32')
+            for i in range(self.nsensels):
+                ic = self.index2cell(i)
+                dd[tuple(ic)] = ic
+                diffeo = Diffeomorphism2DContinuous(dd)
+                
+            self.update_areas(diffeo, 0)
+
+
+        buffer_shape = (self.nsensels, grid_size)
+        self.neig_esim_score = np.zeros(buffer_shape, 'float32')
+        
+        # initialize a buffer of size NxA
+        self.buffer_NA = np.zeros(buffer_shape, 'float32')
+        
+        self.dd = np.zeros((self.shape[0], self.shape[1], 2)) 
+        logger.info('structure initiated')
+
+    def summarize(self):
+        ''' 
+            Find maximum likelihood estimate for diffeomorphism looking 
+            at each pixel singularly. 
+            
+            Returns a Diffeomorphism2D.
+        '''
+        dd = np.zeros((self.shape[0], self.shape[1], 2))
+        for i in range(self.nsensels):
+            best = np.argmin(self.neig_esim_score[i])
+            if i == 620:
+                pass
+#                pdb.set_trace()
+            best_coord = get_original_coordinate(best, self.grid_shape, self.area, self.area_positions_coarse[i])
+
+            ic = self.index2cell(i)
+            
+#            logger.info('local coordinate : ' + str(best_coord - ic))
+            dd[tuple(ic)] = best_coord
+
+            
+        cert_flat = (self.neig_esim_score - np.min(self.neig_esim_score)) / (np.max(self.neig_esim_score) - np.min(self.neig_esim_score))
+        cert = np.min(cert_flat, axis=1).reshape(self.shape)
+        
+        return Diffeomorphism2DContinuous(dd, cert)
+    
+#    def calculate_next_search_areas(self, refined):
+#        diffeo = self.summarize()
+#        dd = diffeo.d
+#        
+#        area_shape = np.ceil(np.array(self.area) / self.refine_factor ** refined).astype('int')
+##        self.area_shape = area_shape
+#        
+#        for i in range(self.nsensels):
+#            cx, cy = self.index2cell(i)
+#            s = np.array(diffeo.d[cx, cy, :])
+#            s_coarse = s * np.array(self.grid_shape) / np.array(area_shape)
+#            area_pos_coarse = (s_coarse - np.array(self.grid_shape) / 2.)
+#            self.area_positions_coarse[i, :] = np.floor(area_pos_coarse).astype('int')
+    
+    def display(self, report):
+        self.show_areas(report)
 #        pdb.set_trace()
+        
+        report.data('num_samples', self.num_samples)
+        report.data('grid_shape', self.grid_shape)
+        report.data('area_shape', self.area)
+
+        
+        report.data('reduced_shape', np.array(self.shape) * self.grid_shape / np.array(self.area))
+        f = report.figure(cols=1)
+        
+    
+        esim = self.make_grid(self.neig_esim_score)
+        
+        with f.plot('esim', caption='esim') as pylab:
+            pylab.imshow(esim)
 
     def show_interp_images(self, y0, outdir='out/subim/'):
         arrays = self.interpolator.arrays
         for key, array in arrays.items():
             im = Image.fromarray(array.astype('uint8'))
             im.resize(np.array(im.size) * 10).save(outdir + 'fullimage' + str(key) + '.png')
-#        pdb.set_trace()
+
 
     def show_subimages(self, y0, outdir='out/subim/'):
         i = 0
@@ -122,201 +231,175 @@ class DiffeomorphismEstimatorRefineFast():
                 sub_ai = (sub_ai - np.min(sub_ai)) / (np.max(sub_ai) - np.min(sub_ai)) * 255
                 Image.fromarray(sub_ai.astype('uint8')).resize((300, 300)).save(outdir + 'subim' + str(i) + '.png')
                 i += 1
+
+    def show_areas(self, report):
+        diffeo = self.summarize()
+        
+        dd = diffeo.d
+
+        Y, X = np.meshgrid(range(self.shape[1]), range(self.shape[0]))
+
+        dx = np.median(dd[:, :, 0] - X)
+        dy = np.median(dd[:, :, 1] - Y)
+        
+        report.data('median_displ: ', (dx, dy))
+        
 #        pdb.set_trace()
+#        sensels = range(self.shape[1])
+        sensels = [0, 39, 40 * 15 + 20, 40 * 15 + 21, 40 * 16 + 20, 40 * 16 + 21]
+        
+        f = report.figure(cols=6)
+        for index in sensels:
+            start = self.index2cell(index)
+            center = dd[start[0], start[1], :]
+#            pdb.set_trace()
+            with f.plot('esim_area_%s' % index, caption='esim over %s' % index) as pylab:
+                esim_score = self.neig_esim_score[index, :].reshape(self.grid_shape)
+                c2f = 1.0 * np.array(self.area) / self.grid_shape
+                xl, yl = self.area_positions_coarse[index] * c2f
+                xu, yu = (self.area_positions_coarse[index] + self.grid_shape) * c2f
+                
+#                extent_box = np.array((xl, xu, yl, yu)) 
+                
+                pylab.imshow(esim_score, extent=(yl, yu, xl, xu), interpolation='nearest', origin='lower')
+#                pylab.xlim((-10, self.shape[1] + 10))
+#                pylab.ylim((self.shape[0] + 10, -10))
+                pylab.xlim((0, self.shape[1]))
+                pylab.ylim((self.shape[0], 0))
+                
+                ax = pylab.subplot(111)
+                ax.xaxis.set_major_locator(MultipleLocator(self.shape[1] / 5))
+                ax.xaxis.set_minor_locator(MultipleLocator(1))
+                ax.yaxis.set_major_locator(MultipleLocator(self.shape[0] / 5))
+                ax.yaxis.set_minor_locator(MultipleLocator(1))
+                pylab.grid(True, 'major', linewidth=2, linestyle='solid') # , alpha=0.5
+                pylab.grid(True, 'minor', linewidth=.2, linestyle='solid')
 
-    def init_structures(self, y):
-        self.shape = y.shape
-        # for each sensel, create an area
-        self.area = np.ceil(self.max_displ * np.array(self.shape)).astype('int32')
+#                pylab.xticks(range(self.shape[1] + 1), rotation='vertical', size=5)
+#                pylab.yticks(range(self.shape[0] + 1), size=5)
+                vector = center - start
+                logger.info(' vector : %s' % vector)
+#                pdb.set_trace()
+                if np.sum(vector ** 2) != 0:
+                    pylab.arrow(start[1] + .5, start[0] + .5, vector[1], vector[0], head_width=0.5, length_includes_head=True, color='gray')
+                else:
+                    pylab.plot(start[1] + .5, start[0] + .5, markersize=.5, color='gray')
+                
+                pylab.grid()
         
-        
-        # ensure it's an odd number of pixels
-        for i in range(2):
-            if self.area[i] % 2 == 0:
-                self.area[i] += 1
-        self.area = (int(self.area[0]), int(self.area[1]))
-        
-        # Increase the area to something larger but still faster to manage
-        rest = self.area % np.array([5, 5])
-        logger.debug(' rest of area % 5 : ' + str(rest))
-        self.area = self.area - rest + [5, 5]
-        
-        self.area = tuple(self.area)
-        
-        self.area = (15, 15)
-        
-        self.nsensels = y.size
-        self.area_size = self.area[0] * self.area[1]
-        self.res_size = self.res[0] * self.res[1]
-        
-        self.interpolator = ImageInterpolatorFast(self.intp_method)
-        self.interpolator.set_resolution(self.res, self.area)
-        
-        logger.debug(' Field Shape: %s' % str(self.shape))
-        logger.debug('    Fraction: %s' % str(self.max_displ))
-        logger.debug(' Search area: %s' % str(self.area))
-        logger.debug('Creating FlatStructure...')
-        self.flat_structure = flat_structure_cache(self.shape, self.area)
-        self.refine_flat_structure = flat_structure_cache(self.shape, self.res)
-        logger.debug('done creating')
-        
-        assert(self.num_refined == 0)
-        if self.num_refined == 0:
-            logger.debug('First time estimator is initiated, generating A, B and C')
-#            self.A = np.zeros((self.nsensels, 2))
-#            self.B = np.zeros((self.nsensels, 2))
-            self.C = self.flat_structure.flattening.index2cell
-        
-#        for i in range(self.nsensels):
-#            a = -np.array(self.area) / 2
-#            b = np.array(self.area)
-#            self.A[i] = a
-#            self.B[i] = b
-
-        buffer_shape = (self.nsensels, self.res_size)
-        self.neig_esim_score = np.zeros(buffer_shape, 'float32')
-        
-        # initialize a buffer of size NxA
-        self.buffer_NA = np.zeros(buffer_shape, 'float32')
-        
-        self.dd = np.zeros((self.shape[0], self.shape[1], 2)) 
-
-    def display(self, report):
-#        self.show_areas(report, self.dd)
-        
-        
-        report.data('num_samples', self.num_samples)
-        f = report.figure(cols=4)
-        
-        
-        def make_best(x):
-            return x == np.min(x, axis=1)
-        
-        @contract(score='array[NxA]', returns='array[HxW],H*W=N')
-        def distance_to_border_for_best(score):
-            N, _ = score.shape
-            best = np.argmin(score, axis=1)
-            assert best.shape == (N,)
-            D = self.flat_structure.get_distances_to_area_border()
-            res = np.zeros(N)
-            for i in range(N):
-                res[i] = D[i, best[i]]
-            return self.flat_structure.flattening.flat2rect(res)
-
-        @contract(score='array[NxA]', returns='array[HxW],H*W=N')
-        def distance_from_center_for_best(score):
-            N, _ = score.shape
-            best = np.argmin(score, axis=1)
-            assert best.shape == (N,)
-            D = self.flat_structure.get_distances()
-            res = np.zeros(N)
-            for i in range(N):
-                res[i] = D[i, best[i]]
-            return self.flat_structure.flattening.flat2rect(res)
-
-        max_d = int(np.ceil(np.hypot(np.floor(self.area[0] / 2.0),
-                                     np.floor(self.area[1] / 2.0))))
-        safe_d = int(np.floor(np.min(self.area) / 2.0))
-        
-        bdist_scale = dict(min_value=0, max_value=max_d, max_color=[0, 1, 0])
-        cdist_scale = dict(min_value=0, max_value=max_d, max_color=[1, 0, 0])
-        bins = range(max_d + 2)
-        
-        def plot_safe(pylab):
-            plot_vertical_line(pylab, safe_d, 'g--')
-            plot_vertical_line(pylab, max_d, 'r--')
-      
-#        pdb.set_trace()
-        esim = self.make_grid(self.neig_esim_score)
-        report.data('neig_esim_score_rect', esim).display('scale').add_to(f, caption='sim')
-#        esim_bdist = distance_to_border_for_best(self.neig_esim_score)
-#        esim_cdist = distance_from_center_for_best(self.neig_esim_score)
-#        report.data('esim_bdist', esim_bdist).display('scale', **bdist_scale).add_to(f, caption='esim_bdist')
-#        report.data('esim_cdist', esim_cdist).display('scale', **cdist_scale).add_to(f, caption='esim_cdist')
-    
-#        with f.plot('esim_bdist_hist') as pylab:
-#            pylab.hist(esim_bdist.flat, bins)
-#        with f.plot('esim_cdist_hist') as pylab:
-#            pylab.hist(esim_cdist.flat, bins)
-#            plot_safe(pylab)
-            
+                    
     @contract(score='array[NxA]', returns='array[UxV]') # ,U*V=N*A') not with border
     def make_grid(self, score):
-        fourd = self.refine_flat_structure.unrolled2multidim(score) # HxWxXxY
-        return togrid(add_border(fourd))      
+        fourd = self.unrolled2multidim(score) # HxWxXxY
+        return togrid(add_border(fourd, fill=np.max(fourd) * 2))
     
-#    def show_areas(self, report, d):
-#        Y, X = np.meshgrid(range(d.shape[1]), range(d.shape[0]))
-#        dx_local = d[:, :, 0] - X
-#        dy_local = d[:, :, 1] - Y 
-#        f = report.figure(cols=3)
-#        
-#        with f.plot('search_box', caption='All search boxes') as pylab:
-#            pylab.hold(True)
-#            
-#            nbx = np.max(dx_local) - np.min(dx_local)
-#            nby = np.max(dy_local) - np.min(dy_local)
-##            hist_range = [[np.min(dx_local), np.max(dx_local)],
-##                     [np.min(dy_local), np.max(dy_local)]] 
-#            hist_range = [[-(self.area[0] + 2.0) / 2, (self.area[0] + 2.0) / 2],
-#                          [-(self.area[1] + 2.0) / 2, (self.area[1] + 2.0) / 2]]
-#            
-#            Hc, xe, ye = np.histogram2d(dx_local.flatten(), dy_local.flatten(),
-#                                        range=hist_range, bins=(nbx, nby))
-##            pdb.set_trace()
-#            Yh, Xh = np.meshgrid(ye[:-1] + .5 * (ye[1] - ye[0]),
-#                                 xe[:-1] + .5 * (xe[1] - xe[0]))            
-#            pylab.contourf(Xh, Yh, Hc, cmap=pylab.get_cmap('Blues'), alpha=1)
-#            
-#            
-#            Hc, xe, ye = np.histogram2d(self.A[:, 0], self.A[:, 1],
-#                                        range=hist_range, bins=(nbx, nby))
-#            Yh, Xh = np.meshgrid(ye[:-1] + 0.5 * (ye[1] - ye[0]),
-#                                 xe[:-1] + 0.5 * (xe[1] - xe[0]))            
-#            pylab.contourf(Xh, Yh, Hc, cmap=pylab.get_cmap('Reds'), alpha=0.5)
-#            
-##            for i in range(self.nsensels):
-##                a = self.A[i]
-##                b = self.B[i]
-##                
-##                boxx = np.array([a[0], a[0] + b[0], a[0] + b[0], a[0], a[0]])
-##                boxy = np.array([a[1], a[1], a[1] + b[1], a[1] + b[1], a[1]])
-##            
-##                pylab.plot(boxx, boxy)
-#            
-#            pylab.plot(dx_local.reshape(dx_local.size),
-#                       dy_local.reshape(dy_local.size),
-#                       linestyle='none', marker='.')
+    @contract(v='array[NxA]', returns='array[HxWxXxY],N=H*W,A=X*Y')
+    def unrolled2multidim(self, v):
+        """ De-unrolls both dimensions to obtain a 4d vector. """
+        # Let's make sure we understand what's going on...
+#        assert_allclose((self.N, self.A), v.shape)
+        H, W = self.shape
+        X, Y = self.grid_shape
+        res = np.zeros((H, W, X, Y), v.dtype)
+        for i, j in coords_iterate((H, W)):
+            k = self.cell2index([i, j])
+            sim = v[k, :]
+            sim[sim == np.min(sim)] = 0
+            res[i, j, :, :] = sim.reshape((X, Y))
+        return res
+    
+    def index2cell(self, index):
+        return np.array((index / self.shape[1], index % self.shape[1]))
+    
+    def cell2index(self, cell):
+        return self.shape[1] * cell[0] + cell[1]
 
 
-    def summarize(self):
-        ''' 
-            Find maximum likelihood estimate for diffeomorphism looking 
-            at each pixel singularly. 
-            
-            Returns a Diffeomorphism2D.
-        '''
-        dd_local = np.zeros((self.shape[0], self.shape[1], 2))
-        dd = np.zeros((self.shape[0], self.shape[1], 2))
-        for i in range(self.nsensels):
-            best = np.argmin(self.neig_esim_score[i])
-#            logger.info('best coord is: ' + str(best))
-            best_coord_local = self.interpolator.get_local_coord(best)
-            best_coord = self.C[i] + best_coord_local
-            
-            dd_local[tuple(self.C[i])] = best_coord_local
-            dd[tuple(self.C[i])] = best_coord
-        cert_flat = (self.neig_esim_score - np.min(self.neig_esim_score)) / (np.max(self.neig_esim_score) - np.min(self.neig_esim_score))
-
-        cert = np.min(cert_flat, axis=1).reshape(self.shape)
-        self.dd = dd
-        return Diffeomorphism2DContinuous(dd, cert)
+    
     
     def publish(self, pub):
         pass
     
     def merge(self, other):
-        pass
+        assert self.shape == other.shape
+        assert self.grid_shape == other.grid_shape
+        assert self.area_positions_coarse == other.area_positions_coarse 
+        
+        # Handles only esim, not eord
+        self.neig_esim_score += other.neig_esim_score
     
+    
+def get_original_coordinate(grid_index, grid_shape, area_shape, area_position_coarse):
+    '''
+    
+    :param grid_index:
+    :param grid_shape:
+    :param area_shape:
+    :param area_position:
+    '''
+    
+#    logger.debug(' asked grid index: ' + str(grid_index))
+
+    grid_shape = np.array(grid_shape)
+    area_shape = np.array(area_shape)
+    area_position_coarse = np.array(area_position_coarse)
+    
+    area_position = area_position_coarse.astype('float') * area_shape / grid_shape
+    
+    XY = list(itertools.product(np.linspace(0, area_shape[0] - 1, grid_shape[0]), np.linspace(0, area_shape[1] - 1, grid_shape[1])))
+    
+#    local_coord_coarse = (grid_index % grid_shape[1], grid_index / grid_shape[1])
+#    local_coord = np.array(local_coord_coarse).astype('float') * area_shape / grid_shape
+    local_coord = XY[grid_index]
+#    pdb.set_trace()
+        
+    return area_position + local_coord
+    
+    
+def extract_wraparound(Y, ((xl, xu), (yl, yu))):
+    '''
+    Y[xl:xu,yl:yu] with a wrap around effect
+    '''
+    xsize, ysize = Y.shape
+    
+    # Assert valid dimensions
+    assert(xu > xl)
+    assert(yu > yl)
+    
+    # Extract image in x-direction
+    if xu < 0 or xl > xsize:
+        # Complete wrap around
+        Yx = Y[xl % xsize:xu % xsize]
+    elif xl < 0:
+        # Partial wrap around on lower bound
+        Yx = np.concatenate((Y[xl:], Y[:xu]), axis=0)
+    elif xu >= xsize:
+        # Partial wrap around on upper bound
+        Yx = np.concatenate((Y[xl:], Y[:xu % xsize]), axis=0)
+    else:
+        # Normal interval
+        Yx = Y[xl:xu]
+    
+    
+    # Extract image in y-direction from Yx
+    if yu < 0 or yl > ysize:
+        # Complete wrap around
+        Yi_sub = Yx[:, yl % ysize:yu % ysize] 
+    elif yl < 0:
+        # Partial wrap around on lower bound
+        Yi_sub = np.concatenate((Yx[:, yl:], Yx[:, :yu]), axis=1)
+    elif yu >= ysize:
+        # Partial wrap around on upper bound
+        Yi_sub = np.concatenate((Yx[:, yl:], Yx[:, :yu % ysize]), axis=1)
+    else:
+        # Normal interval
+        Yi_sub = Yx[:, yl:yu]
+        
+    return Yi_sub
+
+
+
+
+
 def compare():
     pass
