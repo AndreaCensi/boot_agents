@@ -6,7 +6,7 @@ from boot_agents.diffeo.diffeo_basic import diffeo_from_function, diffeo_apply
 
 
 class Diffeo(Block):
-    ''' A block that creates a larger image by arranging them in a grid. '''
+    ''' Applies a diffeomorphism. '''
 
     Block.alias('diffeo')
 

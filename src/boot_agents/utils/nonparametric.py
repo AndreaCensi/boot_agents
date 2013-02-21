@@ -34,7 +34,8 @@ def scale_score(x, kind='quicksort', kind2='quicksort'):
 #scale_score2.buf = np.zeros(1)
 
 def scale_score_scipy(x):
-    import scipy, scipy.stats
+    import scipy
+    import scipy.stats
     return scipy.stats.mstats.rankdata(x) - 1
     
 #@contract(x='array,shape(x)', score='array(int32),shape(x)')
