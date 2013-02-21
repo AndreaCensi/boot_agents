@@ -4,7 +4,6 @@ from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
     Diffeomorphism2D)
 from boot_agents.diffeo.diffeo_basic import diffeo_identity
 from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
-from boot_agents.utils.nonparametric import scale_score
 from reprep.plot_utils import plot_vertical_line
 import time
 
@@ -35,7 +34,11 @@ class DiffeomorphismEstimatorFaster():
         self.num_samples = 0
 
         self.buffer_NA = None
-        
+
+    def initialized(self):
+        """ Returns true if the structures have already been initialized. """
+        return self.shape is not None
+             
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
         if y0.dtype == np.uint8:
@@ -44,8 +47,8 @@ class DiffeomorphismEstimatorFaster():
         self.num_samples += 1
 
         # init structures if not already
-        if self.shape is None:
-            self.init_structures(y0)
+        if not self.initialized():
+            self.init_structures(y0.shape)
 
         # check shape didn't change
         if self.shape != y0.shape:
@@ -56,15 +59,18 @@ class DiffeomorphismEstimatorFaster():
         self.last_y0 = y0
         self.last_y1 = y1
         
-        
+        # The _update_scalar function is typically faster
+        check_times = False
         ts = []
         ts.append(time.time())
-        #self._update_vectorial(y0, y1)
+        if check_times:
+            self._update_vectorial(y0, y1)
         ts.append(time.time())
         self._update_scalar(y0, y1)
         ts.append(time.time())
-        delta = np.diff(ts)
-        logger.info('Update times: vect %5.3f scal %5.3f seconds' % 
+        if check_times:
+            delta = np.diff(ts)
+            logger.info('Update times: vect %5.3f scal %5.3f seconds' % 
                     (delta[0], delta[1]))
         
     def _update_scalar(self, y0, y1):
@@ -79,7 +85,7 @@ class DiffeomorphismEstimatorFaster():
             
             if self.inference_method == Order:
                 order = np.argsort(diff)
-                #diff_order = scale_score(diff, kind='quicksort')
+                # diff_order = scale_score(diff, kind='quicksort')
                 self.neig_eord_score[k, order] += order_comp 
             elif self.inference_method == Similarity:
                 self.neig_esim_score[k, :] += diff
@@ -108,9 +114,10 @@ class DiffeomorphismEstimatorFaster():
                     
         self.neig_esimmin_score += np.min(difference, axis=1)
         
-        
-    def init_structures(self, y):
-        self.shape = y.shape
+    @contract(y_shape='seq[2](int)')
+    def init_structures(self, y_shape):
+        self.shape = (y_shape[0], y_shape[1])
+        self.nsensels = self.shape[0] * self.shape[1]
         # for each sensel, create an area
         self.area = np.ceil(self.max_displ * np.array(self.shape)).astype('int32')
         
@@ -119,7 +126,6 @@ class DiffeomorphismEstimatorFaster():
             if self.area[i] % 2 == 0:
                 self.area[i] += 1
         self.area = (int(self.area[0]), int(self.area[1]))
-        self.nsensels = y.size
         self.area_size = self.area[0] * self.area[1]
 
         logger.debug(' Field Shape: %s' % str(self.shape))
@@ -143,9 +149,13 @@ class DiffeomorphismEstimatorFaster():
         self.buffer_NA = np.zeros(buffer_shape, 'float32') 
     
     def display(self, report):
+        
+        if not self.initialized():
+            report.text('notice', 'Cannot display() because not initialized.')
+            return
+            
         report.data('num_samples', self.num_samples)
         f = report.figure(cols=4)
-        
         
         def make_best(x):
             return x == np.min(x, axis=1)
@@ -213,9 +223,9 @@ class DiffeomorphismEstimatorFaster():
     
         
         
-    @contract(score='array[NxA]', returns='array[UxV]') # ,U*V=N*A') not with border
+    @contract(score='array[NxA]', returns='array[UxV]')  # ,U*V=N*A') not with border
     def make_grid(self, score):
-        fourd = self.flat_structure.unrolled2multidim(score) # HxWxXxY
+        fourd = self.flat_structure.unrolled2multidim(score)  # HxWxXxY
         return togrid(add_border(fourd))
         
     def summarize(self):
@@ -225,8 +235,11 @@ class DiffeomorphismEstimatorFaster():
             
             Returns a Diffeomorphism2D.
         '''
+        if not self.initialized():
+            msg = 'Cannot summarize() because not initialized yet.'
+            raise ValueError(msg)
         certainty = np.zeros(self.shape, dtype='float32')
-        certainty[:] = np.nan
+        certainty.fill(np.nan)
         
         dd = diffeo_identity(self.shape)
         dd[:] = -1
@@ -249,7 +262,7 @@ class DiffeomorphismEstimatorFaster():
             if self.inference_method == 'sim':
                 first = np.sort(esim_score)[:10]
                 certain = -(first[0] - np.mean(first[1:]))
-                #certain = -np.min(esim_score) / np.mean(esim_score)
+                # certain = -np.min(esim_score) / np.mean(esim_score)
 #            certain = np.min(esim_score) / self.num_samples
 #            certain = -np.mean(esim_score) / np.min(esim_score)
             
@@ -279,7 +292,7 @@ class DiffeomorphismEstimatorFaster():
 
         n = 20
         M = None
-        for i in range(n): #@UnusedVariable
+        for i in range(n):  # @UnusedVariable
             c = self.flattening.random_coords()
             Mc = self.get_similarity(c)
             if M is None:
@@ -306,11 +319,25 @@ class DiffeomorphismEstimatorFaster():
 
     def merge(self, other):
         """ Merges the values obtained by "other" with ours. """
-        logger.info('merging %s + %s' % (self.num_samples, other.num_samples)) 
+        if not other.initialized():
+            # nothing to do
+            return
+        if not self.initialized() and other.initialized():
+            # Let's initialized like the other
+            self.init_structures(other.shape)
+        
+        assert other.initialized(), "Can only merge initialized structures"
+        logger.info('merging %s + %s samples' % (self.num_samples, other.num_samples))
         self.num_samples += other.num_samples
-        self.neig_esim_score += other.neig_esim_score
-        self.neig_eord_score += other.neig_eord_score
-        self.neig_esimmin_score = other.neig_esimmin_score
-
+        if self.inference_method == Similarity:   
+            self.neig_esim_score += other.neig_esim_score
+        elif self.inference_method == Order:
+            self.neig_eord_score += other.neig_eord_score
+        else:
+            assert False
+        
+        self.neig_esimmin_score += other.neig_esimmin_score
+        # AC: this was as below, it was a bug, I think
+        # self.neig_esimmin_score = other.neig_esimmin_score
 
         
