@@ -5,52 +5,65 @@ Created on Nov 5, 2012
 '''
 from . import logger
 import itertools
-import scipy
 import numpy as np
 import pylab
-
-def memoize(f):
-    cache = {}
-    def memf(*x):
-        if x not in cache:
-            cache[x] = f(*x)
-        return cache[x]
-    return memf
+from PIL import Image #@UnresolvedImport
+import pdb
 
 class Interpolator():
-    def __init__(self):
-        pass
+    def __init__(self, method=Image.BILINEAR):
+        self.method = method
             
-    @memoize
-    def basis(self, orig_size, new_size):
-        logger.info('Creating new basis representation with: ' + str(orig_size) + ' and: ' + str(new_size))
-        j = complex(0, 1)
-        def f(k, n):
-            return (2 * float(k) / n) % 1 - (2 * k / n)
-        
-        resolution = new_size
-        C = list(itertools.product(range(orig_size[0]), range(orig_size[1])))
-        F = np.array([[f(c[0], orig_size[0]), f(c[1], orig_size[1])] for c in C])
-        XY = list(itertools.product(np.linspace(0, orig_size[0] - 1, resolution[0]), np.linspace(0, orig_size[1] - 1, resolution[1])))
-        
-        M = np.mat([[scipy.exp(j * np.pi * np.sum(F[k] * XY[xy])) for k in range(len(F))] for xy in range(len(XY))])
-        return M
+    def refine(self, Y, new_size):
+        '''
+        :param Y:        Image to be refined
+        :param new_size: size in pixels of the refined image
+        '''
+#        pdb.set_trace()
+#        logger.debug('Refining with image_interpolator.py')
+        ret = np.array(Image.fromarray(Y).resize(np.flipud(new_size), self.method))
+        assert ret.shape == new_size
+        return ret
+    
+#    def test_local_coord(self):
+#        orig_size = (21, 29)
+#        new_size = (10, 10)
+#        test_indexes = [0, 99, 29 * 10]
+#        red = np.zeros(new_size)
+#        green = np.zeros(new_size)
+#        blue = np.zeros(new_size)
+#        for index in test_indexes:
+#            red.reshape(())[index]
+#        
+#        coord = self.get_local_coord(orig_size, new_size, flat_index)
     
     def get_local_coord(self, orig_size, new_size, flat_index):
-        resolution = new_size
-        XY = list(itertools.product(np.linspace(0, orig_size[0] - 1, resolution[0]), np.linspace(0, orig_size[1] - 1, resolution[1])))
-        return XY[flat_index]
+        '''
+        Get the coordinate d \in a continuous SensorDomain of the pixel with 
+        index <flat_index> in a refined discreet domain.
+        
+        E.g.     
+        The search area was initially of size 15x15 pixels and was refined to 
+        25x25 pixels by interpolating. 
+        A pixel a location (7, 7) in the flat structure of the original sized 
+        image has index 112, while in the refined image (which has more pixels)
+        the pixel number 112 has the coordinate  (2.333, 7.0). 
+        This function returns the coordinate in the refined image 
+        
+            > get_local_coord((15,15),(25,25), 112)
+            (2.3333333333333335, 7.0)
+            
+        :param orig_size:
+        :param new_size:
+        :param flat_index:
+        '''
+        res = new_size
+        XY = list(itertools.product(np.linspace(0, orig_size[0] - 1, res[0]),
+                                    np.linspace(0, orig_size[1] - 1, res[1])))
+        local_coord = XY[flat_index]
+#        logger.debug('image_interpolator returns local_coord = ' + str(local_coord))
+        return local_coord
     
-    def refine(self, Y, new_size):
-#        logger.info('refining')
-        S = np.fft.fft2(Y)
-        orig_size = Y.shape[:2]
-        S_flat = S.reshape(np.prod(orig_size))
-        M = self.basis(orig_size, new_size)
-#        pdb.set_trace()
-        Y_new_flat = np.array(M * np.mat(S_flat).T)
-        return np.real(Y_new_flat.reshape(new_size)) / np.prod(orig_size)
-
     def extract_wraparound(self, Y, ((xl, xu), (yl, yu))):
         '''
         Y[xl:xu,yl:yu] with a wrap around effect
@@ -93,6 +106,9 @@ class Interpolator():
         return Yi_sub
 
 if __name__ == '__main__':
+    '''
+    Test function for the Interpolator class
+    '''
     orig_size = (5, 4)
     interp = Interpolator()
 #    interp.init_basis((10, 10))
@@ -147,3 +163,14 @@ if __name__ == '__main__':
     pylab.savefig('y.png')
     
 #    pdb.set_trace()
+
+#from boot_agents.diffeo.learning.interpolators import Interpolator
+#from boot_agents.diffeo.learning.interpolators import FourierInterpolator
+#import numpy as np
+#M = np.array([[10, 20, 30], [40, 50, 60]]).astype('uint8')
+#itp = Interpolator()
+#ftp = FourierInterpolator()
+#itp.refine(M, (2, 3))
+#ftp.refine(M, (2, 3))
+#ii = itp.refine(M, (9, 11))
+#ff = ftp.refine(M, (9, 11)).astype('int')

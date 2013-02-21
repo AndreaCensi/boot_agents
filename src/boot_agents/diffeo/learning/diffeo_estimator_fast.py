@@ -8,8 +8,9 @@ from reprep.plot_utils import plot_vertical_line
 import time
 
 Order = 'order'
-Similarity = 'sim' 
-InferenceMethods = [Order, Similarity]
+Similarity = 'sim'
+Cont = 'quad'
+InferenceMethods = [Order, Similarity, Cont]
     
 class DiffeomorphismEstimatorFaster():
     ''' Learns a diffeomorphism between two 2D fields. '''
@@ -27,7 +28,7 @@ class DiffeomorphismEstimatorFaster():
         self.inference_method = inference_method
         
         if self.inference_method not in InferenceMethods:
-            msg = ('I need one of %s; foudnd %s' % 
+            msg = ('I need one of %s; found %s' % 
                    (InferenceMethods, inference_method))
             raise ValueError(msg)
         
@@ -329,15 +330,27 @@ class DiffeomorphismEstimatorFaster():
         assert other.initialized(), "Can only merge initialized structures"
         logger.info('merging %s + %s samples' % (self.num_samples, other.num_samples))
         self.num_samples += other.num_samples
-        if self.inference_method == Similarity:   
-            self.neig_esim_score += other.neig_esim_score
-        elif self.inference_method == Order:
+
+        # if self.inference_method == Similarity:   
+        #     self.neig_esim_score += other.neig_esim_score
+        # elif self.inference_method == Order:
+        #     self.neig_eord_score += other.neig_eord_score
+        # else:
+        #     assert False
+        
+        self.neig_esim_score += other.neig_esim_score
+        
+        if hasattr(self, 'neig_eord_score') and hasattr(other, 'neig_eord_score'):
             self.neig_eord_score += other.neig_eord_score
         else:
-            assert False
-        
-        self.neig_esimmin_score += other.neig_esimmin_score
-        # AC: this was as below, it was a bug, I think
-        # self.neig_esimmin_score = other.neig_esimmin_score
-
-        
+            logger.warn(('neig_eord_score is missing in at least one estimator.' + 
+            'Merged estimator will not have neig_eord_score.'))
+            
+        if hasattr(self, 'neig_esimmin_score') and hasattr(other, 'neig_esimmin_score'):
+            # AC: this was as below, it was a bug, I think
+            self.neig_esimmin_score += other.neig_esimmin_score
+            # self.neig_esimmin_score = other.neig_esimmin_score
+        else:
+            logger.warn(('neig_esimmin_score is missing in at least one estimator.' + 
+            'Merged estimator will not have neig_eord_score.'))
+ 

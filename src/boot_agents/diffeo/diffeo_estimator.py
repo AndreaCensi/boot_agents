@@ -33,6 +33,8 @@ class DiffeomorphismEstimator():
             :param match_method: Either "continuous" or "binary" (to compute the 
                 error function).
         """
+        print('diffeo_estimator.py in boot_agents.diffeo is deprecated')
+        assert False
         self.shape = None
         self.max_displ = np.array(max_displ)
         self.last_y0 = None

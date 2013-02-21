@@ -3,20 +3,17 @@ Created on Dec 3, 2012
 
 @author: adam
 '''
+
 from . import logger
 from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
-    diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv, diffeo_text_stats,
-    Diffeomorphism2D)
+                diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv,
+                diffeo_text_stats, Diffeomorphism2D)
 from boot_agents.diffeo.diffeo_basic import diffeo_identity
 from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
-from boot_agents.utils.nonparametric import scale_score
-from reprep.plot_utils import plot_vertical_line
-import time
-import pdb
-from sklearn.gaussian_process.gaussian_process import GaussianProcess
-from matplotlib import cm, colors
 from matplotlib.cm import get_cmap
-import itertools
+from reprep.plot_utils import plot_vertical_line
+from sklearn.gaussian_process.gaussian_process import GaussianProcess
+import pdb
 
 Order = 'order'
 Similarity = 'sim'
