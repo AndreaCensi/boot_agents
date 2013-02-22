@@ -1,3 +1,8 @@
+'''
+This estimator saves a lot of images during calculation s to be used for 
+visualizing the learning progress
+'''
+
 from . import logger
 from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
     diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv, diffeo_text_stats,

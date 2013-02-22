@@ -1,4 +1,11 @@
 '''
+This version only considers learning for specified pixels/sensels. It considers 
+all commands and states for those pixels and creates a model for interpolation 
+of other commands in between the learned ones. This estimator is more similar 
+to a learner and needs to be feed with log items for all commands.     
+
+This estimator is still in a experimental stage
+
 Created on Dec 3, 2012
 
 @author: adam
@@ -14,7 +21,6 @@ from matplotlib.cm import get_cmap
 from reprep.plot_utils import plot_vertical_line
 from sklearn.gaussian_process.gaussian_process import GaussianProcess
 import pdb
-
 Order = 'order'
 Similarity = 'sim'
 Cont = 'quad'
@@ -169,9 +175,9 @@ class DiffeomorphismEstimatorPixelized():
                                      np.floor(self.area[1] / 2.0))))
         safe_d = int(np.floor(np.min(self.area) / 2.0))
         
-        bdist_scale = dict(min_value=0, max_value=max_d, max_color=[0, 1, 0])
-        cdist_scale = dict(min_value=0, max_value=max_d, max_color=[1, 0, 0])
-        bins = range(max_d + 2)
+#        bdist_scale = dict(min_value=0, max_value=max_d, max_color=[0, 1, 0])
+#        cdist_scale = dict(min_value=0, max_value=max_d, max_color=[1, 0, 0])
+#        bins = range(max_d + 2)
         
         def plot_safe(pylab):
             plot_vertical_line(pylab, safe_d, 'g--')
@@ -221,7 +227,7 @@ class DiffeomorphismEstimatorPixelized():
 #        for cmd_state in self.output_cmd_state:
         
         dd = diffeo_identity(self.shape)
-        dd_g = diffeo_identity(self.shape)
+#        dd_g = diffeo_identity(self.shape)
         certainty = np.zeros(self.shape, dtype='float32')
         coords_flat = []
         dmap_flat = []
@@ -391,7 +397,7 @@ class SenselEstimator():
         f = report.figure(cols=5)
         C0, C1 = np.meshgrid(np.linspace(-256, 256, res[0]), np.linspace(-256, 256, res[1]))
         C0fine, C1fine = np.meshgrid(np.linspace(-256 - 50, 256 + 50, res[0] * 10), np.linspace(-256 - 50, 256 + 50, res[1] * 10))
-        zooms = [100, 150, 200]
+#        zooms = [100, 150, 200]
 #        for zoom in zooms:
         for zoom in []:
             evalset = np.zeros((C0.size, 4))

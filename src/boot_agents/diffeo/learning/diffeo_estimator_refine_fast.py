@@ -1,39 +1,37 @@
-
+'''
+This estimator works with a refining learner. It resizes the whole image at 
+once. 
+'''
 from . import logger
 from .. import (contract, np)
-from PIL import Image, ImageDraw #@UnresolvedImport
-from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
-
-from boot_agents.diffeo.plumbing import togrid, add_border
-
-from reprep.plot_utils import plot_vertical_line 
-from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
-import pdb
-import itertools
-from geometry.utils import assert_allclose
+from PIL import Image #@UnresolvedImport
 from boot_agents.diffeo import coords_iterate
+from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
+from boot_agents.diffeo.plumbing import togrid, add_border
 from matplotlib.ticker import MultipleLocator
-from compmake.utils import memoize
+import itertools
 import time
 
+# Methods for resizing the image
 REFINE_FAST_BILINEAR = 'fast-bilinear'
 REFINE_FAST_BICUBIC = 'fast-bicubic'
 REFINE_FAST_ANTIALIAS = 'fast-antialias'
-
-
-
-
 
 class DiffeomorphismEstimatorRefineFast():
     '''
     
     '''
     @contract(max_displ='seq[2](>0,<1)')
-    def __init__(self, max_displ, refine_method, resolution, refine_factor):
-        """ 
-            :param max_displ: Maximum displacement  
-            :param inference_method: order, sim
-        """
+    def __init__(self, max_displ, refine_method, resolution, refine_factor, update_uncertainty=False):
+        '''
+        
+        :param max_displ:          Fraction of the search area
+        :param refine_method:      Method to use for resizing the image
+        :param resolution:         Resolution of the search_grid
+        :param refine_factor:      The ratio which the search area is resized  
+        :param update_uncertainty: If true, the uncertainties are 
+                                   calculated with new method
+        '''
         self.shape = None
         self.max_displ = np.array(max_displ)
         self.last_y0 = None
@@ -70,23 +68,28 @@ class DiffeomorphismEstimatorRefineFast():
         area = tuple(np.ceil(np.array(self.area) / self.refine_factor ** nrefine).astype('int'))
         
         for i in range(self.nsensels):
-            if i == 620:
-#                pdb.set_trace()
-                pass
             cx, cy = self.index2cell(i)
             s = np.array(diffeo.d[cx, cy, :]).astype('float')
-            s_coarse = s * np.array(self.grid_shape) / np.array(area)
-            area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2.)
-            area_positions_coarse[i, :] = area_pos_coarse.astype('int')           
+            s_coarse = np.floor(s * self.grid_shape / area) #.astype('int')
+            area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2)
+
+            area_positions_coarse[i, :] = np.floor(area_pos_coarse).astype('int')
         return (area_positions_coarse, area)
     
     def update_areas(self, diffeo, nrefine):
         self.area_positions_coarse , self.area = self.calculate_areas(diffeo, nrefine)
-        
+
+            
     def tic(self):
+        '''
+        Help function for timing calculations
+        '''
         self.t0 = time.time()
         
     def toc(self):
+        '''
+        Help function for timing calculations
+        '''
         t = time.time()
         return t - self.t0
          
@@ -96,23 +99,20 @@ class DiffeomorphismEstimatorRefineFast():
         if self.shape is None:
             logger.info('Initiating structure from update()')
             self.init_structures(y0)
-#        pdb.set_trace()
-        
-#        cache = {}
-#        def get_diff(coords):
-#            if not cache.has_key(coords):
-#                Yi_ref = extract_wraparound(y0_resized, coords)
-#                c = self.index2cell(i)
-#                diff = np.abs(Yi_ref - y1[tuple(c)]).reshape(grid_size)
-#                cache[coords] = diff
-#                return diff
-#            else:
-#                return cache[coords]
-        
+
 #        self.tic()
         grid_size = np.product(self.grid_shape)
         reduced_shape = np.array(self.shape) * self.grid_shape / np.array(self.area)
 #        self.time_unn += self.toc()
+        
+        Ycache = {}
+        def get_Yi_ref(coords):
+            if not Ycache.has_key(coords):
+                Yi_ref = extract_wraparound(y0_resized, coords).reshape(grid_size)
+                Ycache[coords] = Yi_ref
+                return Yi_ref
+            else:
+                return Ycache[coords]
         
 #        self.tic()
         PImage = Image.fromarray(y0.astype('float'))
@@ -121,25 +121,27 @@ class DiffeomorphismEstimatorRefineFast():
 #        self.time_resize += self.toc()
         
 
-#        self.tic()
-#        for i in range(self.nsensels):
-        for i in self.unique_indices:
+        self.tic()
+        # About 0.06s/iteration for 40x30 ang 5x5
+        for i in range(self.nsensels):
+#        for i in self.unique_indices:
             xl, yl = self.area_positions_coarse[i]
             xu, yu = self.area_positions_coarse[i] + self.grid_shape
 
-            Yi_ref = extract_wraparound(y0_resized, ((xl, xu), (yl, yu)))
+#            Yi_ref = extract_wraparound(y0_resized, ((xl, xu), (yl, yu)))
+            Yi_ref = get_Yi_ref(((xl, xu), (yl, yu)))
             c = self.index2cell(i)
-            diff = np.abs(Yi_ref - y1[tuple(c)]).reshape(grid_size)
+            diff = np.abs(Yi_ref - y1[tuple(c)])
             
             self.neig_esim_score[i] += diff
 #            self.neig_esim_score[i] += get_diff(((xl, xu), (yl, yu)))
         self.num_samples += 1
-#        self.time_sensels += self.toc()
+        self.time_sensels += self.toc()
         
-#        logger.info('Time spent in average:')
+        logger.info('Time spent in average:')
 #        logger.info('    unn:      %s' % (self.time_unn / self.num_samples))
 #        logger.info('    resizing: %s' % (self.time_resize / self.num_samples))
-#        logger.info('    updating: %s' % (self.time_sensels / self.num_samples))
+        logger.info('    updating: %s' % (self.time_sensels / self.num_samples))
         
     def fill_esim(self):
         for i in range(self.nsensels):
@@ -153,7 +155,7 @@ class DiffeomorphismEstimatorRefineFast():
 #        # Time measure variables
 #        self.time_unn = 0
 #        self.time_resize = 0
-#        self.time_sensels = 0
+        self.time_sensels = 0
         
         self.shape = y.shape
         # for each sensel, create an area
@@ -222,7 +224,7 @@ class DiffeomorphismEstimatorRefineFast():
             
             Returns a Diffeomorphism2D.
         '''
-        self.fill_esim()
+#        self.fill_esim()
         dd = np.zeros((self.shape[0], self.shape[1], 2))
         for i in range(self.nsensels):
             best = np.argmin(self.neig_esim_score[i])
@@ -241,20 +243,6 @@ class DiffeomorphismEstimatorRefineFast():
         cert = np.min(cert_flat, axis=1).reshape(self.shape)
         
         return Diffeomorphism2DContinuous(dd, cert)
-    
-#    def calculate_next_search_areas(self, refined):
-#        diffeo = self.summarize()
-#        dd = diffeo.d
-#        
-#        area_shape = np.ceil(np.array(self.area) / self.refine_factor ** refined).astype('int')
-##        self.area_shape = area_shape
-#        
-#        for i in range(self.nsensels):
-#            cx, cy = self.index2cell(i)
-#            s = np.array(diffeo.d[cx, cy, :])
-#            s_coarse = s * np.array(self.grid_shape) / np.array(area_shape)
-#            area_pos_coarse = (s_coarse - np.array(self.grid_shape) / 2.)
-#            self.area_positions_coarse[i, :] = np.floor(area_pos_coarse).astype('int')
     
     def display(self, report):
         self.show_areas(report)
@@ -302,14 +290,17 @@ class DiffeomorphismEstimatorRefineFast():
         
         report.data('median_displ: ', (dx, dy))
         
-#        pdb.set_trace()
-#        sensels = range(self.shape[1])
-#        sensels = [0, 39, 40 * 15 + 20, 40 * 15 + 21, 40 * 16 + 20, 40 * 16 + 21]
         sensels = [0, self.shape[1],
                    self.shape[1] * (self.shape[0] - 1),
                    self.shape[1] * self.shape[0] - 1,
                    (self.shape[1] * self.shape[0] + self.shape[1]) / 2,
-                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 1]
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 1,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 2,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 3,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 4,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 5,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 6,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 7]
         
         f = report.figure(cols=6)
         for index in sensels:
@@ -322,11 +313,8 @@ class DiffeomorphismEstimatorRefineFast():
                 xl, yl = self.area_positions_coarse[index] * c2f
                 xu, yu = (self.area_positions_coarse[index] + self.grid_shape) * c2f
                 
-#                extent_box = np.array((xl, xu, yl, yu)) 
-                
                 pylab.imshow(esim_score, extent=(yl, yu, xl, xu), interpolation='nearest', origin='lower')
-#                pylab.xlim((-10, self.shape[1] + 10))
-#                pylab.ylim((self.shape[0] + 10, -10))
+
                 pylab.xlim((0, self.shape[1]))
                 pylab.ylim((self.shape[0], 0))
                 
@@ -338,15 +326,14 @@ class DiffeomorphismEstimatorRefineFast():
                 pylab.grid(True, 'major', linewidth=2, linestyle='solid') # , alpha=0.5
                 pylab.grid(True, 'minor', linewidth=.2, linestyle='solid')
 
-#                pylab.xticks(range(self.shape[1] + 1), rotation='vertical', size=5)
-#                pylab.yticks(range(self.shape[0] + 1), size=5)
                 vector = center - start
                 logger.info(' vector : %s' % vector)
-#                pdb.set_trace()
+
+                offs = 0.0
                 if np.sum(vector ** 2) != 0:
-                    pylab.arrow(start[1] + .5, start[0] + .5, vector[1], vector[0], head_width=0.5, length_includes_head=True, color='gray')
+                    pylab.arrow(start[1] + offs, start[0] + offs, vector[1], vector[0], head_width=0.5, length_includes_head=True, color='gray')
                 else:
-                    pylab.plot(start[1] + .5, start[0] + .5, markersize=.5, color='gray')
+                    pylab.plot(start[1] + offs, start[0] + offs, markersize=.5, color='gray')
                 
                 pylab.grid()
         
@@ -359,8 +346,6 @@ class DiffeomorphismEstimatorRefineFast():
     @contract(v='array[NxA]', returns='array[HxWxXxY],N=H*W,A=X*Y')
     def unrolled2multidim(self, v):
         """ De-unrolls both dimensions to obtain a 4d vector. """
-        # Let's make sure we understand what's going on...
-#        assert_allclose((self.N, self.A), v.shape)
         H, W = self.shape
         X, Y = self.grid_shape
         res = np.zeros((H, W, X, Y), v.dtype)
@@ -377,9 +362,6 @@ class DiffeomorphismEstimatorRefineFast():
     def cell2index(self, cell):
         return self.shape[1] * cell[0] + cell[1]
 
-
-    
-    
     def publish(self, pub):
         pass
     
@@ -390,8 +372,7 @@ class DiffeomorphismEstimatorRefineFast():
         
         # Handles only esim, not eord
         self.neig_esim_score += other.neig_esim_score
-    
-    
+
 def get_original_coordinate(grid_index, grid_shape, area_shape, area_position_coarse):
     '''
     
@@ -407,13 +388,17 @@ def get_original_coordinate(grid_index, grid_shape, area_shape, area_position_co
     area_shape = np.array(area_shape)
     area_position_coarse = np.array(area_position_coarse)
     
-    area_position = area_position_coarse.astype('float') * area_shape / grid_shape
+    area_position = (area_position_coarse.astype('float')) * area_shape / grid_shape
+    
+#    if not (np.floor(area_position * grid_shape / area_shape) == area_position_coarse).all():
+#        logger.warn('something wrong with area transformations')
+#        pdb.set_trace()
     
 #    XY = list(itertools.product(np.linspace(0, area_shape[0] - 1, grid_shape[0]), np.linspace(0, area_shape[1] - 1, grid_shape[1])))
-    offs = 1.0 * np.array(area_shape) / grid_shape / 2
-    range0 = 1.0 * np.arange(grid_shape[0]) * area_shape[0] / grid_shape[0] + offs[0]
-    range1 = 1.0 * np.arange(grid_shape[1]) * area_shape[1] / grid_shape[1] + offs[1]
-    XY = np.array(list(itertools.product(range0, range1))).astype('int')
+#    offs = np.array(area_shape).astype('float') / grid_shape / 2
+    range0 = 1.0 * np.arange(0, grid_shape[0] + 0) * area_shape[0] / grid_shape[0]
+    range1 = 1.0 * np.arange(0, grid_shape[1] + 0) * area_shape[1] / grid_shape[1]
+    XY = np.array(list(itertools.product(range0, range1)))
     
 #    local_coord_coarse = (grid_index % grid_shape[1], grid_index / grid_shape[1])
 #    local_coord = np.array(local_coord_coarse).astype('float') * area_shape / grid_shape

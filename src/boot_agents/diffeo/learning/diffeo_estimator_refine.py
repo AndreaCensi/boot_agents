@@ -1,19 +1,16 @@
+'''
+This is the first version of a refining learner. It resizes the image of each  
+search area using a specified interpolator.  
 
+'''
 from . import logger
 from .. import (contract, np)
+from .interpolators import Interpolator, ImageInterpolatorFast, FourierInterpolator
 from PIL import Image #@UnresolvedImport
 from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
-
 from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
 from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
 from reprep.plot_utils import plot_vertical_line 
-import pdb
-from .interpolators import Interpolator, ImageInterpolatorFast, FourierInterpolator
-#interpolators = {'standard-bilinear':{'class':Interpolator, 'args': 'bilinear'},
-#                 'standard-antialias':{'class':Interpolator, 'args': 'antialias'},
-#                 'standard-bicubic':{'class':Interpolator, 'args': 'bicubic'},
-#                 'fft':{'class':FourierInterpolator, 'args': []}
-#                 }
 
 REFINE_STANDARD_BILINEAR = 'standard-bilinear'
 REFINE_STANDARD_BICUBIC = 'standard-bicubic'
