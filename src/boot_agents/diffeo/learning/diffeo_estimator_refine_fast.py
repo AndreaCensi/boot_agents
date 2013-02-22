@@ -13,6 +13,8 @@ import itertools
 from geometry.utils import assert_allclose
 from boot_agents.diffeo import coords_iterate
 from matplotlib.ticker import MultipleLocator
+from compmake.utils import memoize
+import time
 
 REFINE_FAST_BILINEAR = 'fast-bilinear'
 REFINE_FAST_BICUBIC = 'fast-bicubic'
@@ -72,45 +74,87 @@ class DiffeomorphismEstimatorRefineFast():
 #                pdb.set_trace()
                 pass
             cx, cy = self.index2cell(i)
-            s = np.array(diffeo.d[cx, cy, :])
+            s = np.array(diffeo.d[cx, cy, :]).astype('float')
             s_coarse = s * np.array(self.grid_shape) / np.array(area)
-            area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2)
+            area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2.)
             area_positions_coarse[i, :] = area_pos_coarse.astype('int')           
         return (area_positions_coarse, area)
     
     def update_areas(self, diffeo, nrefine):
         self.area_positions_coarse , self.area = self.calculate_areas(diffeo, nrefine)
         
+    def tic(self):
+        self.t0 = time.time()
         
+    def toc(self):
+        t = time.time()
+        return t - self.t0
+         
     @contract(y0='array[MxN]', y1='array[MxN]')
     def update(self, y0, y1):
         # Initiate structures at the first update
         if self.shape is None:
             logger.info('Initiating structure from update()')
             self.init_structures(y0)
+#        pdb.set_trace()
         
+#        cache = {}
+#        def get_diff(coords):
+#            if not cache.has_key(coords):
+#                Yi_ref = extract_wraparound(y0_resized, coords)
+#                c = self.index2cell(i)
+#                diff = np.abs(Yi_ref - y1[tuple(c)]).reshape(grid_size)
+#                cache[coords] = diff
+#                return diff
+#            else:
+#                return cache[coords]
+        
+#        self.tic()
         grid_size = np.product(self.grid_shape)
-        
         reduced_shape = np.array(self.shape) * self.grid_shape / np.array(self.area)
+#        self.time_unn += self.toc()
         
+#        self.tic()
         PImage = Image.fromarray(y0.astype('float'))
         PImage_resized = PImage.resize(np.flipud(reduced_shape), self.intp_method)
         y0_resized = np.array(PImage_resized)
+#        self.time_resize += self.toc()
         
-#        logger.info('update(): looping over all sensels')
-        for i in range(self.nsensels):
+
+#        self.tic()
+#        for i in range(self.nsensels):
+        for i in self.unique_indices:
             xl, yl = self.area_positions_coarse[i]
             xu, yu = self.area_positions_coarse[i] + self.grid_shape
 
             Yi_ref = extract_wraparound(y0_resized, ((xl, xu), (yl, yu)))
-            
-#            c = self.flat_structure.flattening.index2cell[i]
             c = self.index2cell(i)
-            diff = np.abs(Yi_ref.astype('float') - y1[tuple(c)]).reshape(grid_size)
+            diff = np.abs(Yi_ref - y1[tuple(c)]).reshape(grid_size)
+            
             self.neig_esim_score[i] += diff
+#            self.neig_esim_score[i] += get_diff(((xl, xu), (yl, yu)))
         self.num_samples += 1
+#        self.time_sensels += self.toc()
+        
+#        logger.info('Time spent in average:')
+#        logger.info('    unn:      %s' % (self.time_unn / self.num_samples))
+#        logger.info('    resizing: %s' % (self.time_resize / self.num_samples))
+#        logger.info('    updating: %s' % (self.time_sensels / self.num_samples))
+        
+    def fill_esim(self):
+        for i in range(self.nsensels):
+            if not i in self.unique_indices:
+                xl, yl = self.area_positions_coarse[i]
+                xu, yu = self.area_positions_coarse[i] + self.grid_shape
+                i0 = self.unique_coords[((xl, xu), (yl, yu))]
+                self.neig_esim_score[i] = self.neig_esim_score[i0]
 
     def init_structures(self, y):
+#        # Time measure variables
+#        self.time_unn = 0
+#        self.time_resize = 0
+#        self.time_sensels = 0
+        
         self.shape = y.shape
         # for each sensel, create an area
         if not hasattr(self, 'area'):
@@ -156,6 +200,19 @@ class DiffeomorphismEstimatorRefineFast():
         self.buffer_NA = np.zeros(buffer_shape, 'float32')
         
         self.dd = np.zeros((self.shape[0], self.shape[1], 2)) 
+        
+        # Calculate the indices which will have unique search boxes
+        self.unique_coords = {}
+        for i in range(self.nsensels):
+            xl, yl = self.area_positions_coarse[i]
+            xu, yu = self.area_positions_coarse[i] + self.grid_shape
+            
+            # If the key doesn't already have an index, add it.
+            if not self.unique_coords.has_key(((xl, xu), (yl, yu))):
+                self.unique_coords[((xl, xu), (yl, yu))] = i
+        
+        self.unique_indices = self.unique_coords.values()
+        
         logger.info('structure initiated')
 
     def summarize(self):
@@ -165,6 +222,7 @@ class DiffeomorphismEstimatorRefineFast():
             
             Returns a Diffeomorphism2D.
         '''
+        self.fill_esim()
         dd = np.zeros((self.shape[0], self.shape[1], 2))
         for i in range(self.nsensels):
             best = np.argmin(self.neig_esim_score[i])
@@ -246,7 +304,12 @@ class DiffeomorphismEstimatorRefineFast():
         
 #        pdb.set_trace()
 #        sensels = range(self.shape[1])
-        sensels = [0, 39, 40 * 15 + 20, 40 * 15 + 21, 40 * 16 + 20, 40 * 16 + 21]
+#        sensels = [0, 39, 40 * 15 + 20, 40 * 15 + 21, 40 * 16 + 20, 40 * 16 + 21]
+        sensels = [0, self.shape[1],
+                   self.shape[1] * (self.shape[0] - 1),
+                   self.shape[1] * self.shape[0] - 1,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2,
+                   (self.shape[1] * self.shape[0] + self.shape[1]) / 2 + 1]
         
         f = report.figure(cols=6)
         for index in sensels:
@@ -346,16 +409,21 @@ def get_original_coordinate(grid_index, grid_shape, area_shape, area_position_co
     
     area_position = area_position_coarse.astype('float') * area_shape / grid_shape
     
-    XY = list(itertools.product(np.linspace(0, area_shape[0] - 1, grid_shape[0]), np.linspace(0, area_shape[1] - 1, grid_shape[1])))
+#    XY = list(itertools.product(np.linspace(0, area_shape[0] - 1, grid_shape[0]), np.linspace(0, area_shape[1] - 1, grid_shape[1])))
+    offs = 1.0 * np.array(area_shape) / grid_shape / 2
+    range0 = 1.0 * np.arange(grid_shape[0]) * area_shape[0] / grid_shape[0] + offs[0]
+    range1 = 1.0 * np.arange(grid_shape[1]) * area_shape[1] / grid_shape[1] + offs[1]
+    XY = np.array(list(itertools.product(range0, range1))).astype('int')
     
 #    local_coord_coarse = (grid_index % grid_shape[1], grid_index / grid_shape[1])
 #    local_coord = np.array(local_coord_coarse).astype('float') * area_shape / grid_shape
+#    logger.info(' %s = %s' % (XY[grid_index], local_coord))
     local_coord = XY[grid_index]
 #    pdb.set_trace()
         
     return area_position + local_coord
     
-    
+
 def extract_wraparound(Y, ((xl, xu), (yl, yu))):
     '''
     Y[xl:xu,yl:yu] with a wrap around effect
