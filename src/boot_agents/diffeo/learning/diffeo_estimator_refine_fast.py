@@ -11,6 +11,7 @@ from boot_agents.diffeo.plumbing import togrid, add_border
 from matplotlib.ticker import MultipleLocator
 import itertools
 import time
+import pdb
 
 # Methods for resizing the image
 REFINE_FAST_BILINEAR = 'fast-bilinear'
@@ -101,18 +102,25 @@ class DiffeomorphismEstimatorRefineFast():
             self.init_structures(y0)
 
 #        self.tic()
-        grid_size = np.product(self.grid_shape)
-        reduced_shape = np.array(self.shape) * self.grid_shape / np.array(self.area)
+
+        grid_shape = self.grid_shape
+        shape = self.shape
+        
+        grid_size = grid_shape[0] * grid_shape[1]
+        reduced_shape = np.array(shape) * grid_shape / np.array(self.area)
 #        self.time_unn += self.toc()
         
         Ycache = {}
         def get_Yi_ref(coords):
-            if not Ycache.has_key(coords):
-                Yi_ref = extract_wraparound(y0_resized, coords).reshape(grid_size)
-                Ycache[coords] = Yi_ref
-                return Yi_ref
-            else:
-                return Ycache[coords]
+            try:
+                if not Ycache.has_key(coords):
+                    Yi_ref = extract_wraparound(y0_resized, coords).reshape(grid_size)
+                    Ycache[coords] = Yi_ref
+                    return Yi_ref
+                else:
+                    return Ycache[coords]
+            except ValueError:
+                pdb.set_trace()
         
 #        self.tic()
         PImage = Image.fromarray(y0.astype('float'))
@@ -122,26 +130,32 @@ class DiffeomorphismEstimatorRefineFast():
         
 
         self.tic()
+        diff = np.zeros(grid_size)
+        adiff = np.zeros(grid_size)
         # About 0.06s/iteration for 40x30 ang 5x5
-        for i in range(self.nsensels):
+        for i in xrange(self.nsensels):
 #        for i in self.unique_indices:
-            xl, yl = self.area_positions_coarse[i]
-            xu, yu = self.area_positions_coarse[i] + self.grid_shape
-
+            xl = self.area_positions_coarse[i][0]
+            yl = self.area_positions_coarse[i][1]
+            xu = xl + grid_shape[0]
+            yu = yl + grid_shape[1]
 #            Yi_ref = extract_wraparound(y0_resized, ((xl, xu), (yl, yu)))
-            Yi_ref = get_Yi_ref(((xl, xu), (yl, yu)))
-            c = self.index2cell(i)
-            diff = np.abs(Yi_ref - y1[tuple(c)])
+#            (xl, xu, yl, yu)
+            Yi_ref = get_Yi_ref((xl, xu, yl, yu))
+            c = self.index2cell_tuple(i)
+            np.subtract(Yi_ref, y1[c], out=diff)
+            np.fabs(diff, out=adiff)
+            #diff = np.abs(Yi_ref - y1[tuple(c)])
             
-            self.neig_esim_score[i] += diff
+            self.neig_esim_score[i] += adiff
 #            self.neig_esim_score[i] += get_diff(((xl, xu), (yl, yu)))
         self.num_samples += 1
         self.time_sensels += self.toc()
         
-        logger.info('Time spent in average:')
+#        logger.info('Time spent in average:')
 #        logger.info('    unn:      %s' % (self.time_unn / self.num_samples))
 #        logger.info('    resizing: %s' % (self.time_resize / self.num_samples))
-        logger.info('    updating: %s' % (self.time_sensels / self.num_samples))
+#        logger.info('    updating: %s' % (self.time_sensels / self.num_samples))
         
     def fill_esim(self):
         for i in range(self.nsensels):
@@ -358,6 +372,9 @@ class DiffeomorphismEstimatorRefineFast():
     
     def index2cell(self, index):
         return np.array((index / self.shape[1], index % self.shape[1]))
+
+    def index2cell_tuple(self, index):
+        return index / self.shape[1], index % self.shape[1]
     
     def cell2index(self, cell):
         return self.shape[1] * cell[0] + cell[1]
@@ -409,7 +426,7 @@ def get_original_coordinate(grid_index, grid_shape, area_shape, area_position_co
     return area_position + local_coord
     
 
-def extract_wraparound(Y, ((xl, xu), (yl, yu))):
+def extract_wraparound(Y, (xl, xu, yl, yu)):
     '''
     Y[xl:xu,yl:yu] with a wrap around effect
     '''
