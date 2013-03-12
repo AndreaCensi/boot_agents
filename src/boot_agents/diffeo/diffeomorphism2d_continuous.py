@@ -3,6 +3,8 @@ import numpy as np
 from boot_agents.diffeo.diffeo_display import diffeo_stats, angle_legend
 from reprep import Report
 import pickle
+from boot_agents.diffeo.diffeo_visualization import scalaruncertainty2rgb
+import pdb
 
 class Diffeomorphism2DContinuous(Diffeomorphism2D):
     def __init__(self, d, variance=None):
@@ -14,7 +16,10 @@ class Diffeomorphism2DContinuous(Diffeomorphism2D):
         else:
             assert variance.shape == d.shape[:2]
             assert np.isfinite(variance).all()
-            self.variance = variance.astype('float32')
+            
+            # Normalize
+            self.variance_max = np.max(variance)
+            self.variance = 1 - variance.astype('float32') / self.variance_max
             
         # Make them immutable
         self.variance = self.variance.copy()
@@ -24,58 +29,52 @@ class Diffeomorphism2DContinuous(Diffeomorphism2D):
 
     def display(self, report, full=False, nbins=100):
         """ Displays this diffeomorphism. """
-        stats = diffeo_stats(self.d)
-        angle = stats.angle
-        norm = stats.norm
-        
-        norm_rgb = self.get_rgb_norm()
-        angle_rgb = self.get_rgb_angle()
-        info_rgb = self.get_rgb_info()
-        
+        # Inherit method from superclass
+        Diffeomorphism2D.display(self, report, full, nbins)
+
+        # Additional plots for the continuous diffeo
         Y, X = np.meshgrid(range(self.d.shape[1]), range(self.d.shape[0]))
         
         xq = (self.d[:, :, 0] - X)
         xqf = xq.reshape(self.d.size / 2)
         yq = (self.d[:, :, 1] - Y)
         yqf = yq.reshape(self.d.size / 2)
-#        pdb.set_trace()
-        
-        f0 = report.figure(cols=9)
+
+        f0 = report.figure(cols=6)
         with f0.plot('angle_legend', caption='Angle legend') as pylab:
             pylab.imshow(angle_legend((20, 20), 0))
-        
-        f = report.figure(cols=9)
-        f.data_rgb('norm_rgb', norm_rgb,
-                    caption="Norm(D). white=0, blue=maximum (%.2f). " % np.max(norm))
-        f.data_rgb('phase_rgb', angle_rgb,
-                    caption="Phase(D).")
-        
-        f.data_rgb('var_rgb', info_rgb,
-                    caption='Uncertainty (green=sure, red=unknown)')
 
-        with f.plot('norm_hist', caption='histogram of norm values') as pylab:
-            pylab.hist(norm.flat, nbins)
-
-        angles = np.array(angle.flat)
-        valid_angles = angles[np.logical_not(np.isnan(angles))]
-        with f.plot('angle_hist', caption='histogram of angle values '
-                    '(excluding where norm=0)') as pylab:
-            pylab.hist(valid_angles, nbins)
-
-        with f.plot('var_hist', caption='histogram of certainty values') as pylab:
-            pylab.hist(self.variance.flat, nbins)
-
-        with f.plot('x_hist', caption='x displacement') as pylab:
+        with f0.plot('quiver', caption='quiver plot') as pylab:
+            pylab.quiver(Y, X, yq, xq)
+            
+        if hasattr(self, 'plot_ranges') and hasattr(self, 'variance_max'):
+            if self.plot_ranges.has_key('uncertainty_max'):
+                
+                if hasattr(self, 'variance_max'):
+                    varmax_text = '(variance max %s)' % self.variance_max
+                else:
+                    varmax_text = ''
+#                pdb.set_trace()
+                variance_max = self.plot_ranges['uncertainty_max']
+                
+                uncert = self.get_scalar_info()
+                variance = (1 - uncert) * self.variance_max
+                uncert_new = 1 - variance / variance_max 
+                info_rgb = scalaruncertainty2rgb(uncert_new)
+                f0.data_rgb('uncert_fixed', info_rgb,
+                            caption='Uncertainty (green=sure, red=unknown %s)' % varmax_text)
+                
+            
+        with f0.plot('x_hist', caption='x displacement') as pylab:
             pylab.hist(xqf, nbins)
             
-        with f.plot('y_hist', caption='y displacement') as pylab:
+        with f0.plot('y_hist', caption='y displacement') as pylab:
             pylab.hist(yqf, nbins)
             
-            
-        with f.plot('quiver', caption='quiver plot') as pylab:
-            pylab.quiver(Y, X, yq, xq)
+        
 
 def make_report(learners):
+    print('make_report(learners) in diffeomorphism2d_continuous is used')
     for i, name in enumerate(learners):
         # init report
         report = Report(learners[i])

@@ -3,11 +3,12 @@ from . import (diffeo_apply, contract, np, diffeo_to_rgb_norm,
     diffeo_local_differences, diffeo_identity)
 from geometry.utils import assert_allclose
 from boot_agents.diffeo.diffeo_apply_quick import FastDiffeoApply
+import pdb
 
 
 class Diffeomorphism2D:
                 
-    @contract(d='valid_diffeomorphism,array[HxWx2]', variance='None|array[HxW](>=0,<=1)')
+    @contract(d='valid_diffeomorphism,array[HxWx2]', variance='None|array[HxW](>=0)')
     def __init__(self, d, variance=None, E2=None, E3=None, E4=None):
         ''' 
             This is a diffeomorphism + variance.
@@ -33,6 +34,7 @@ class Diffeomorphism2D:
             assert variance.shape == d.shape[:2]
             assert np.isfinite(variance).all()
             self.variance = variance.astype('float32')
+            
             
         if E2 is not None:
             self.E2 = E2
@@ -60,7 +62,7 @@ class Diffeomorphism2D:
     def identity(shape):
         return Diffeomorphism2D(diffeo_identity(shape))
 
-    @contract(returns='array[HxW](>=0,<=1)')
+#    @contract(returns='array[HxW](>=0,<=1)')
     def get_scalar_info(self):
         """ 
             Returns a scalar value which has the interpretation
@@ -213,8 +215,13 @@ class Diffeomorphism2D:
         f.data_rgb('phase_rgb', angle_rgb,
                     caption="Phase(D).")
         
+        if hasattr(self, 'variance_max'):
+            varmax_text = '(variance max %s)' % self.variance_max
+        else:
+            varmax_text = ''  
+        
         f.data_rgb('var_rgb', info_rgb,
-                    caption='Uncertainty (green=sure, red=unknown)')
+                    caption='Uncertainty (green=sure, red=unknown %s)' % varmax_text)
 
         with f.plot('norm_hist', caption='histogram of norm values') as pylab:
             pylab.hist(norm.flat, nbins)
@@ -224,8 +231,10 @@ class Diffeomorphism2D:
         with f.plot('angle_hist', caption='histogram of angle values '
                     '(excluding where norm=0)') as pylab:
             pylab.hist(valid_angles, nbins)
-
-        with f.plot('var_hist', caption='histogram of certainty values') as pylab:
-            pylab.hist(self.variance.flat, nbins)
-
- 
+        
+        try:
+            with f.plot('var_hist', caption='histogram of certainty values') as pylab:
+                pylab.hist(self.variance.flat, nbins)
+        except:
+            print('hist plot exception')
+#            pdb.set_trace()
