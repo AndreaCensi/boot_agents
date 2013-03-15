@@ -66,10 +66,13 @@ class DiffeomorphismEstimatorRefineFast():
         self.area_positions_coarse = areas_position
         self.area = tuple(area_shape)
 
-        
     def calculate_areas(self, diffeo, nrefine):
         area_positions_coarse = np.zeros((self.nsensels, 2))
-        area = tuple(np.ceil(np.array(self.area) / self.refine_factor ** nrefine).astype('int'))
+        area = tuple(np.ceil(np.array(self.area) * 1.0 / (self.refine_factor ** nrefine)).astype('int'))
+        
+        if not area[0] >= 1 or not area[1] >= 1:
+            print str(area)
+            logger.error('something went wrong with the size of the search area')
         
         for i in range(self.nsensels):
             cx, cy = self.index2cell(i)

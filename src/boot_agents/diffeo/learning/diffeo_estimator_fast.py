@@ -41,7 +41,7 @@ class DiffeomorphismEstimatorFaster():
         return self.shape is not None
              
     @contract(y0='array[MxN]', y1='array[MxN]')
-    def update(self, y0, y1):
+    def update(self, y0, y1, u0=None, x0=None):
         if y0.dtype == np.uint8:
             y0 = (y0 / 255.0).astype('float32')
             y1 = (y1 / 255.0).astype('float32')
