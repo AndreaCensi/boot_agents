@@ -23,7 +23,7 @@ class DiffeomorphismEstimatorRefineFast():
     
     '''
     @contract(max_displ='seq[2](>0,<1)')
-    def __init__(self, max_displ, refine_method, resolution, refine_factor, update_uncertainty=False):
+    def __init__(self, max_displ, refine_method, resolution, refine_factor, update_uncertainty=False, info={}):
         '''
         
         :param max_displ:          Fraction of the search area
@@ -39,6 +39,9 @@ class DiffeomorphismEstimatorRefineFast():
         self.last_y1 = None
         self.grid_shape = tuple(resolution)
         self.refine_factor = refine_factor
+        self.y_gradx = None
+        self.y_grady = None
+        self.info = info
         
             
         # Fast methods
@@ -102,6 +105,11 @@ class DiffeomorphismEstimatorRefineFast():
             self.init_structures(y0)
 
 #        self.tic()
+#        gx, gy = np.gradient(y0)
+        gx = np.diff(y0, axis=0)
+        gy = np.diff(y0, axis=1)
+        self.y_gradx += np.abs(gx)
+        self.y_grady += np.abs(gy)
 
         grid_shape = self.grid_shape
         shape = self.shape
@@ -170,6 +178,11 @@ class DiffeomorphismEstimatorRefineFast():
 #        self.time_unn = 0
 #        self.time_resize = 0
         self.time_sensels = 0
+        
+        gradx_shape = (y.shape[0] - 1, y.shape[1])
+        grady_shape = (y.shape[0], y.shape[1] - 1) 
+        self.y_gradx = np.zeros(gradx_shape)
+        self.y_grady = np.zeros(grady_shape)
         
         self.shape = y.shape
         # for each sensel, create an area
@@ -252,11 +265,17 @@ class DiffeomorphismEstimatorRefineFast():
 #            logger.info('local coordinate : ' + str(best_coord - ic))
             dd[tuple(ic)] = best_coord
 
-            
-        cert_flat = (self.neig_esim_score - np.min(self.neig_esim_score)) / (np.max(self.neig_esim_score) - np.min(self.neig_esim_score))
+#        cert_flat = (self.neig_esim_score - np.min(self.neig_esim_score)) / (np.max(self.neig_esim_score) - np.min(self.neig_esim_score))
+        cert_flat = (self.neig_esim_score - np.min(self.neig_esim_score)) / self.num_samples
         cert = np.min(cert_flat, axis=1).reshape(self.shape)
         
-        return Diffeomorphism2DContinuous(dd, cert)
+        # Pass plot ranges data to the diffeo
+        diffeo = Diffeomorphism2DContinuous(dd, cert)
+
+        if self.info.has_key('plot_ranges'):
+            diffeo.plot_ranges = self.info['plot_ranges']
+            
+        return diffeo
     
     def display(self, report):
         self.show_areas(report)
@@ -275,6 +294,29 @@ class DiffeomorphismEstimatorRefineFast():
         
         with f.plot('esim', caption='esim') as pylab:
             pylab.imshow(esim)
+            
+        self.show_gradient(report)
+        
+    def show_gradient(self, report):
+        f = report.figure(cols=3)
+        
+        gradx = self.y_gradx / self.num_samples
+        grady = self.y_grady / self.num_samples
+#        grad = np.sqrt(gradx ** 2 + grady ** 2)
+        vmax = np.max((np.percentile(gradx, 90), np.percentile(grady, 90)))
+        with f.plot('gradx', caption='E{gradient_x}, max value: %s' % np.max(gradx)) as pylab:
+            pylab.imshow(gradx, vmin=0, vmax=vmax)
+        with f.plot('grady', caption='E{gradient_y}, max value: %s' % np.max(grady)) as pylab:
+            pylab.imshow(grady, vmin=0, vmax=vmax)
+#        with f.plot('grad', caption='E{gradient}, max value: %s' % np.max(grad)) as pylab:
+#            pylab.imshow(grad, vmin=0, vmax=np.percentile(grad, 90))
+        
+        with f.plot('gradxu', caption='E{gradient_x}, max value: %s' % np.max(gradx)) as pylab:
+            pylab.imshow(gradx)
+        with f.plot('gradyu', caption='E{gradient_y}, max value: %s' % np.max(grady)) as pylab:
+            pylab.imshow(grady)
+#        with f.plot('gradu', caption='E{gradient}, max value: %s' % np.max(grad)) as pylab:
+#            pylab.imshow(grad)    
 
     def show_interp_images(self, y0, outdir='out/subim/'):
         arrays = self.interpolator.arrays
