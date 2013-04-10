@@ -1,11 +1,11 @@
-#Here are a couple references on computing sample variance.
+# Here are a couple references on computing sample variance.
 #
-#Chan, Tony F.; Golub, Gene H.; LeVeque, Randall J. (1983). 
-#Algorithms for Computing the Sample Variance: Analysis and Recommendations. 
-#The American Statistician 37, 242-247.
+# Chan, Tony F.; Golub, Gene H.; LeVeque, Randall J. (1983). 
+# Algorithms for Computing the Sample Variance: Analysis and Recommendations. 
+# The American Statistician 37, 242-247.
 #
-#Ling, Robert F. (1974). Comparison of Several Algorithms for Computing Sample 
-#Means and Variances. Journal of the American Statistical Association,
+# Ling, Robert F. (1974). Comparison of Several Algorithms for Computing Sample 
+# Means and Variances. Journal of the American Statistical Association,
 # Vol. 69, No. 348, 859-866. 
 
 from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
@@ -41,7 +41,7 @@ class MeanCovariance:
         else:
             # TODO: check dimensions
             if not (value.shape == self.maximum.shape):
-                raise ValueError('Value shape changed: %s -> %s' %
+                raise ValueError('Value shape changed: %s -> %s' % 
                                  (self.maximum.shape, value.shape))
             self.maximum = np.maximum(value, self.maximum)
             self.minimum = np.minimum(value, self.minimum)
@@ -116,11 +116,22 @@ class MeanCovariance:
                 pylab.plot(y_min, 's', label='min')
                 y_axis_extra_space(pylab)
                 pylab.legend()
+            
+            stddev = np.sqrt(P.diagonal())
+            with pub.plot('stddev') as pylab:
+                style_ieee_fullcol_xy(pylab)
+                pylab.plot(stddev, 's', label='stddev')
+                y_axis_extra_space(pylab)
+                pylab.legend()
+                
+            self.print_odd_ones(pub, P, perc=50, ratio=0.2)
+
 
             from boot_agents.misc_utils.tensors_display import pub_tensor2_cov
             pub_tensor2_cov(pub, 'covariance', P)
-            #pub.array_as_image('covariance', P)
+            # pub.array_as_image('covariance', P)
             
+
             # TODO: get rid of this?
             R = R.copy()
             np.fill_diagonal(R, np.nan)
@@ -146,3 +157,32 @@ class MeanCovariance:
             stats += 'std: %g\n' % np.sqrt(P)
             pub.text('stats', stats)
 
+    def print_odd_ones(self, pub, P, perc=50, ratio=0.2):
+        std = np.sqrt(P.diagonal())
+        odd, okay = find_odd(std, perc, ratio)
+        
+        pub.text('okay', '%s' % list(okay))
+        pub.text('odd', '%s' % list(odd))
+        
+        std = std.copy()
+        with pub.plot('odd') as pylab:
+            style_ieee_fullcol_xy(pylab)
+            pylab.plot(odd, std[odd], 'rs')
+            pylab.plot(okay, std[okay], 'gs')
+            y_axis_extra_space(pylab)
+            
+            
+def find_odd(values, perc, ratio):
+    """ Writes the ones that have smaller variance.
+        Defined as ratio * value at percentile """
+    v = np.percentile(values, perc)
+    threshold = v * ratio
+    odd, = np.nonzero(values < threshold)
+    okay, = np.nonzero(values >= threshold) 
+    assert len(odd) + len(okay) == len(values)
+    return odd, okay
+    
+        
+        
+        
+        

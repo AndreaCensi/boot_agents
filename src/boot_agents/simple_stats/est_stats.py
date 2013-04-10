@@ -75,10 +75,11 @@ class EstStats(ExpSwitcher):
         pub.array_as_image('Py_inv', Py_inv)
         pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
 
-        with pub.plot('Py_svd') as pylab: # XXX: use spectrum
+        with pub.plot('Py_svd') as pylab:  # XXX: use spectrum
             style_ieee_fullcol_xy(pylab)
             _, s, _ = np.linalg.svd(Py)
             s /= s[0]
             pylab.semilogy(s, 'bx-')
 
 
+        self.y_stats.publish(pub.section('y_stats'))

@@ -1,15 +1,19 @@
-from . import contract, MeanVariance, Publisher, generalized_gradient
+from . import contract, MeanVariance, Publisher, generalized_gradient, np
 
 
 __all__ = ['ImageStats']
 
 
 class ImageStats:
-    """ A class to compute all statistics of an image (2D float) stream. """
+    """ A class to compute statistics of an image (2D float) stream. """
     
     def __init__(self):
+        # Mean and variance of the luminance
         self.mv = MeanVariance()
+        # Mean and variance of the luminance gradient
         self.gmv = [MeanVariance(), MeanVariance()] 
+        # Mean and variance of the luminance gradient norm
+        self.gnmv = MeanVariance()
         self.num_samples = 0
         self.last_y = None
 
@@ -19,14 +23,20 @@ class ImageStats:
     @contract(y='array[HxW]')
     def update(self, y, dt=1.0):
         self.last_y = y.copy()
-        gy = generalized_gradient(y)
         
+        # luminance
         self.mv.update(y, dt)
-        for i in range(2):
-            self.gmv[i].update(gy[i, ...], dt)
+        
+        # luminance gradient
+        gy = generalized_gradient(y)    
+        self.gmv[0].update(gy[0, ...], dt)
+        self.gmv[1].update(gy[1, ...], dt)
 
+        # gradient norm
+        gradient_norm = np.hypot(gy[0, ...], gy[1, ...])
+        self.gnmv.update(gradient_norm, dt)
+                
         self.num_samples += dt
-
 
     @contract(pub=Publisher)
     def publish(self, pub):
@@ -39,19 +49,19 @@ class ImageStats:
         stats += 'Num samples: %s' % self.num_samples
         pub.text('stats', stats)
 
-        mean, stddev = self.mv.get_mean_stddev()         
-        pub.array_as_image('mean', mean)
-        pub.array_as_image('stddev', stddev)
-        
-        for i in range(2):
-            sec = pub.section('grad%d' % i)
-            mean, stddev = self.gmv[i].get_mean_stddev()
-            sec.array_as_image('mean', mean)
-            sec.array_as_image('stddev', stddev)
+        publish_section_mean_stddev(pub, 'y', self.mv)
+        publish_section_mean_stddev(pub, 'grad0', self.gmv[0])
+        publish_section_mean_stddev(pub, 'grad1', self.gmv[1])
+        publish_section_mean_stddev(pub, 'gradient_norm', self.gnmv)
             
-      
-
-
-
+    
+def publish_section_mean_stddev(pub, name, mv):
+    sec = pub.section(name)
+    mean, stddev = mv.get_mean_stddev()
+    sec.array_as_image('mean', mean)
+    sec.array_as_image('sdtdev', stddev, filter='scale')
+    
+    
+    
     
     
