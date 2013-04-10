@@ -2,12 +2,13 @@
 
 from . import  np, contract
 from numpy.linalg.linalg import LinAlgError
+import warnings
 
 
 @contract(M='array[NxNxK]', P='array[NxN]', Q='array[KxK]', returns='array[NxNxK]')
 def get_expected_T_from_M_P_Q(M, P, Q):
     """ 
-        Implements the formula
+        Implements the formula: ..
             
             T^{svi} = P^{sx} M^{v}_{xj} Q^{ij}
     """
@@ -40,8 +41,12 @@ def obtain_TP_inv_from_TP(T, P):
         try:
             Mk = np.linalg.solve(P, Tk) 
         except LinAlgError:
-            raise
-        M[:, :, k] = Mk.T # note transpose (to check)
+            # TODO: what shall we do here?
+            msg = 'in obtain_TP_inv_from_TP we found a singular matrix for linalg.solve'
+            msg += '; I will try to use the least square solution, but I did not test it'
+            warnings.warn(msg)
+            Mk, residuals, rank, s = np.linalg.lstsq(P, Tk)
+        M[:, :, k] = Mk.T  # note transpose (to check)
     return M
 
 
