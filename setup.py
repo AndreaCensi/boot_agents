@@ -31,7 +31,8 @@ setup(name='BootAgents',
       package_dir={'':'src'},
       packages=find_packages('src'),
       install_requires=[
-        #'scikits.image', # TODO: put conditional 
+        # 'scikits.image', # TODO: put conditional
+        'astatsa',
         'BootOlympics>=1.0,<2'],
       setup_requires=['nose>=1.0'],
       tests_require=['nose>=1.0', 'rudolf', 'nose-progressive', 'nose-cov'],

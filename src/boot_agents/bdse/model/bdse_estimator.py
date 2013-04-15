@@ -4,6 +4,9 @@ from boot_agents.misc_utils.tensors_display import (pub_tensor2_cov,
 from boot_agents.utils import Expectation, MeanCovariance, outer
 from geometry import printm
 from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q
+from bootstrapping_olympics.utils.strings import indent
+import traceback
+from boot_agents import logger
 
 
 
@@ -12,6 +15,10 @@ __all__ = ['BDSEEstimator']
 
 class BDSEEstimator:
     """
+        Estimates a BDSE model.
+        
+        Tensors:
+        
          M^s_vi   (N) x (N x K)
          N^s_i    (N) x (K)
          T^svi    (NxNxK)
@@ -29,13 +36,16 @@ class BDSEEstimator:
         self.y_stats = MeanCovariance()
         self.u_stats = MeanCovariance()
         self.rcond = rcond
+        self.once = False
 
     @contract(u='array[K],K>0,array_finite',
               y='array[N],N>0,array_finite',
               y_dot='array[N],array_finite', w='>0')
     def update(self, y, u, y_dot, w=1.0):
+        self.once = True
+        
         self.n = y.size
-        self.k = u.size # XXX: check
+        self.k = u.size  # XXX: check
 
         self.y_stats.update(y, w)
         self.u_stats.update(u, w)
@@ -90,7 +100,7 @@ class BDSEEstimator:
             printm('MYav1', Myav)
             y2 = np.linalg.solve(P, self.y_stats.get_mean())
             Myav2 = np.tensordot(T, y2, axes=(0, 0))
-            #Myav = np.tensordot(T, y2, axes=(1, 0))
+            # Myav = np.tensordot(T, y2, axes=(1, 0))
             printm('MYav2', Myav2)
 
         if False:
@@ -106,8 +116,19 @@ class BDSEEstimator:
         return BDSEmodel(M, N)
 
     def publish(self, pub):
+        if not self.once:
+            pub.text('warning', 'not updated yet')
+            return
+        
         pub.text('rcond', '%g' % self.rcond)
-        model = self.get_model()
+        try:
+            model = self.get_model()
+        except Exception as e:
+            msg = 'Could not publish the model:\n'
+            msg += indent(traceback.format_exc(e), '> ')
+            logger.error(msg)
+            pub.text('error', msg)
+            return 
         model.publish(pub.section('model'))
 
         pub = pub.section('tensors')

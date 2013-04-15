@@ -1,14 +1,17 @@
-from . import BGDSEstimator, smooth2d, np, contract, BGDSPredictor
+from . import np, contract
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, Expectation, RemoveDoubles
 from bootstrapping_olympics import UnsupportedSpec
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
+from boot_agents.bgds.bgds_estimator import BGDSEstimator
+from boot_agents.bgds.utils import smooth2d
+from boot_agents.bgds.bgds_predictor import BGDSPredictor
 
 
 __all__ = ['BGDSAgent']
 
-MINIMUM_FOR_PREDICTION = 200 # XXX
+MINIMUM_FOR_PREDICTION = 200  # XXX
 
 
 class BGDSAgent(ExpSwitcher):
@@ -68,7 +71,7 @@ class BGDSAgent(ExpSwitcher):
         if self.fixed_dt:
             # dt is not reliable sometime
             # you don't want to give high weight to higher dt samples.
-            dt = 1 # XXX: add in constants
+            dt = 1  # XXX: add in constants
 
         self.rd.update(y0)
         if not self.rd.ready():
@@ -129,7 +132,7 @@ class BGDSAgent(ExpSwitcher):
 
         self.bgds_estimator.publish(publisher.section('model'))
 
-        if False and self.is2D: # TODO: implement separately
+        if False and self.is2D:  # TODO: implement separately
             sec = publisher.section('preprocessing')
             sec.array_as_image('last_y0', self.last_y0, filter='scale')
             sec.array_as_image('last_y', self.last_y, filter='scale')
@@ -145,13 +148,13 @@ class BGDSAgent(ExpSwitcher):
                 sec.array_as_image('y_disag_s',
                                    self.y_disag_s.get_value(), filter='posneg')
 
-        if False: # XXX
+        if False:  # XXX
             self.publish_u_stats(publisher.section('u_stats'))
 
     def publish_u_stats(self, pub):
         T = len(self.u_stats)
         print('Obtained %d obs' % T)
-        K = 2 # FIXME: change this
+        K = 2  # FIXME: change this
         u_act = np.zeros((T, K))
         u_est = np.zeros((T, K))
         u_mis = np.zeros((T, K))
@@ -161,7 +164,7 @@ class BGDSAgent(ExpSwitcher):
         id_episode2num = {}
         num2id_episode = {}
         id_episode2start = {}
-        #cmd2faults = {}
+        # cmd2faults = {}
         for t, stats in enumerate(self.u_stats):
             u_act[t, :] = stats['u']
             u_est[t, :] = stats['u_est']
@@ -201,7 +204,7 @@ class BGDSAgent(ExpSwitcher):
 #                    u_mis_smooth = scipy.signal.convolve(u_mis[et, k], 
 #                     np.ones(scale) / scale,
 #                                                         mode='same')
-                    pylab.plot(e_timestamps, u_mis[et, k], #u_mis_smooth,
+                    pylab.plot(e_timestamps, u_mis[et, k],  # u_mis_smooth,
                                '%s-' % cmd2color[k], label='u[%d]' % k,
                                markersize=markersize)
                 x_axis_set(pylab, episode_bounds[0], episode_bounds[1])

@@ -19,8 +19,8 @@ class BDSEAgent(AgentInterface):
             :param servo: extra parameters for servo.
             :param skip: only used one every skip observations.
         """
-        agents = BootOlympicsConfig.agents
-        self.explorer = agents.instance(explorer) #@UndefinedVariable
+        agents = BootOlympicsConfig.agents  # @UndefinedVariable
+        self.explorer = agents.instance(explorer)  # @UndefinedVariable
         self.skip = skip
         self.change_fraction = change_fraction
         self.servo = servo
@@ -65,7 +65,7 @@ class BDSEAgent(AgentInterface):
         self.y_stats.update(y, dt)
 
         if obs['episode_start']:
-            #self.info('episode_changed: %s' % obs['id_episode'])
+            # self.info('episode_changed: %s' % obs['id_episode'])
             self.y_deriv.reset()
             return
 

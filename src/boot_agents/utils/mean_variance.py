@@ -1,4 +1,4 @@
-from . import Expectation, contract, np, Publisher
+from . import contract, np, Publisher, Expectation
 
 __all__ = ['MeanVariance']
 

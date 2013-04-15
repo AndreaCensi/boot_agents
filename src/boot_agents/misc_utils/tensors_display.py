@@ -117,7 +117,7 @@ def pub_save_versions(pub, rgb):
 def pub_tensor2_cov(pub, name, V, rcond=None):
     """ Publishes a tensor which is supposed to represent a covariance. """
     sub = pub.section(name)
-    sub.array_as_image('posneg', V) # XXX: redundant, but don't want to change code
+    sub.array_as_image('posneg', V)  # XXX: redundant, but don't want to change code
     sub.array('value', V)
     rgb = posneg(V)
     pub_save_versions(sub, rgb)
@@ -135,7 +135,7 @@ def pub_svd_decomp(parent, V, rcond=None):
     
 
 def plot_matrix_svd(pylab, M, rcond=None):
-    u, s, v = np.linalg.svd(M) #@UnusedVariable
+    u, s, v = np.linalg.svd(M)  # @UnusedVariable
     sn = s / s[0]
     pylab.semilogy(sn, 'bx-')
     if rcond is not None:
@@ -147,7 +147,7 @@ def plot_matrix_svd(pylab, M, rcond=None):
 def pub_tensor2(pub, name, V):
     """ Publishes a generic 2D tensor """
     section = pub.section(name)
-    section.array('value', V) # TODO
+    section.array('value', V)  # TODO
     value_rgb = posneg(V)
     pub_save_versions(section, value_rgb)
     pub_stats(section, V)
@@ -161,7 +161,10 @@ class BV1Style:
     
 @contract(V='array[NxK]')
 def pub_tensor2_comp1(pub, name, V):
-    """ Publishes a generic NxK tensor, plotting along the last component. """
+    """ 
+        Publishes a generic NxK tensor, plotting along the last component.
+        Assumes that it can be either pos or neg.
+    """
     section = pub.section(name)
     section.array('value', V)
     
@@ -176,9 +179,16 @@ def pub_tensor2_comp1(pub, name, V):
     for i in range(V.shape[1]):
         sub2 = sub.section('%d' % i)
         sub2.array('value', V[:, i])
-        with sub2.plot('plot') as pylab:
+        
+        with sub2.plot('plot') as pylab: 
             pylab.plot(V[:, i])
-
+            style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V[:, i])))
+            
+        # This is scaled with the maximum of all slices
+        with sub2.plot('plot_scaled') as pylab: 
+            pylab.plot(V[:, i])
+            style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V)))
+        
         if False:
             with sub2.plot('plotB', figsize=figsize) as pylab:
                 pylab.plot(V[:, i], **dots_format)

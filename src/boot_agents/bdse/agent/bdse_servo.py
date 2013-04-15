@@ -1,4 +1,5 @@
 from . import contract, np
+import warnings
 
 
 class BDSEServo():
@@ -32,7 +33,6 @@ class BDSEServo():
             self.initial_error = np.linalg.norm(self.y - self.goal)
 
     def choose_commands(self):
-        
 #        error = self.y - self.goal
 
 #        if self.strategy == 'S1n':
@@ -56,10 +56,12 @@ class BDSEServo():
         else:
             raise ValueError('not implemented %r' % self.linpoint)
 
-        # XXX check u=0
-        u = u / np.abs(u).max()
+        
+        u_max = np.abs(u).max()
+        if u_max > 0:
+            u = u / u_max
 
-        #current_error = np.linalg.norm(error)
+        # current_error = np.linalg.norm(error)
         if self.strategy in ['S1', 'S1n', 'S2']:
             pass
         elif self.strategy in ['S2d']:
@@ -76,9 +78,57 @@ class BDSEServo():
  
         u = clip(u, self.commands_spec)
         return u
+    
+    
+    def choose_commands2(self):
+        warnings.warn('Using choose_commands2')
+        if self.linpoint == 'current':
+            u = self.bdse_model.get_servo_descent_direction(self.y, self.goal)
+        elif self.linpoint == 'goal':
+            u = -self.bdse_model.get_servo_descent_direction(self.goal, self.y)
+        elif self.linpoint == 'middle':
+            u1 = self.bdse_model.get_servo_descent_direction(self.y, self.goal)
+            u2 = -self.bdse_model.get_servo_descent_direction(self.goal, self.y)
+            u = 0.5 * u1 + 0.5 * u2
+        else:
+            raise ValueError('not implemented %r' % self.linpoint)
+        
+            
+        u_raw = u.copy()
+        
+        # XXX check u=0
+
+        u_max = np.abs(u).max()
+        if u_max > 0:
+            u = u / u_max
+            
+#         # current_error = np.linalg.norm(error)
+#         if self.strategy in ['S1', 'S1n', 'S2']:
+#             pass
+#         elif self.strategy in ['S2d']:
+#             initial_error = (self.initial_error
+#                              if self.initial_error > 0 else 1)
+#             current_error = np.linalg.norm(self.y - self.goal)
+#             u = u * current_error / initial_error
+#         else:
+#             assert False
+# 
+#         u = clip(u, self.commands_spec)
+
+        
+        u = u * self.gain
+ 
+        u = clip(u, self.commands_spec)
+        
+        res = {}
+        res['linpoint'] = self.linpoint
+        res['u_raw'] = u_raw
+        res['u'] = u
+         
+        return res
 
 
-def clip(x, stream_spec): # TODO: move away
+def clip(x, stream_spec):  # TODO: move away
     x = np.maximum(x, stream_spec.streamels['lower'])
     x = np.minimum(x, stream_spec.streamels['upper'])
     return x

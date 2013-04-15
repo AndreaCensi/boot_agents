@@ -2,11 +2,15 @@ from bootstrapping_olympics import Publisher
 
 from .. import logger, np, contract
 
+from astatsa.expectation import Expectation, ExpectationFast
+
+
+
 from .shape_utils import *
 from .outerproduct import *
 from .cov2corr import *
 from .nonparametric import *
-from .expectation import *
+# from .expectation import *
 from .mean_variance import *
 from .mean_covariance import *
 from .prediction_stats import *
@@ -21,6 +25,6 @@ from .gradients import *
 from .image_stats import *
 
 
-from .expectation_test import *
+# from .expectation_test import *
 from .nonparametric_test import *
 from .gradients_test import *

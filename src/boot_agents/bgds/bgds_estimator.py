@@ -5,6 +5,7 @@ from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tenso
     display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
 from boot_agents.utils.gradients import generalized_gradient
+from bootstrapping_olympics.utils.np_comparisons import check_all_finite
 
 
 __all__ = ['BGDSEstimator']
@@ -42,18 +43,19 @@ class BGDSEstimator:
         self.H = None
         self.H_needs_update = True
 
+        self.once = False
+        
     def get_model(self):
         return BGDSmodel(self.get_H(), self.get_C())
 
     @contract(y='(array[M]|array[MxN]),shape(x)',
             y_dot='shape(x)', u='array[K]', dt='>0')
     def update(self, y, y_dot, u, dt):
-        if not np.isfinite(y).all(): # XXX: this is wasteful
-            raise ValueError('Invalid values in y.')
-        if not np.isfinite(y_dot).all():
-            raise ValueError('Invalid values in y_dot.')
-        if not np.isfinite(u).all():
-            raise ValueError('Invalid values in u.')
+        self.once = True
+        check_all_finite(y)
+        check_all_finite(y_dot)
+        check_all_finite(u)
+   
         # TODO: check shape is conserved
         self.is1D = y.ndim == 1
         self.is2D = y.ndim == 2
@@ -122,7 +124,7 @@ class BGDSEstimator:
                     G_s = G[:, :, i].squeeze()
                     R_s = R[:, :, i].squeeze()
                     H_s = np.dot(Qinv, np.dot(G_s, R_s))
-                    H[:, 0, i] = H_s # XXX: not sure, not tested
+                    H[:, 0, i] = H_s  # XXX: not sure, not tested
             self.H = H
             self.H_needs_update = False
         return self.H
@@ -140,7 +142,7 @@ class BGDSEstimator:
                     B_s = B[:, i, j].squeeze()
                     C_s = np.dot(Qinv, B_s)
                     self.C[:, i, j] = C_s
-            else: # 1D
+            else:  # 1D
                 for i in range(B.shape[-1]):
                     B_s = B[:, i].squeeze()
                     C_s = np.dot(Qinv, B_s)
@@ -153,6 +155,10 @@ class BGDSEstimator:
         return np.linalg.pinv(Q)
 
     def publish(self, pub):
+        if not self.once:
+            pub.text('warning', 'Not updated yet.')
+            return 
+        
         if self.is2D:
             self.publish_2d(pub)
         else:
