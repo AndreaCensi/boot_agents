@@ -41,9 +41,6 @@ class BDSEstimator2:
 
         self.y_dot_pred_stats = PredictionStats('y_dot', 'y_dot_pred')
         self.Py_dot_pred_stats = PredictionStats('Py_dot', 'Py_dot_pred')
-#
-#        self.y_dots_stats = MeanCovariance()
-#        self.Py_dots_stats = MeanCovariance()
 
         self.fits1 = Expectation()
         self.fits2 = Expectation()
@@ -82,7 +79,7 @@ class BDSEstimator2:
 
     def update_prediction_stats(self, y, y_dot, u, dt):
         T = self.get_T()
-        uu_inv = np.linalg.pinv(self.get_uu()) # XXX: change this
+        uu_inv = np.linalg.pinv(self.get_uu())  # XXX: change this
         un = np.dot(uu_inv, u)
 
         A = np.tensordot(un, T, ([0], [0]))
@@ -148,14 +145,14 @@ class BDSEstimator2:
                 yy = self.get_yy()
                 Tk = T[k, :, :]
                 try:
-                    Mk = scipy.linalg.solve(yy, Tk) #@UndefinedVariable
+                    Mk = scipy.linalg.solve(yy, Tk)  # @UndefinedVariable
                 except LinAlgError:
                     # yy is singular  
                     # print('Using pseudoinverse, rcond=%s' % rcond)
-                    #yy_pinv = self.get_yy_inv(rcond)
+                    # yy_pinv = self.get_yy_inv(rcond)
                     yy_pinv = np.linalg.inv(np.eye(yy.shape[0]) * rcond + yy)
                     Mk = np.dot(yy_pinv, Tk)
-                self.MP[k, :, :] = Mk.T # note transpose
+                self.MP[k, :, :] = Mk.T  # note transpose
 
             uu_inv = np.linalg.pinv(self.get_uu()).astype(self.MP.dtype)
             self.M = np.tensordot(uu_inv, self.MP, ([0], [0]))
@@ -186,7 +183,7 @@ class BDSEstimator2:
             pub.text('warning',
                      'No samples obtained yet -- not publishing anything.')
             return
-        #params = dict(filter=pub.FILTER_POSNEG, filter_params={'skim':2})
+        # params = dict(filter=pub.FILTER_POSNEG, filter_params={'skim':2})
         params = dict(filter=pub.FILTER_POSNEG, filter_params={})
 
         rcond = 1e-2
@@ -199,7 +196,7 @@ class BDSEstimator2:
             # TODO: computation of usefulness
             y_dots_corr = self.y_dots_stats.get_correlation()
             n = T.shape[2]
-            measured_corr = y_dots_corr[:n, n:].diagonal() # upper right
+            measured_corr = y_dots_corr[:n, n:].diagonal()  # upper right
             try:
                 var_noise = self.y_dot_noise.get_covariance().diagonal()
                 var_prediction = y_dots_corr.diagonal()[n:]
@@ -216,7 +213,7 @@ class BDSEstimator2:
                     pylab.xlabel('sensel')
                     pylab.legend()
             except:
-                pass # XXX: 
+                pass  # XXX: 
 
         def pub_tensor(name, V):
             section = pub.section(name)
@@ -229,7 +226,7 @@ class BDSEstimator2:
 
         if T.shape[0] == 2:
             # Only for 2 commands so far
-            Tortho, Q = orthogonalize(T) #@UnusedVariable
+            Tortho, Q = orthogonalize(T)  # @UnusedVariable
             Tortho_norm = normalize(Tortho, yy)
             pub_tensor('Tortho', Tortho)
             pub_tensor('Tortho_norm', Tortho_norm)
@@ -252,7 +249,7 @@ class BDSEstimator2:
         pub.array_as_image('uu', self.get_uu(), **params)
 
         with pub.plot('yy_svd') as pylab:
-            u, s, v = np.linalg.svd(yy) #@UnusedVariable
+            u, s, v = np.linalg.svd(yy)  # @UnusedVariable
             s /= s[0]
             pylab.semilogy(s, 'bx-')
             pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
@@ -312,7 +309,7 @@ class BDSEstimator2:
         pub.array_as_image('yy', self.get_yy(), **params)
 
         with pub.plot('yy_svd') as pylab:
-            u, s, v = np.linalg.svd(yy) #@UnusedVariable
+            u, s, v = np.linalg.svd(yy)  # @UnusedVariable
             s /= s[0]
             pylab.semilogy(s, 'bx-')
             pylab.semilogy(np.ones(s.shape) * rcond, 'k--')
@@ -320,7 +317,7 @@ class BDSEstimator2:
 
 def normalize(T, P):
     # XXX: again
-    #R = cov2corr(P)
+    # R = cov2corr(P)
     # Tn, Q = normalize(T, yy)
     Tn = np.empty_like(T)
     for i in range(Tn.shape[0]):

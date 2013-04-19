@@ -80,8 +80,9 @@ class BDSEServo():
         return u
     
     
-    def choose_commands2(self):
+    def choose_commands2(self, K):
         warnings.warn('Using choose_commands2')
+        
         if self.linpoint == 'current':
             u = self.bdse_model.get_servo_descent_direction(self.y, self.goal)
         elif self.linpoint == 'goal':
@@ -93,10 +94,13 @@ class BDSEServo():
         else:
             raise ValueError('not implemented %r' % self.linpoint)
         
-            
+        
+        u = u * K    
         u_raw = u.copy()
         
         # XXX check u=0
+        
+        
 
         u_max = np.abs(u).max()
         if u_max > 0:
