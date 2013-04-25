@@ -4,7 +4,7 @@ once.
 '''
 from . import logger
 from .. import (contract, np)
-from PIL import Image #@UnresolvedImport
+from PIL import Image  # @UnresolvedImport
 from boot_agents.diffeo import coords_iterate
 from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
 from boot_agents.diffeo.plumbing import togrid, add_border
@@ -77,14 +77,14 @@ class DiffeomorphismEstimatorRefineFast():
         for i in range(self.nsensels):
             cx, cy = self.index2cell(i)
             s = np.array(diffeo.d[cx, cy, :]).astype('float')
-            s_coarse = np.floor(s * self.grid_shape / area) #.astype('int')
+            s_coarse = np.floor(s * self.grid_shape / area)  # .astype('int')
             area_pos_coarse = s_coarse - (np.array(self.grid_shape) / 2)
 
             area_positions_coarse[i, :] = np.floor(area_pos_coarse).astype('int')
         return (area_positions_coarse, area)
     
     def update_areas(self, diffeo, nrefine):
-        self.area_positions_coarse , self.area = self.calculate_areas(diffeo, nrefine)
+        self.area_positions_coarse, self.area = self.calculate_areas(diffeo, nrefine)
 
             
     def tic(self):
@@ -156,7 +156,7 @@ class DiffeomorphismEstimatorRefineFast():
             c = self.index2cell_tuple(i)
             np.subtract(Yi_ref, y1[c], out=diff)
             np.fabs(diff, out=adiff)
-            #diff = np.abs(Yi_ref - y1[tuple(c)])
+            # diff = np.abs(Yi_ref - y1[tuple(c)])
             
             self.neig_esim_score[i] += adiff
 #            self.neig_esim_score[i] += get_diff(((xl, xu), (yl, yu)))
@@ -382,7 +382,7 @@ class DiffeomorphismEstimatorRefineFast():
                 ax.xaxis.set_minor_locator(MultipleLocator(1))
                 ax.yaxis.set_major_locator(MultipleLocator(self.shape[0] / 5))
                 ax.yaxis.set_minor_locator(MultipleLocator(1))
-                pylab.grid(True, 'major', linewidth=2, linestyle='solid') # , alpha=0.5
+                pylab.grid(True, 'major', linewidth=2, linestyle='solid')  # , alpha=0.5
                 pylab.grid(True, 'minor', linewidth=.2, linestyle='solid')
 
                 vector = center - start
@@ -397,9 +397,9 @@ class DiffeomorphismEstimatorRefineFast():
                 pylab.grid()
         
                     
-    @contract(score='array[NxA]', returns='array[UxV]') # ,U*V=N*A') not with border
+    @contract(score='array[NxA]', returns='array[UxV]')  # ,U*V=N*A') not with border
     def make_grid(self, score):
-        fourd = self.unrolled2multidim(score) # HxWxXxY
+        fourd = self.unrolled2multidim(score)  # HxWxXxY
         return togrid(add_border(fourd, fill=np.max(fourd) * 2))
     
     @contract(v='array[NxA]', returns='array[HxWxXxY],N=H*W,A=X*Y')

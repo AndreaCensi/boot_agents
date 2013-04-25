@@ -26,32 +26,34 @@ class BGDSServo():
             msg = ('Warning: choose_commands() before process_observations()')
             raise Exception(msg)
 
-        error = self.y - self.goal
-
-        My = np.tensordot(M, self.y, axes=(1, 0))
-
-        u = -np.tensordot(My, error, axes=(1, 0))
-
-        # XXX check u=0
-        u = u / np.abs(u).max()
-
-        # current_error = np.linalg.norm(error)
-        if self.strategy in ['S1', 'S1n', 'S2']:
-            pass
-        elif self.strategy in ['S2d']:
-            initial_error = (self.initial_error
-                             if self.initial_error > 0 else 1)
-            current_error = np.linalg.norm(self.y - self.goal)
-            u = u * current_error / initial_error
-        else:
-            raise Exception('Unknown strategy %r.' % self.strategy)
-
-        u = clip(u, self.commands_spec)
-
-        u = u * self.gain
-
-        u = clip(u, self.commands_spec)
-        return u
+        raise NotImplemented()
+    
+#         error = self.y - self.goal
+# 
+#         My = np.tensordot(M, self.y, axes=(1, 0))
+# 
+#         u = -np.tensordot(My, error, axes=(1, 0))
+# 
+#         # XXX check u=0
+#         u = u / np.abs(u).max()
+# 
+#         # current_error = np.linalg.norm(error)
+#         if self.strategy in ['S1', 'S1n', 'S2']:
+#             pass
+#         elif self.strategy in ['S2d']:
+#             initial_error = (self.initial_error
+#                              if self.initial_error > 0 else 1)
+#             current_error = np.linalg.norm(self.y - self.goal)
+#             u = u * current_error / initial_error
+#         else:
+#             raise Exception('Unknown strategy %r.' % self.strategy)
+# 
+#         u = clip(u, self.commands_spec)
+# 
+#         u = u * self.gain
+# 
+#         u = clip(u, self.commands_spec)
+#         return u
 
 
 

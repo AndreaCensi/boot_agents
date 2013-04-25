@@ -1,7 +1,7 @@
 from . import contract, np
 from .. import diffeo_compose, diffeo_apply, diffeo_identity
 from ..analysis import Action, imread, resize
-from PIL import Image
+from PIL import Image  # @UnresolvedImport - Eclipse gets confused
 from collections import namedtuple
 from optparse import OptionParser
 import cPickle as pickle
@@ -46,7 +46,7 @@ def main():
         original_cmd = dd.commands2label[cmd_index]
         print('Summarizing %s' % original_cmd)
         diffeo = de.summarize()
-        a = Action(diffeo=diffeo, label="u%s" % cmd_index, #index=cmd_index,
+        a = Action(diffeo=diffeo, label="u%s" % cmd_index,  # index=cmd_index,
                invertible=False, primitive=True, original_cmd=original_cmd)
         actions.append(a)
 
@@ -91,7 +91,7 @@ def compute_effects(pub, action, image):
         gray = np.empty_like(res)
         gray.fill(128)
         alpha = c
-        #alpha = np.sqrt(np.sqrt(alpha))
+        # alpha = np.sqrt(np.sqrt(alpha))
         return blend_alpha(res, gray, alpha)
 
     b1 = with_uncertainty(d1, C1, image)
@@ -144,7 +144,7 @@ def load_templates(dirname, shape):
 
 def load_template(filename, shape):
     template = imread(filename)
-    width = shape[1] # note inverted
+    width = shape[1]  # note inverted
     height = shape[0]
     template = resize(template, width, height, mode=Image.ANTIALIAS)
     return template

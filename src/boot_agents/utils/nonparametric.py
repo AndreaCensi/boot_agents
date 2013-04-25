@@ -3,7 +3,7 @@ from contracts import contract
 import itertools
 
 
-#def scale_score(x, kind='quicksort'):
+# def scale_score(x, kind='quicksort'):
 #    y = x.copy()
 #    order = np.argsort(x.flat, kind=kind)
 #    # Black magic ;-) Probably the smartest thing I came up with today. 
@@ -19,26 +19,25 @@ def scale_score(x, kind='quicksort', kind2='quicksort'):
     y.flat[:] = order_order.astype(y.dtype)
     return y
 
-#@contract(x='array,shape(x)', returns='array(int32),shape(x)')
-#def scale_score2(x, kind='quicksort', out=None):
+# @contract(x='array,shape(x)', returns='array(int32),shape(x)')
+# def scale_score2(x, kind='quicksort', out=None):
 #    if scale_score2.buf.size != x.size:
 #        scale_score2.buf = np.arange(x.size, dtype='int32')
 #    #r = np.arange(n, dtype='int32')
 #    r = scale_score2.buf
-##    print('x', x)
+# #    print('x', x)
 #    order = np.argsort(x.flat, kind=kind)
-##    print('order', order)
+# #    print('order', order)
 #    order_order = r.take(order)
-##    print('order_order', order_order)
+# #    print('order_order', order_order)
 #    return order_order.reshape(x.shape)
-#scale_score2.buf = np.zeros(1)
+# scale_score2.buf = np.zeros(1)
 
 def scale_score_scipy(x):
-    import scipy
     import scipy.stats
     return scipy.stats.mstats.rankdata(x) - 1
     
-#@contract(x='array,shape(x)', score='array(int32),shape(x)')
+# @contract(x='array,shape(x)', score='array(int32),shape(x)')
 def check_scale_score(x, score):
     n = x.size
     xf = x.flat

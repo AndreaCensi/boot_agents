@@ -8,10 +8,8 @@ from reprep import Report
 from reprep.graphics.filter_posneg import posneg
 from vehicles import VehiclesConfig
 import numpy as np
-from boot_agents.bdse.model.bdse_estimator import get_M_from_P_T_Q
 from contracts import contract
 from geometry.utils.numpy_backport import assert_allclose
-from geometry.formatting import printm
 from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q_alt
 
 
@@ -66,8 +64,8 @@ def check_linear_tran(id_set='bv1bds4'):
     
     cases = map(lambda x: read_data(id_set, x, id_agent, config), allr)
     
-    c0 = cases[0] # first is the reference one
-    for c in cases[1:]: # skip first
+    c0 = cases[0]  # first is the reference one
+    for c in cases[1:]:  # skip first
         print(c.id_robot)
         sec = rep.section(c.id_robot)
         f = sec.figure('A')
@@ -108,9 +106,9 @@ def check_linear_tran(id_set='bv1bds4'):
                 
         cases = [ 
                     ('conjugation1', conjugation1),
-                    #('conjugation2', conjugation2),
+                    # ('conjugation2', conjugation2),
                     ('conjugation3', conjugation3),
-                    #('conjugation4', conjugation4)
+                    # ('conjugation4', conjugation4)
                 ]
         
         for name, func in cases:
@@ -173,7 +171,7 @@ def conjugation1(X, A):
     M2 = np.linalg.inv(A)
     return prod(M1, X, M2)
 #
-#def conjugation2(X, A):
+# def conjugation2(X, A):
 #    """ A^-1 X A """
 #    M1 = np.linalg.inv(A)
 #    M2 = A
@@ -185,7 +183,7 @@ def conjugation3(X, A):
     M2 = A.T
     return prod(M1, X, M2)
 
-#def conjugation4(X, A):
+# def conjugation4(X, A):
 #    """ A.T  X A^-T """
 #    M1 = A.T
 #    M2 = np.linalg.inv(A).T
