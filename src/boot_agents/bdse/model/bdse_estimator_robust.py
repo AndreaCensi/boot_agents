@@ -19,6 +19,15 @@ class BDSEEstimatorRobust(BDSEEstimator):
         self.y_stats = MeanCovariance()  # TODO: make robust
         self.u_stats = MeanCovariance()
         self.once = False
+        
+    def merge(self, other):
+        assert isinstance(other, BDSEEstimatorRobust)
+        self.T.merge(other.T)
+        self.U.merge(other.U)
+        self.y_stats.merge(other.y_stats)
+        self.y_mean.merge(other.y_mean)
+        self.u_stats.merge(other.u_stats)
+
   
     @contract(u='array[K],K>0,array_finite',
               y='array[N],N>0,array_finite',

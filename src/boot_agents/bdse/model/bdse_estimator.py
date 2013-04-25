@@ -3,10 +3,12 @@ from boot_agents.misc_utils.tensors_display import (pub_tensor2_cov,
     pub_tensor3_slice2, pub_tensor2_comp1)
 from boot_agents.utils import Expectation, MeanCovariance, outer
 from geometry import printm
-from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q
+from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q, \
+    get_M_from_Pinv_T_Q
 from bootstrapping_olympics.utils.strings import indent
 import traceback
 from boot_agents import logger
+import warnings
 
 
 
@@ -87,7 +89,11 @@ class BDSEEstimator:
             printm('Q_inv', Q_inv)
             printm('P_inv', P_inv)
 
-        M = get_M_from_P_T_Q(P, T, Q)
+        if False:
+            M = get_M_from_P_T_Q(P, T, Q)
+        else:
+            warnings.warn('untested')
+            M = get_M_from_Pinv_T_Q(P_inv, T, Q)
         
         UQ_inv = np.tensordot(U, Q_inv, axes=(1, 0))
         # This works but badly conditioned

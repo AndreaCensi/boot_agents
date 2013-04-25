@@ -1,8 +1,11 @@
-from . import BDSEPredictor, BDSEServo, MiscStatistics
+from . import BDSEPredictor, MiscStatistics
 from .. import BDSEEstimator
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
 from bootstrapping_olympics import (AgentInterface, BootOlympicsConfig,
     UnsupportedSpec)
+from conf_tools.code_specs import instantiate_spec
+from contracts import contract
+from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
 
 
 __all__ = ['BDSEAgent']
@@ -12,11 +15,14 @@ class BDSEAgent(AgentInterface):
     '''
         An agent that uses a BDS model.
     '''
-    def __init__(self, explorer, rcond=1e-10, skip=1,
-                 change_fraction=0.0, servo={}):
+    
+    @contract(servo='code_spec')
+    def __init__(self, explorer, servo, rcond=1e-10, skip=1,
+                 change_fraction=0.0):
         """
             :param explorer: ID of the explorer agent.
-            :param servo: extra parameters for servo.
+            :param servo: extra parameters for servo; if string, the ID of an agent.
+                
             :param skip: only used one every skip observations.
         """
         agents = BootOlympicsConfig.agents  # @UndefinedVariable
@@ -27,6 +33,8 @@ class BDSEAgent(AgentInterface):
         self.rcond = rcond
 
     def init(self, boot_spec):
+        self.boot_spec = boot_spec
+        
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('This agent can only work with 1D signals.')
 
@@ -97,7 +105,10 @@ class BDSEAgent(AgentInterface):
         return BDSEPredictor(model)
 
     def get_servo(self):
+        servo_agent = instantiate_spec(self.servo)
+        servo_agent.init(self.boot_spec)
+        assert isinstance(servo_agent, BDSEServoInterface)
         model = self.bdse_estimator.get_model()
-        return BDSEServo(model, self.commands_spec, **self.servo)
-
+        servo_agent.set_model(model)
+        return servo_agent
 

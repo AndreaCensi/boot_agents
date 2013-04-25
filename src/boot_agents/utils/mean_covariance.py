@@ -13,6 +13,7 @@ from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
 from bootstrapping_olympics.utils import check_all_finite
 from reprep.plot_utils import style_ieee_fullcol_xy
+import warnings
 
 
 
@@ -22,8 +23,17 @@ class MeanCovariance:
         self.mean_accum = Expectation(max_window)
         self.covariance_accum = Expectation(max_window)
         self.minimum = None
-        self.maximum = None
+        self.maximum = None  # TODO: use class
         self.num_samples = 0
+        
+    def merge(self, other):
+        warnings.warn('To test')
+        assert isinstance(other, MeanCovariance)
+        self.mean_accum.merge(other.mean_accum)
+        self.covariance_accum.merge(other.covariance_accum)
+        self.num_samples += other.num_samples
+        warnings.warn('minimum/maximum missing')
+
 
     def get_num_samples(self):
         return self.num_samples

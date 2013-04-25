@@ -23,6 +23,7 @@ class DerivAgentRobust(AgentInterface):
     def init(self, boot_spec):
         warnings.warn('Must do this properly')
         # self.explorer.init(boot_spec)
+        self.boot_spec = boot_spec
         self.commands_spec = boot_spec.get_commands()
 
     def process_observations(self, obs):
