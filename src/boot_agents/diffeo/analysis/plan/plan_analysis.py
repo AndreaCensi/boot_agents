@@ -10,7 +10,7 @@ import contracts
 import numpy as np
 
 
-def plan_analysis(global_options, data, args):
+def plan_analysis(global_options, data, args):  # @UnusedVariable
 
     np.random.seed(12345226)
     from matplotlib import rc
@@ -32,8 +32,8 @@ def plan_analysis(global_options, data, args):
 #    id_agent = data['id_agent']
     pub = data['publisher']
 
-    vehicle = VehiclesConfig.vehicles.instance(id_robot) #@UndefinedVariable
-    world = VehiclesConfig.worlds.instance(options.id_world) #@UndefinedVariable
+    vehicle = VehiclesConfig.vehicles.instance(id_robot)  # @UndefinedVariable
+    world = VehiclesConfig.worlds.instance(options.id_world)  # @UndefinedVariable
 
     sim = VehicleSimulation(vehicle, world)
 
@@ -60,7 +60,7 @@ def plan_analysis(global_options, data, args):
 
     examples = {
                 'forwd1': {'trajectory': [(FORWARD, T1)]},
-##                'forwd2': {'trajectory': [(FORWARD, T2)]},
+# #                'forwd2': {'trajectory': [(FORWARD, T2)]},
 #                'left1': {'trajectory': [(LEFT, T1)]},
 #                'right1': {'trajectory': [(RIGHT, T1)]},
 #                'back1': {'trajectory': [(BACKWARD, T1)]},
@@ -116,7 +116,7 @@ def scenario_solve(scenario, actions):
         res2 = diffeo_apply(action.diffeo.d, res)
         res3 = diffeo_apply(action.diffeo.d, res2)
         res4 = diffeo_apply(action.diffeo.d, res3)
-        exploration[code] = res4# {'actions' = }
+        exploration[code] = res4  # {'actions' = }
     scenario['exploration'] = exploration
 
 
@@ -125,7 +125,7 @@ def sensels2map(y0):
     y0 = np.maximum(y0, 0)
     y0 = np.minimum(y0, 1)
     y = popcode(y0, 180)
-    from scipy.misc import imresize #@UnresolvedImport
+    from scipy.misc import imresize  # @UnresolvedImport
     y = imresize(y, (90, 90))
     y = np.array(y, dtype='float32')
     return y
@@ -173,7 +173,7 @@ def scenario_display(scenario, S, sim):
         x = scenario['sim0']['vehicle']['sensors'][0]['sensor']
         theta = x['directions']
         theta = np.array(theta)
-        if len(theta) > len(sensels): # XXX: hack
+        if len(theta) > len(sensels):  # XXX: hack
             theta = theta[::2]
         theta_rad = theta
         theta = np.rad2deg(theta)
@@ -209,7 +209,7 @@ def scenario_display(scenario, S, sim):
 
     with S.plot('poses') as pylab:
 #        for pose in scenario['poses']:
-##            print pose
+# #            print pose
 #            draw_axes(pylab, SE2_from_SE3(pose))
 #        
         for pose in scenario['poses']:
@@ -272,7 +272,7 @@ def scenario_compute_inputs(scenario, sim, dt=0.1):
         num = time / dt
         for _ in range(int(num)):
             scenario['poses'].append(sim.vehicle.get_pose())
-            sim.simulate(command, dt) # XXX: smaller steps?
+            sim.simulate(command, dt)  # XXX: smaller steps?
             if sim.vehicle_collided:
                 raise ValueError('Collision; must restart.')
             scenario['commands'].append(command)
@@ -311,13 +311,13 @@ def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
             rho_min = 0.05
             for theta_i, rho_i in zip(directions, readings):
                 print('theta_i: %s' % theta_i)
-                x.append(sensor_t[0] +
+                x.append(sensor_t[0] + 
                          np.cos(sensor_theta + theta_i) * rho_min)
-                y.append(sensor_t[1] +
+                y.append(sensor_t[1] + 
                          np.sin(sensor_theta + theta_i) * rho_min)
-                x.append(sensor_t[0] +
+                x.append(sensor_t[0] + 
                          np.cos(sensor_theta + theta_i) * rho_i)
-                y.append(sensor_t[1] +
+                y.append(sensor_t[1] + 
                          np.sin(sensor_theta + theta_i) * rho_i)
                 x.append(None)
                 y.append(None)
@@ -333,13 +333,13 @@ def show_sensor_data(pylab, vehicle, robot_pose=None, col='r'):
             for theta_i, rho_i, lum in zip(directions, readings, luminance):
                 x = []
                 y = []
-                x.append(sensor_t[0] +
+                x.append(sensor_t[0] + 
                          np.cos(sensor_theta + theta_i) * rho_min)
-                y.append(sensor_t[1] +
+                y.append(sensor_t[1] + 
                          np.sin(sensor_theta + theta_i) * rho_min)
-                x.append(sensor_t[0] +
+                x.append(sensor_t[0] + 
                          np.cos(sensor_theta + theta_i) * rho_i)
-                y.append(sensor_t[1] +
+                y.append(sensor_t[1] + 
                          np.sin(sensor_theta + theta_i) * rho_i)
                 pylab.plot(x, y, color=(lum, lum, lum),
                            markersize=0.5, zorder=2000)

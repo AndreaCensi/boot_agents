@@ -1,7 +1,7 @@
 from . import (diffeomorphism_to_rgb, cmap, coords_iterate, Flattening, contract,
     np, diffeo_to_rgb_norm, diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv,
     diffeo_text_stats, Diffeomorphism2D)
-from PIL import Image #@UnresolvedImport
+from PIL import Image  # @UnresolvedImport
 from matplotlib import cm
 import numpy.linalg as la
 # from scipy.signal import convolve2d
@@ -11,11 +11,11 @@ import numpy.linalg as la
 def sim_continuous(a, b):
     # XXX strange conversions
     diff = np.abs(a.astype(np.int16) - b.astype(np.int16)) ** 2
-    #diff = np.abs(a - b)
+    # diff = np.abs(a - b)
     return diff
 
 
-def sim_binary(a, b): # good for 0-1
+def sim_binary(a, b):  # good for 0-1
     return a * b
 
 
@@ -179,7 +179,7 @@ class DiffeomorphismEstimator():
             if sim_max == sim_min:
                 # if all the neighbors have the same similarity
                 best_index = 0
-                variance[c] = 0 # minimum information
+                variance[c] = 0  # minimum information
                 maximum_likelihood_index[c] = best_index
             else:
                 best = np.argmin(sim)
@@ -211,7 +211,7 @@ class DiffeomorphismEstimator():
             print('Warning, %d were not informative.' % num_problems)
             pass
         
-        sqrt_2_sigma2 = np.sqrt(2 * variance / self.num_samples)
+#         sqrt_2_sigma2 = np.sqrt(2 * variance / self.num_samples)
         
 #        eps = 1
 #        P0 = (erf(-1 / sqrt_2_sigma2) - erf(1 / sqrt_2_sigma2)) / 2
@@ -322,7 +322,7 @@ class DiffeomorphismEstimator():
             print('.')
         ds = np.array(d, 'float')
         avg = ds.mean(axis=0)
-        #var  = diff.variance
+        # var  = diff.variance
         var = ds[:, :, :, 0].var(axis=0) + ds[:, :, :, 1].var(axis=0)
         print var.shape
         assert avg.shape == diff.d.shape
@@ -333,7 +333,7 @@ class DiffeomorphismEstimator():
 #        diffeo = self.summarize_averaged(10, 0.02) # good for camera
 #        diffeo = self.summarize_averaged(2, 0.1)
         print('Publishing')
-        #pdb.set_trace()
+        # pdb.set_trace()
         pub.array_as_image('mle', diffeomorphism_to_rgb(diffeo.d))
         pub.array_as_image('angle', diffeo_to_rgb_angle(diffeo.d))
         pub.array_as_image('norm', diffeo_to_rgb_norm(diffeo.d, max_value=10))
@@ -346,7 +346,7 @@ class DiffeomorphismEstimator():
 
         n = 20
         M = None
-        for i in range(n): #@UnusedVariable
+        for i in range(n):  # @UnusedVariable
             c = self.flattening.random_coords()
             Mc = self.get_similarity(c)
             if M is None:
@@ -372,7 +372,7 @@ class DiffeomorphismEstimator():
             pub.array_as_image('motion', x, filter='posneg')
 
 
-### Test functions
+# ## Test functions
 
 import matplotlib.pyplot as plt
 
@@ -380,14 +380,14 @@ import matplotlib.pyplot as plt
 def get_valid_diffeomorphism(x):
     M, N = x.shape[0], x.shape[1]
     
-    #assert (0 <= x[:, :, 0]).all()
-    #assert (0 <= x[:, :, 1]).all()
+    # assert (0 <= x[:, :, 0]).all()
+    # assert (0 <= x[:, :, 1]).all()
     x[x < 0] = 0
     
-    #assert (x[:, :, 0] < M).all()
+    # assert (x[:, :, 0] < M).all()
     x[x[:, :, 0] >= M] = M - 1
     
-    #assert (x[:, :, 1] < N).all()
+    # assert (x[:, :, 1] < N).all()
     x[x[:, :, 1] >= N] = N - 1
     
     return x
