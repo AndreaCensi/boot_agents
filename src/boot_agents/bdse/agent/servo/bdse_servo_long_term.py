@@ -74,7 +74,6 @@ class BDSEServoLongTerm(BDSEServoInterface):
             cmds.append((tuple(x), t))
         return cmds
     
-    
     def report(self):
         r = Report('ServoLongTerm')
         f = r.figure()
@@ -83,8 +82,6 @@ class BDSEServoLongTerm(BDSEServoInterface):
             what = str(plan)
             f.data(what, result > 0).display('scale').add_to(f, caption=what)
         return r
-    
-    
         
     @contract(y0='array[N]', y_goal='array[N]', limit='int,>=1')
     def find_best(self, y0, y_goal, limit):

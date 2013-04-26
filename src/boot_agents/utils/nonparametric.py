@@ -1,5 +1,4 @@
 from . import np
-from contracts import contract
 import itertools
 
 

@@ -1,5 +1,5 @@
 from . import load_report_phase
-from reprep import MIME_PDF, MIME_PNG
+from reprep import MIME_PNG
 
 
 def template_servo_stats_L2(frag, id_set, id_agent, id_robot,

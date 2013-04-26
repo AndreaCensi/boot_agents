@@ -1,6 +1,5 @@
 from . import contract, np
-import warnings
-from bootstrapping_olympics.interfaces.boot_spec import BootSpec
+from bootstrapping_olympics.interfaces import BootSpec
 from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
 
 
@@ -52,7 +51,6 @@ class BDSEServo(BDSEServoInterface):
         else:
             raise ValueError('not implemented %r' % self.linpoint)
 
-        
         u_max = np.abs(u).max()
         if u_max > 0:
             u = u / u_max

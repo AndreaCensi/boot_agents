@@ -3,7 +3,6 @@ from . import (diffeo_apply, contract, np, diffeo_to_rgb_norm,
     diffeo_local_differences, diffeo_identity)
 from geometry.utils import assert_allclose
 from boot_agents.diffeo.diffeo_apply_quick import FastDiffeoApply
-import pdb
 
 
 class Diffeomorphism2D:
@@ -108,7 +107,7 @@ class Diffeomorphism2D:
             <var> is the variance of diffeomorphism
         """
         dd_info = self.get_scalar_info()
-        if True: # XX: redundant
+        if True:  # XX: redundant
             assert np.isfinite(dd_info).all()
         
         im2 = self._d_apply(im)
@@ -126,7 +125,7 @@ class Diffeomorphism2D:
             
             var2 = dd_info * dvar
             
-        if True: # XX: redundant
+        if True:  # XX: redundant
             assert np.isfinite(dd_info).all()
             assert np.isfinite(var).all()
             assert np.isfinite(im2).all()
@@ -168,7 +167,7 @@ class Diffeomorphism2D:
         info = dd1_info * dd2_info
         info_sum = info.sum()
         if info_sum == 0:
-            return 1.0 # XXX, need to check it is the bound
+            return 1.0  # XXX, need to check it is the bound
                     
         wdist = (dist * info) / info_sum
         
@@ -181,11 +180,11 @@ class Diffeomorphism2D:
         a = Diffeomorphism2D.distance_L2_infow(d1, d2)
         dd1_info = d1.get_scalar_info()
         dd2_info = d2.get_scalar_info()
-        #x = dd1_info
-        #print('min %g max %g' % (x.max(), x.min()))
-        b = np.mean(np.abs(dd1_info - dd2_info)) # / dd1_info.size
-        #print('a, b: %.5f %.5f   mean %g %g' % (a, b, dd1_info.mean(), dd2_info.mean()))
-        return b + min(a, 0.5) # a * (1 + b)
+        # x = dd1_info
+        # print('min %g max %g' % (x.max(), x.min()))
+        b = np.mean(np.abs(dd1_info - dd2_info))  # / dd1_info.size
+        # print('a, b: %.5f %.5f   mean %g %g' % (a, b, dd1_info.mean(), dd2_info.mean()))
+        return b + min(a, 0.5)  # a * (1 + b)
          
     def get_shape(self):
         return (self.d.shape[0], self.d.shape[1])
@@ -237,4 +236,4 @@ class Diffeomorphism2D:
                 pylab.hist(self.variance.flat, nbins)
         except:
             print('hist plot exception')
-#            pdb.set_trace()
+

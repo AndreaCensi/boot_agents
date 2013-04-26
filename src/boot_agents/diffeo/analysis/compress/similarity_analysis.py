@@ -6,7 +6,7 @@ from optparse import OptionParser
 import os
 import numpy as np
 import itertools
-from geometry import formatm # XXX: dep
+from geometry import formatm  # XXX: dep
 
 
 def zoom(M, factor=10):
@@ -48,7 +48,7 @@ def describe_info(sec, actions, info):
     sec.text('list_of_actions', s)
 
 
-def similarity_analysis(global_options, data, args):
+def similarity_analysis(global_options, data, args):  # @UnusedVariable
     usage = ""
     parser = OptionParser(usage=usage)
     parser.disable_interspersed_args()
@@ -65,7 +65,7 @@ def similarity_analysis(global_options, data, args):
     publisher = data['publisher']
 
     print('Compressing %d actions' % len(cmds))
-    cmds2, info2 = actions_compress(cmds, threshold=0.9974) #@UnusedVariable
+    cmds2, info2 = actions_compress(cmds, threshold=0.9974)  # @UnusedVariable
     describe_info(publisher.section('cmd2'), cmds, info2)
 
     print('After compressing, we have %d actions' % len(cmds2))
@@ -74,14 +74,14 @@ def similarity_analysis(global_options, data, args):
     cmds4 = actions_remove_similar_to_identity(cmds3, threshold=0.01)
     print('After removing similar, we have %s' % len(cmds4))
     print('Now compressing commutators...')
-    cmds5, info5 = actions_compress(cmds3, threshold=0.9974) #@UnusedVariable
+    cmds5, info5 = actions_compress(cmds3, threshold=0.9974)  # @UnusedVariable
     print('After compressing, we have %s' % len(cmds5))
 
     # load template
     template_name = options.template
     template = imread(template_name)
     example_diffeo = cmds[0].diffeo.d
-    width = example_diffeo.shape[1] # note inverted
+    width = example_diffeo.shape[1]  # note inverted
     height = example_diffeo.shape[0]
     template = resize(template, width, height)
     publisher.array_as_image('template', template)
