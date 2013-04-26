@@ -1,5 +1,6 @@
 from . import contract, coords_iterate, np
-from diffeoplan.utils.memoization import memoize_simple as memoize
+from compmake.utils import memoize_simple as memoize
+
 
 
 class Flattening:
