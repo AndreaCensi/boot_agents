@@ -16,6 +16,7 @@ class BDSEServo(BDSEServoInterface):
             raise ValueError('Unknown strategy %r.' % strategy)
         if not linpoint in BDSEServo.linpoints:
             raise ValueError('Unknown linpoint %r.' % linpoint)
+        print('Using servo gain %s' % gain)
         self.strategy = strategy
         self.gain = gain
         self.linpoint = linpoint

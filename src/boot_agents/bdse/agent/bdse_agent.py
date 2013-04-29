@@ -49,7 +49,7 @@ class BDSEAgent(AgentInterface):
 
         # All the rest are only statistics
         self.stats = MiscStatistics()
-
+    
     def choose_commands(self):
         return self.explorer.choose_commands()
 
