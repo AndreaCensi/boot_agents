@@ -1,14 +1,14 @@
-from boot_agents.diffeo.diffeomorphism2d import Diffeomorphism2D
-import numpy as np
-from boot_agents.diffeo.diffeo_display import diffeo_stats, angle_legend
-from reprep import Report
-import pickle
+from boot_agents.diffeo.diffeo_display import angle_legend
 from boot_agents.diffeo.diffeo_visualization import scalaruncertainty2rgb
-import pdb
-
+from boot_agents.diffeo.diffeomorphism2d import Diffeomorphism2D
+from reprep import Report
+import numpy as np
+import pickle
+import warnings
+ 
+ 
 class Diffeomorphism2DContinuous(Diffeomorphism2D):
     def __init__(self, d, variance=None):
-        
         self.d = d
         
         if variance is None:
@@ -32,6 +32,11 @@ class Diffeomorphism2DContinuous(Diffeomorphism2D):
         # Inherit method from superclass
         Diffeomorphism2D.display(self, report, full, nbins)
 
+        warnings.warn('removed part of visualization')
+        if False:
+            self.display_mesh(report=report, nbins=nbins)
+            
+    def display_mesh(self, report, nbins):
         # Additional plots for the continuous diffeo
         Y, X = np.meshgrid(range(self.d.shape[1]), range(self.d.shape[0]))
         
@@ -48,13 +53,13 @@ class Diffeomorphism2DContinuous(Diffeomorphism2D):
             pylab.quiver(Y, X, yq, xq)
             
         if hasattr(self, 'plot_ranges') and hasattr(self, 'variance_max'):
-            if self.plot_ranges.has_key('uncertainty_max'):
+            if 'uncertainty_max' in self.plot_ranges:
                 
                 if hasattr(self, 'variance_max'):
                     varmax_text = '(variance max %s)' % self.variance_max
                 else:
                     varmax_text = ''
-#                pdb.set_trace()
+                    
                 variance_max = self.plot_ranges['uncertainty_max']
                 
                 uncert = self.get_scalar_info()

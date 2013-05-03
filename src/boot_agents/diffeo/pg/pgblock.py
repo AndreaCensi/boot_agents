@@ -4,6 +4,7 @@ from conf_tools.exceptions import BadConfig
 from procgraph.core.exceptions import BadInput
 from boot_agents.diffeo.diffeo_basic import diffeo_from_function, diffeo_apply
 
+# MOVE: in diffeo repo
 
 class Diffeo(Block):
     ''' Applies a diffeomorphism. '''

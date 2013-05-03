@@ -1,16 +1,11 @@
-'''
-This is the first version of a refining learner. It resizes the image of each  
-search area using a specified interpolator.  
-
-'''
 from . import logger
 from .. import (contract, np)
 from .interpolators import Interpolator, ImageInterpolatorFast, FourierInterpolator
-from PIL import Image #@UnresolvedImport
+from PIL import Image  # @UnresolvedImport
 from boot_agents.diffeo.diffeomorphism2d_continuous import Diffeomorphism2DContinuous
-from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
-from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
+from boot_agents.diffeo.plumbing import togrid, add_border
 from reprep.plot_utils import plot_vertical_line 
+from boot_agents.diffeo.plumbing.flat_structure import flat_structure_cache
 
 REFINE_STANDARD_BILINEAR = 'standard-bilinear'
 REFINE_STANDARD_BICUBIC = 'standard-bicubic'
@@ -22,6 +17,8 @@ REFINE_FFT = 'fft'
 
 class DiffeomorphismEstimatorRefine():
     '''
+    This is the first version of a refining learner. It resizes the image of each  
+    search area using a specified interpolator.  
     
     '''
     @contract(max_displ='seq[2](>0,<1)')
@@ -245,9 +242,9 @@ class DiffeomorphismEstimatorRefine():
 #            pylab.hist(esim_cdist.flat, bins)
 #            plot_safe(pylab)
             
-    @contract(score='array[NxA]', returns='array[UxV]') # ,U*V=N*A') not with border
+    @contract(score='array[NxA]', returns='array[UxV]')  # ,U*V=N*A') not with border
     def make_grid(self, score):
-        fourd = self.refine_flat_structure.unrolled2multidim(score) # HxWxXxY
+        fourd = self.refine_flat_structure.unrolled2multidim(score)  # HxWxXxY
         return togrid(add_border(fourd))      
     
     def show_areas(self, report, d):
