@@ -1,11 +1,11 @@
 from . import BDSEPredictor, MiscStatistics
 from .. import BDSEEstimator
+from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
-from bootstrapping_olympics import (AgentInterface, BootOlympicsConfig,
-    UnsupportedSpec)
+from bootstrapping_olympics import AgentInterface, UnsupportedSpec
+from bootstrapping_olympics.configuration.master import get_boot_config
 from conf_tools.code_specs import instantiate_spec
 from contracts import contract
-from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
 
 
 __all__ = ['BDSEAgent']
@@ -25,8 +25,9 @@ class BDSEAgent(AgentInterface):
                 
             :param skip: only used one every skip observations.
         """
-        agents = BootOlympicsConfig.agents  # @UndefinedVariable
-        self.explorer = agents.instance(explorer)  # @UndefinedVariable
+        boot_config = get_boot_config()
+        _, self.explorer = boot_config.agents.instance_smarter(explorer)  # @UndefinedVariable
+        
         self.skip = skip
         self.change_fraction = change_fraction
         self.servo = servo
@@ -85,9 +86,9 @@ class BDSEAgent(AgentInterface):
         y_sync, y_dot_sync = self.y_deriv.get_value()
 
         self.bdse_estimator.update(u=u.astype('float32'),
-                                  y=y_sync.astype('float32'),
-                                  y_dot=y_dot_sync.astype('float32'),
-                                  w=dt)
+                                   y=y_sync.astype('float32'),
+                                   y_dot=y_dot_sync.astype('float32'),
+                                   w=dt)
 
         # Just other statistics
         self.stats.update(y_sync, y_dot_sync, u, dt)
