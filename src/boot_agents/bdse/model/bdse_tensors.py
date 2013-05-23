@@ -1,7 +1,8 @@
 """ Algebra of BDS tensors """
-
-from . import  np, contract
+from contracts import contract
+import numpy as np
 from numpy.linalg.linalg import LinAlgError
+
 import warnings
 
 

@@ -1,13 +1,15 @@
-from . import BDSEmodel, np, contract
-from boot_agents.misc_utils.tensors_display import (pub_tensor2_cov,
-    pub_tensor3_slice2, pub_tensor2_comp1)
-from boot_agents.utils import Expectation, MeanCovariance, outer
-from geometry import printm
-from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q, \
-    get_M_from_Pinv_T_Q
-from bootstrapping_olympics.utils.strings import indent
-import traceback
+
+from .bdse_model import BDSEmodel
+from .bdse_tensors import get_M_from_P_T_Q, get_M_from_Pinv_T_Q
 from boot_agents import logger
+from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
+    pub_tensor2_comp1)
+from boot_agents.utils import Expectation, MeanCovariance, outer
+from bootstrapping_olympics.utils import indent
+from contracts import contract
+from geometry import printm
+import numpy as np
+import traceback
 import warnings
 
 
@@ -40,9 +42,9 @@ class BDSEEstimator:
         self.rcond = rcond
         self.once = False
 
-    @contract(u='array[K],K>0,array_finite',
-              y='array[N],N>0,array_finite',
-              y_dot='array[N],array_finite', w='>0')
+    @contract(u='array[K],K>0,finite',
+              y='array[N],N>0,finite',
+              y_dot='array[N],finite', w='>0')
     def update(self, y, u, y_dot, w=1.0):
         self.once = True
         

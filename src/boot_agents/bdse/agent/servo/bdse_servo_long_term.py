@@ -3,7 +3,10 @@ import numpy as np
 from reprep import Report
 import itertools
 import warnings
-from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
+from .interface import BDSEServoInterface
+
+__all__ = ['ServoLongTermMotion', 'BDSEServoLongTerm', 'myexp']
+
 
 class ServoLongTermMotion():
     

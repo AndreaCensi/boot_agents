@@ -1,10 +1,10 @@
 from ..model import (get_expected_T_from_M_P_Q, get_M_from_P_T_Q,
     get_M_from_P_T_Q_alt)
-from geometry.utils.numpy_backport import assert_allclose
+from numpy.testing import assert_allclose
 import numpy as np
-from boot_agents.bdse.testing.examples import for_all_bdse_examples
 from contracts import contract
-#from geometry.formatting import printm
+from boot_agents.bdse.testing.examples import for_all_bdse_examples
+# from geometry.formatting import printm
 
 
 def get_M_test():
@@ -15,8 +15,8 @@ def get_M_test():
     M = np.random.randn(n, n, k)
     T = get_expected_T_from_M_P_Q(M, P, Q)
     M2 = get_M_from_P_T_Q(P, T, Q)
-    #print()
-    #printm('T', T, 'M', M, 'M2', M2)
+    # print()
+    # printm('T', T, 'M', M, 'M2', M2)
     assert_allclose(M, M2)
 
 def get_M_alt_test():
@@ -27,8 +27,8 @@ def get_M_alt_test():
     M = np.random.randn(n, n, k)
     T = get_expected_T_from_M_P_Q(M, P, Q)
     M2_alt = get_M_from_P_T_Q_alt(P, T, Q)
-    #print()
-    #printm('T', T, 'M', M, 'M2_alt', M2_alt)
+    # print()
+    # printm('T', T, 'M', M, 'M2_alt', M2_alt)
     assert_allclose(M, M2_alt)
 
     
@@ -40,19 +40,19 @@ def get_random_cov(n):
     
     
 @for_all_bdse_examples
-def equivariance1(id_bds, bds): #@UnusedVariable
+def equivariance1(id_bds, bds):  # @UnusedVariable
     n = bds.get_y_shape()
     A = np.random.randn(n, n)
     A_inv = np.linalg.inv(A)
     bds_A = bds.conjugate(A)
     bds2 = bds_A.conjugate(A_inv)
     
-    atol = 1e-8 # otherwise 0 and 0.00001 won't match
+    atol = 1e-8  # otherwise 0 and 0.00001 won't match
     assert_allclose(bds.M, bds2.M, atol=atol)
     assert_allclose(bds.N, bds2.N, atol=atol)
 
 @for_all_bdse_examples
-def equivariance2(id_bds, bds): #@UnusedVariable
+def equivariance2(id_bds, bds):  # @UnusedVariable
     n = bds.get_y_shape()
     k = bds.get_u_shape()
     A = np.random.randn(n, n)
@@ -75,10 +75,10 @@ def equivariance2(id_bds, bds): #@UnusedVariable
     Uz = bds_A.get_expected_U(z_mean, Q)
     
     # We expect that it is conjugated to T
-    Tz2 = conjugate_T(T, A) # Tz = A T A*
+    Tz2 = conjugate_T(T, A)  # Tz = A T A*
     Uz2 = conjugate_U(U, A) 
     
-    atol = 1e-8 # otherwise 0 and 0.00001 won't match
+    atol = 1e-8  # otherwise 0 and 0.00001 won't match
     assert_allclose(Tz, Tz2, atol=atol)
     assert_allclose(Uz, Uz2, atol=atol)
     

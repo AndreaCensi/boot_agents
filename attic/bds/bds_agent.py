@@ -80,17 +80,17 @@ class BDSAgent(ExpSwitcher):
         self.y_dot_stats.update(y_dot_sync, dt)
         self.y_dot_abs_stats.update(np.abs(y_dot_sync), dt)
 
-    def publish(self, publisher):
+    def publish(self, pub):
         if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
  
-        self.bds_estimator.publish(publisher) 
+        self.bds_estimator.publish(pub) 
 
-        self.y_stats.publish(publisher.section('y_stats'))
-        self.u_stats.publish(publisher.section('u_stats'))
-        self.y_dot_stats.publish(publisher.section('y_dot_stats'))
-        self.y_dot_abs_stats.publish(publisher.section('y_dot_abs_stats')) 
+        self.y_stats.publish(pub.section('y_stats'))
+        self.u_stats.publish(pub.section('u_stats'))
+        self.y_dot_stats.publish(pub.section('y_dot_stats'))
+        self.y_dot_abs_stats.publish(pub.section('y_dot_abs_stats')) 
 
     def get_predictor(self):
         from boot_agents.bds.bds_predictor import BDSPredictor

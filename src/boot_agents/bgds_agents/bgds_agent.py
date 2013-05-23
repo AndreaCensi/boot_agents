@@ -1,12 +1,13 @@
-from . import np, contract
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, Expectation, RemoveDoubles
+from boot_agents.bgds.bgds_estimator import BGDSEstimator
+from boot_agents.bgds.bgds_predictor import BGDSPredictor
+from boot_agents.bgds.utils import smooth2d
 from bootstrapping_olympics import UnsupportedSpec
+from contracts import contract
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
-from boot_agents.bgds.bgds_estimator import BGDSEstimator
-from boot_agents.bgds.utils import smooth2d
-from boot_agents.bgds.bgds_predictor import BGDSPredictor
+import numpy as np
 
 
 __all__ = ['BGDSAgent']
@@ -125,15 +126,15 @@ class BGDSAgent(ExpSwitcher):
 #          u_est = self.model.estimate_u(y, y_dot_sync, gy=self.bgds_estimator)
 #          self.u_stats.append()
 #            
-    def publish(self, publisher):
+    def publish(self, pub):
         if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
 
-        self.bgds_estimator.publish(publisher.section('model'))
+        self.bgds_estimator.publish(pub.section('model'))
 
         if False and self.is2D:  # TODO: implement separately
-            sec = publisher.section('preprocessing')
+            sec = pub.section('preprocessing')
             sec.array_as_image('last_y0', self.last_y0, filter='scale')
             sec.array_as_image('last_y', self.last_y, filter='scale')
             example = np.zeros(self.last_y.shape)
@@ -142,14 +143,14 @@ class BGDSAgent(ExpSwitcher):
             sec.array_as_image('example_smooth', example_smooth)
 
             if self.count > MINIMUM_FOR_PREDICTION:
-                sec = publisher.section('reliability')
+                sec = pub.section('reliability')
                 sec.array_as_image('y_disag',
                                    self.y_disag.get_value(), filter='posneg')
                 sec.array_as_image('y_disag_s',
                                    self.y_disag_s.get_value(), filter='posneg')
 
         if False:  # XXX
-            self.publish_u_stats(publisher.section('u_stats'))
+            self.publish_u_stats(pub.section('u_stats'))
 
     def publish_u_stats(self, pub):
         T = len(self.u_stats)

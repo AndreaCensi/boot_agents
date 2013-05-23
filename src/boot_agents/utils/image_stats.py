@@ -1,10 +1,11 @@
 from . import contract, MeanVariance, Publisher, generalized_gradient, np
+import warnings
 
 
 __all__ = ['ImageStats']
 
 
-class ImageStats:
+class ImageStats(object):
     """ A class to compute statistics of an image (2D float) stream. """
     
     def __init__(self):
@@ -17,6 +18,14 @@ class ImageStats:
         self.num_samples = 0
         self.last_y = None
 
+    def merge(self, other):
+        warnings.warn('implemnt initialized(), etc.')
+        self.mv.merge(other.mv)
+        self.gmv[0].merge(other.gmv[0])
+        self.gmv[1].merge(other.gmv[1])
+        self.gnmv.merge(other.gnmv)
+        self.num_samples += other.num_samples
+        
     def get_num_samples(self):
         return self.num_samples
     

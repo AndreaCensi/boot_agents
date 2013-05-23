@@ -19,6 +19,9 @@ class EstStats2D(ExpSwitcher):
 
         self.y_stats = ImageStats()
 
+    def merge(self, other):
+        self.y_stats.merge(other.y_stats)
+        
     def process_observations(self, obs):
         y = obs['observations']
         dt = obs['dt'].item()

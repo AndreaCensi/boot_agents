@@ -1,10 +1,11 @@
-from . import BDSEPredictor, MiscStatistics
-from .. import BDSEEstimator
-from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
+from .bdse_predictor import BDSEPredictor
+from .misc_statistics import MiscStatistics
+from .servo import BDSEServoInterface
+from boot_agents.bdse.model import BDSEEstimator
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
-from bootstrapping_olympics import AgentInterface, UnsupportedSpec
-from bootstrapping_olympics.configuration.master import get_boot_config
-from conf_tools.code_specs import instantiate_spec
+from bootstrapping_olympics import (AgentInterface, UnsupportedSpec,
+    get_boot_config)
+from conf_tools import instantiate_spec
 from contracts import contract
 
 
@@ -93,13 +94,13 @@ class BDSEAgent(AgentInterface):
         # Just other statistics
         self.stats.update(y_sync, y_dot_sync, u, dt)
 
-    def publish(self, publisher):
+    def publish(self, pub):
         if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
 
-        self.bdse_estimator.publish(publisher.section('estimator'))
-        self.stats.publish(publisher.section('stats'))
+        self.bdse_estimator.publish(pub.section('estimator'))
+        self.stats.publish(pub.section('stats'))
 
     def get_predictor(self):
         model = self.bdse_estimator.get_model()

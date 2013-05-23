@@ -1,17 +1,16 @@
-from . import np
 from ..simple_stats import ExpSwitcher
 from ..utils import DerivativeBox, MeanCovariance, scale_score
 from bootstrapping_olympics import UnsupportedSpec
 from geometry import double_center, inner_product_embedding, mds
 from reprep.plot_utils import style_ieee_halfcol_xy
-# FIXME: dependency to remove
+import numpy as np
 
 __all__ = ['Embed']
 
 
 class Embed(ExpSwitcher):
 
-    def __init__(self, statistic='y_corr', scale_score=False, **kwargs): #@UnusedVariable
+    def __init__(self, statistic='y_corr', scale_score=False, **kwargs):  # @UnusedVariable
         ExpSwitcher.__init__(self, **kwargs)
         self.statistic = statistic
         self.scale_score = False
@@ -40,7 +39,7 @@ class Embed(ExpSwitcher):
             return self.y_dot_abs_stats.get_correlation()
 
         raise ValueError()
-        #check_contained(statistic, self.statistics, 'statistic')
+        # check_contained(statistic, self.statistics, 'statistic')
 
     def process_observations(self, obs):
         y = obs['observations']
@@ -113,7 +112,7 @@ class Embed(ExpSwitcher):
 
         pub.text('info', 'Using statistics: %s' % self.statistic)
 
-        if False: # TODO: make option
+        if False:  # TODO: make option
             S = self.get_S_discrete(2, pub=pub.section('computation'))
         else:
             S = self.get_S(2, pub=pub.section('computation'))
@@ -147,7 +146,7 @@ def discretize(M, w):
 
 def plot_spectrum(pub, name, matrix):
     from scipy.linalg import eigh
-    S, _ = eigh(matrix) # returns the eigenvalues reversed
+    S, _ = eigh(matrix)  # returns the eigenvalues reversed
     eigs = S[::-1]
     with pub.plot('%s-eigs' % name, caption='Spectrum of %s' % name) as pylab:
         style_ieee_halfcol_xy(pylab)
@@ -171,7 +170,7 @@ def inner_product_embedding2(C, ndim):
     for i in range(ndim):
         coords[i, :] = coords[i, :] * np.sqrt(S[i])
 
-    S, V = eigh(C) # returns the eigenvalues reversed
+    S, V = eigh(C)  # returns the eigenvalues reversed
     S = S[::-1]
     return coords, S
 
@@ -189,7 +188,7 @@ def inner_product_embedding2(C, ndim):
 
 #        similarity = decompress(similarity)
 
-        #@contract(C='array[NxN]', ndim='int,>0,K', returns='array[KxN]')
+        # @contract(C='array[NxN]', ndim='int,>0,K', returns='array[KxN]')
 
 #
 #        R = np.empty_like()

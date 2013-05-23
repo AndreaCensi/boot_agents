@@ -1,6 +1,9 @@
-from . import contract, np
-from bootstrapping_olympics.interfaces import BootSpec
-from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
+from .interface import BDSEServoInterface
+from bootstrapping_olympics import BootSpec
+from contracts import contract
+import numpy as np
+
+__all__ = ['BDSEServo']
 
 
 class BDSEServo(BDSEServoInterface):

@@ -1,4 +1,6 @@
-from . import np
+import numpy as np 
+
+__all__ = ['y_axis_balanced', 'y_axis_positive', 'y_axis_extra_space']
 
 
 def y_axis_balanced(pylab, extra_space=0.1, show0=True):
@@ -9,7 +11,7 @@ def y_axis_balanced(pylab, extra_space=0.1, show0=True):
     D *= (1 + extra_space)
     pylab.axis((a[0], a[1], -D, +D))
     if show0:
-        pylab.plot([a[0], a[1]], [0, 0], 'k--') # TODO: zdepth
+        pylab.plot([a[0], a[1]], [0, 0], 'k--')  # TODO: zdepth
 
 
 def y_axis_positive(pylab, extra_space=0.1, show0=True):
@@ -19,7 +21,7 @@ def y_axis_positive(pylab, extra_space=0.1, show0=True):
     y_max *= (1 + extra_space)
     pylab.axis((a[0], a[1], y_min, y_max))
     if show0:
-        pylab.plot([a[0], a[1]], [0, 0], 'k--') # TODO: zdepth
+        pylab.plot([a[0], a[1]], [0, 0], 'k--')  # TODO: zdepth
 
 
 def y_axis_extra_space(pylab, extra_space=0.1):

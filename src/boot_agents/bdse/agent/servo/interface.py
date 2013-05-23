@@ -1,6 +1,7 @@
 from abc import abstractmethod
-from bootstrapping_olympics.interfaces.agent import (
-    ServoAgentInterface) 
+from bootstrapping_olympics import ServoAgentInterface
+
+__all__ = ['BDSEServoInterface']
 
 class BDSEServoInterface(ServoAgentInterface):
     

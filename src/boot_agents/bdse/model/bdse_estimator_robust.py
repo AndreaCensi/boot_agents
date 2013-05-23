@@ -1,12 +1,12 @@
-from . import np, contract
-from astatsa.expectation_weighted.expectation_weighted import (
-    ExpectationWeighted)
-from boot_agents.bdse.model.bdse_estimator import BDSEEstimator
-from boot_agents.utils import outer
-from boot_agents.utils.mean_covariance import MeanCovariance
-from astatsa.utils.np_comparisons import check_all_finite
+from .bdse_estimator import BDSEEstimator
+from astatsa.expectation_weighted import ExpectationWeighted
+from astatsa.utils import check_all_finite
+from boot_agents.utils import MeanCovariance, outer
+from contracts import contract
+import numpy as np
 
 
+__all__ = ['BDSEEstimatorRobust']
 
 class BDSEEstimatorRobust(BDSEEstimator):
 
@@ -29,9 +29,9 @@ class BDSEEstimatorRobust(BDSEEstimator):
         self.u_stats.merge(other.u_stats)
 
   
-    @contract(u='array[K],K>0,array_finite',
-              y='array[N],N>0,array_finite',
-              y_dot='array[N],array_finite',
+    @contract(u='array[K],K>0,finite',
+              y='array[N],N>0,finite',
+              y_dot='array[N],finite',
               w='array[N]')
     def update(self, y, u, y_dot, w):
         self.once = True

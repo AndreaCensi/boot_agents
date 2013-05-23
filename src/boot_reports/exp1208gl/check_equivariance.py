@@ -1,16 +1,15 @@
 from .. import logger
+from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q_alt
 from boot_reports.latex.bds import get_bds_M, get_bds_T, get_bds_P, get_bds_Q
 from boot_reports.latex.load import load_report_phase
-from bootstrapping_olympics.configuration.master import BootOlympicsConfig
-from bootstrapping_olympics.library.robots.equiv_robot import EquivRobot
+from bootstrapping_olympics import get_boot_config
+from bootstrapping_olympics.library.robots import EquivRobot
 from collections import namedtuple
-from reprep import Report
-from reprep.graphics.filter_posneg import posneg
+from contracts import contract
+from numpy.testing import assert_allclose
+from reprep import Report, posneg
 from vehicles import VehiclesConfig
 import numpy as np
-from contracts import contract
-from geometry.utils.numpy_backport import assert_allclose
-from boot_agents.bdse.model.bdse_tensors import get_M_from_P_T_Q_alt
 
 
 Case = namedtuple('Case', 'id_robot M T A P')
@@ -54,7 +53,7 @@ def check_linear_tran(id_set='bv1bds4'):
     transformed = ['Yrs1Se0Vrb1ro', 'Yrp1Se0Vrb1ro', 'Yrl1Se0Vrb1ro'] 
 
     config_dir = '/Users/andrea/scm/boot11_env/src/bvapps/bdse1/config/' 
-    config = BootOlympicsConfig
+    config = get_boot_config()
     vconfig = VehiclesConfig
     config.load(config_dir)
     vconfig.load(config_dir)

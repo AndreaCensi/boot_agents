@@ -1,11 +1,13 @@
-from bootstrapping_olympics import UnsupportedSpec 
-from boot_agents.robustness.deriv_agent_robust import DerivAgentRobust
-from boot_agents.bdse.model.bdse_estimator_robust import BDSEEstimatorRobust
-from boot_agents.bdse.agent.bdse_predictor import BDSEPredictor
-from conf_tools.code_specs import instantiate_spec
-from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
+from .bdse_predictor import BDSEPredictor
+from .servo import BDSEServoInterface
+from boot_agents.bdse.model import BDSEEstimatorRobust
+from boot_agents.robustness import DerivAgentRobust
+from bootstrapping_olympics import UnsupportedSpec
+from conf_tools import instantiate_spec
         
-        
+__all__ = ['BDSEAgentRobust']
+
+
 class BDSEAgentRobust(DerivAgentRobust):
     
     def __init__(self, rcond=1e-8, servo={}, **others):

@@ -1,5 +1,7 @@
 from boot_agents.utils import DerivativeBox2
-from bootstrapping_olympics.interfaces.agent import PredictorAgentInterface
+from bootstrapping_olympics import PredictorAgentInterface
+
+__all__ = ['BDSEPredictor']
 
 
 class BDSEPredictor(PredictorAgentInterface):

@@ -1,4 +1,3 @@
-from .. import np, contract
 from .bdse_predictor import *
 from .misc_statistics import *
 from .servo import *

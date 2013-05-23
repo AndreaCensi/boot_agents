@@ -1,5 +1,9 @@
-from . import np
+from contracts import contract
+import numpy as np
 from boot_agents.utils.mean_covariance import MeanCovariance
+
+__all__ = ['MiscStatistics']
+
 
 class MiscStatistics:
     def __init__(self):

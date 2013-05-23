@@ -1,8 +1,9 @@
-from . import contract, np
+from contracts import contract
+import numpy as np
 from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
 from boot_agents.utils import expect_shape
 from geometry import formatm
-from boot_agents.bdse.model.bdse_tensors import get_expected_T_from_M_P_Q
+from .bdse_tensors import get_expected_T_from_M_P_Q
 
 __all__ = ['BDSEmodel']
 
@@ -45,7 +46,7 @@ class BDSEmodel:
         
         # We have the system y_dot = MyN u
         # which is overdetermined (if we have more observations than commands)
-        u, residuals, rank, st = np.linalg.lstsq(MyN, y_dot) #@UnusedVariable
+        u, residuals, rank, st = np.linalg.lstsq(MyN, y_dot)  # @UnusedVariable
         
         # TODO: not tested
         return u
@@ -58,11 +59,11 @@ class BDSEmodel:
         return MyN
 
     @contract(y='array[N]', y_goal='array[N]', metric='None|array[NxN]')
-    def get_servo_descent_direction(self, y, y_goal, metric=None): #@UnusedVariable
+    def get_servo_descent_direction(self, y, y_goal, metric=None):  # @UnusedVariable
         # TODO: add arbitrary metric
         self.check_valid_y(y)
         self.check_valid_y(y_goal)
-        MyN = self.get_MyN(y) # should I use average?
+        MyN = self.get_MyN(y)  # should I use average?
         e = y_goal - y
         direction = np.tensordot(MyN, e, axes=(0, 0))
         return direction
