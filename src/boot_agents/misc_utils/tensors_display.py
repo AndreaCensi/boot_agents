@@ -107,23 +107,23 @@ def pub_tensor3_slice2(pub, name, V):
 def pub_save_versions(pub, rgb):
     if False:
         jpg_zoom = 1
-        pub.r.data_rgb('jpg', rgb_zoom(rgb, jpg_zoom),
+        pub.data_rgb('jpg', rgb_zoom(rgb, jpg_zoom),
                           mime=MIME_JPG, caption='Converted to JPG')
     png_zoom = 1
-    pub.r.data_rgb('png', rgb_zoom(rgb, png_zoom),
+    pub.data_rgb('png', rgb_zoom(rgb, png_zoom),
                           mime=MIME_PNG, caption='Converted to JPG')
 
 
 @contract(V='array[NxN]')
 def pub_tensor2_cov(pub, name, V, rcond=None):
     """ Publishes a tensor which is supposed to represent a covariance. """
-    sub = pub.section(name)
-    sub.array_as_image('posneg', V)  # XXX: redundant, but don't want to change code
-    sub.array('value', V)
-    rgb = posneg(V)
-    pub_save_versions(sub, rgb)
-    pub_svd_decomp(sub, V)
-    pub_stats(sub, V)
+    with pub.subsection(name) as sub:
+        sub.array_as_image('posneg', V)  # XXX: redundant, but don't want to change code
+        sub.array('value', V)
+        rgb = posneg(V)
+        pub_save_versions(sub, rgb)
+        pub_svd_decomp(sub, V)
+        pub_stats(sub, V)
 
 
 def pub_svd_decomp(parent, V, rcond=None):

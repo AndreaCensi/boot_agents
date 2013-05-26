@@ -4,13 +4,15 @@ from boot_agents.bdse.model import BDSEEstimatorRobust
 from boot_agents.robustness import DerivAgentRobust
 from bootstrapping_olympics import UnsupportedSpec
 from conf_tools import instantiate_spec
+from contracts import contract
         
 __all__ = ['BDSEAgentRobust']
 
 
 class BDSEAgentRobust(DerivAgentRobust):
     
-    def __init__(self, rcond=1e-8, servo={}, **others):
+    @contract(servo='code_spec')
+    def __init__(self, servo, rcond=1e-8, **others):
         print('Servo: %r' % servo)
         DerivAgentRobust.__init__(self, **others)
         self.servo = servo
