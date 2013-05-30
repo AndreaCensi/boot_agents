@@ -1,3 +1,10 @@
+
+- id: test_cmdstats_t3
+  desc: "Commands stats"
+  code:
+      - boot_agents.CmdStats
+      - beta: 3
+
 - id: test_expswitcher_t1
   desc: Switches randomly between commands with an exponential switching time.
   code:

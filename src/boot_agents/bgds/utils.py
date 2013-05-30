@@ -1,5 +1,9 @@
-from . import contract, np
+from contracts import contract
+import numpy as np
 import itertools
+
+__all__ = ['smooth2d', 'outer_first_dim', 'compute_gradient_information_matrix']
+
 
 @contract(y='array[HxW]', scale='>0', returns='array[HxW]')
 def smooth2d(y, scale):
@@ -10,8 +14,6 @@ def smooth2d(y, scale):
     from scipy.ndimage import gaussian_filter
     # TODO: move somewhere else
     return gaussian_filter(y, sigma=scale)
-
-
 
 
 @contract(P='array[2x2xHxW]', returns='array[2x2xHxW]')

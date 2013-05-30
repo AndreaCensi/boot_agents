@@ -1,4 +1,4 @@
-from ..misc_utils import y_axis_balanced
+from boot_agents.misc_utils import y_axis_balanced
 from contracts import contract
 from reprep import MIME_JPG, posneg, rgb_zoom, MIME_PNG
 from reprep.plot_utils import (set_thick_ticks, set_left_spines_outward,
@@ -278,7 +278,7 @@ def iterate_indices(shape):
         for i, j in itertools.product(range(shape[0]), range(shape[1])):
             yield i, j
     else:
-        raise NotImplementedError
+        raise NotImplementedError()
         assert(False)
 
 

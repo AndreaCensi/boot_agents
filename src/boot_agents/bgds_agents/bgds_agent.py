@@ -1,8 +1,8 @@
-from ..simple_stats import ExpSwitcher
-from ..utils import DerivativeBox, Expectation, RemoveDoubles
-from boot_agents.bgds.bgds_estimator import BGDSEstimator
-from boot_agents.bgds.bgds_predictor import BGDSPredictor
-from boot_agents.bgds.utils import smooth2d
+from boot_agents.simple_stats import ExpSwitcher
+from boot_agents.utils import DerivativeBox, Expectation, RemoveDoubles
+from boot_agents.bgds import BGDSEstimator
+from boot_agents.bgds import BGDSPredictor
+from boot_agents.bgds import smooth2d
 from bootstrapping_olympics import UnsupportedSpec
 from contracts import contract
 from reprep import MIME_PDF

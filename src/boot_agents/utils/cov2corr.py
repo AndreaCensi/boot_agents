@@ -1,4 +1,5 @@
-from . import np
+import numpy as np
+
 
 
 def cov2corr(covariance, zero_diagonal=False):

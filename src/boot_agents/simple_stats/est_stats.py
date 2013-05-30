@@ -1,7 +1,8 @@
-from . import ExpSwitcher, np
-from ..utils import MeanCovariance, cov2corr
+from .exp_switcher import ExpSwitcher
+from boot_agents.utils import MeanCovariance, cov2corr
 from bootstrapping_olympics import UnsupportedSpec
-from reprep.plot_utils.styles import style_ieee_fullcol_xy
+from reprep.plot_utils import style_ieee_fullcol_xy
+import numpy as np
 
 __all__ = ['EstStats']
 

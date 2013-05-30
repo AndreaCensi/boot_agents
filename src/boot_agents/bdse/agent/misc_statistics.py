@@ -1,11 +1,10 @@
-from contracts import contract
+from boot_agents.utils import MeanCovariance
 import numpy as np
-from boot_agents.utils.mean_covariance import MeanCovariance
 
 __all__ = ['MiscStatistics']
 
 
-class MiscStatistics:
+class MiscStatistics(object):
     def __init__(self):
         self.y_stats = MeanCovariance()
         self.y_dot_stats = MeanCovariance()

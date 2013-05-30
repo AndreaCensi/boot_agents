@@ -1,5 +1,5 @@
-from . import ExpSwitcher
-from ..utils import ImageStats
+from .exp_switcher import ExpSwitcher
+from boot_agents.utils import ImageStats
 from bootstrapping_olympics import UnsupportedSpec
 
 __all__ = ['EstStats2D']

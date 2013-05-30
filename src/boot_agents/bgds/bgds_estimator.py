@@ -11,7 +11,7 @@ from bootstrapping_olympics.utils.np_comparisons import check_all_finite
 __all__ = ['BGDSEstimator']
 
 
-class BGDSEstimator:
+class BGDSEstimator(object):
     '''
 
     Dimensions of G:

@@ -1,4 +1,5 @@
-from . import np, contract
+from contracts import contract
+import numpy as np
 from ..utils import Expectation, outer, MeanCovariance
 from boot_agents.utils import PredictionStats
 from contracts import new_contract

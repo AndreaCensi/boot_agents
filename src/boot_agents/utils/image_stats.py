@@ -1,6 +1,7 @@
-from . import contract, MeanVariance, Publisher, generalized_gradient, np
+from . import MeanVariance, Publisher, generalized_gradient
+from contracts import contract
+import numpy as np
 import warnings
-
 
 __all__ = ['ImageStats']
 

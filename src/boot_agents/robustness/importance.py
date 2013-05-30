@@ -1,13 +1,13 @@
+from boot_agents.utils import MeanCovariance, generalized_gradient
+from contracts import contract
+from reprep.plot_utils import (turn_off_bottom_and_top, x_axis_set,
+    y_axis_balanced, y_axis_set)
 import numpy as np
 import warnings
-from reprep.plot_utils.spines import turn_off_bottom_and_top
-from reprep.plot_utils.axes import x_axis_set, y_axis_balanced, y_axis_set
-from contracts import contract
-from boot_agents.utils.gradients import generalized_gradient
-from boot_agents.utils.mean_covariance import MeanCovariance
  
- 
-class Importance():
+__all__ = ['Importance']
+
+class Importance(object):
     
     def __init__(self, max_y_dot, max_gy, min_y, max_y):
         self.min_y = min_y

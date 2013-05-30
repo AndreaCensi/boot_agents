@@ -1,5 +1,5 @@
-from . import ExpSwitcher
-from ..utils import SymbolsStatistics
+from .exp_switcher import ExpSwitcher
+from boot_agents.utils import SymbolsStatistics
 from bootstrapping_olympics import UnsupportedSpec, ValueFormats
 from contracts import contract
 from geometry import mds, euclidean_distances
@@ -67,7 +67,7 @@ class SymbolsStats(ExpSwitcher):
                         ax.set_zlabel('Z')
                         fig.add_axes(ax)
 
-            if False: # TODO: use cheaper solution for point cloud as in
+            if False:  # TODO: use cheaper solution for point cloud as in
                     # calib
                 with sec.plot('D_vs_R') as pl:
                     pl.plot(D.flat, R.flat, 'k.')

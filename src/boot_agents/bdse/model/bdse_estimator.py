@@ -17,7 +17,7 @@ import warnings
 __all__ = ['BDSEEstimator']
 
 
-class BDSEEstimator:
+class BDSEEstimator(object):
     """
         Estimates a BDSE model.
         

@@ -1,7 +1,7 @@
-from . import BGDS, np
+from boot_agents.bgds import BGDS
 from numpy.testing.utils import assert_allclose
 import itertools
-
+import numpy as np
 
 # TODO: finish this
 def test_bgds_0():

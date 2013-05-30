@@ -8,8 +8,11 @@
 # Means and Variances. Journal of the American Statistical Association,
 # Vol. 69, No. 348, 859-866. 
 
-from . import logger, Expectation, np, contract, Publisher, cov2corr, outer
-from ..misc_utils.pylab_axis import y_axis_positive, y_axis_extra_space
+from contracts import contract
+import numpy as np
+from boot_agents import logger
+from . import Expectation, Publisher, cov2corr, outer
+from boot_agents.misc_utils import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
 from bootstrapping_olympics.utils import check_all_finite
 from reprep.plot_utils import style_ieee_fullcol_xy
@@ -17,7 +20,7 @@ import warnings
 
 
 
-class MeanCovariance:
+class MeanCovariance(object):
     ''' Computes mean and covariance of a quantity '''
     def __init__(self, max_window=None):
         self.mean_accum = Expectation(max_window)

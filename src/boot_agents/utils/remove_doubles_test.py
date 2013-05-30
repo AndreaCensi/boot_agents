@@ -1,5 +1,5 @@
-from . import RemoveDoubles, np
-
+import numpy as np
+from boot_agents.utils import RemoveDoubles
 
 def remove_doubles_test_1():
     rd = RemoveDoubles(0.5)
@@ -25,7 +25,7 @@ def remove_doubles_test_3():
     rd_0_5 = RemoveDoubles(0.5)
     z1 = np.random.rand(5)
     z2 = z1.copy()
-    z2[3] = 0 # real fraction 0.2 
+    z2[3] = 0  # real fraction 0.2 
 
     rd_0_1.update(z1)
     rd_0_1.update(z2)

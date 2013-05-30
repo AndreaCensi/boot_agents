@@ -1,5 +1,5 @@
-from ..simple_stats import ExpSwitcher
-from ..utils import DerivativeBox, MeanCovariance, scale_score
+from boot_agents.simple_stats import ExpSwitcher
+from boot_agents.utils import DerivativeBox, MeanCovariance, scale_score
 from bootstrapping_olympics import UnsupportedSpec
 from geometry import double_center, inner_product_embedding, mds
 from reprep.plot_utils import style_ieee_halfcol_xy

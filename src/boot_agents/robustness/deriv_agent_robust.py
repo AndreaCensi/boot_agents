@@ -1,10 +1,10 @@
-from boot_agents.utils.derivative import DerivativeBox
-from boot_agents.utils.remove_doubles import RemoveDoubles
 from abc import abstractmethod
-from conf_tools.code_specs import instantiate_spec
-from bootstrapping_olympics.interfaces.agent import AgentInterface
+from boot_agents.utils import DerivativeBox, RemoveDoubles
+from bootstrapping_olympics import AgentInterface
+from conf_tools import instantiate_spec
 import warnings
 
+__all__ = ['DerivAgentRobust']
 
 class DerivAgentRobust(AgentInterface):
     """ 

@@ -1,8 +1,9 @@
 from .. import BDSEmodel
-from . import np, contract
-from bootstrapping_olympics.unittests.utils import fancy_test_decorator
+import numpy as np
+import contracts as contract
 from .simulate import BDSSimulator
 from ..model.bdse_estimator import BDSEEstimator
+from geometry.manifolds.tests.checks_generation import fancy_test_decorator
 
 
 @contract(n='int,>=1', k='int,>=1')
@@ -67,7 +68,7 @@ def check_instantiation(mid, model):
 
 
 @for_all_bdse_examples
-def check_simulation(mid, model): #@UnusedVariable
+def check_simulation(mid, model):  # @UnusedVariable
     y0 = lambda: np.random.rand(model.get_y_shape())
     u_dist = lambda: np.random.rand(model.get_u_shape())
     simulator = BDSSimulator(model, y0, u_dist)
@@ -76,7 +77,7 @@ def check_simulation(mid, model): #@UnusedVariable
 
 
 @for_all_bdse_examples
-def check_learning(mid, model): #@UnusedVariable
+def check_learning(mid, model):  # @UnusedVariable
     if False:
         # Everything zero mean
         y0 = lambda: np.random.randn(model.get_y_shape())
@@ -100,7 +101,7 @@ def check_learning(mid, model): #@UnusedVariable
     count = 0
     for _ in range(nstart):
         for  y, u, y_dot in simulator.get_simulation(nsteps, dt):
-            #printm('u', u)
+            # printm('u', u)
             estimator.update(y, u, y_dot)
             count += 1
             if count % 500 == 0: 

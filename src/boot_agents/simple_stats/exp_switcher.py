@@ -1,11 +1,11 @@
-from . import np
-from ..utils import RandomCanonicalCommand, RandomCommand
+import numpy as np
+from boot_agents.utils import RandomCanonicalCommand, RandomCommand
 from bootstrapping_olympics import AgentInterface
 
 __all__ = ['RandomSwitcher', 'ExpSwitcher', 'ExpSwitcherCanonical']
 
 
-class RandomSwitcher:
+class RandomSwitcher(object):
     def __init__(self, interval_function, value_function):
         self.interval_function = interval_function
         self.value_function = value_function

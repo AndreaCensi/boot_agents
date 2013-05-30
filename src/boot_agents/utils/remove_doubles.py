@@ -1,9 +1,9 @@
-from . import contract
+from contracts import contract
 
 __all__ = ['RemoveDoubles']
 
 
-class RemoveDoubles():
+class RemoveDoubles(object):
     ''' 
         Filters the stream, ignoring values that did not change enough,
         in the sense that a certain percentage of the measurements remained

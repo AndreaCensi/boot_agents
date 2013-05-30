@@ -8,7 +8,7 @@ from .bdse_tensors import get_expected_T_from_M_P_Q
 __all__ = ['BDSEmodel']
 
 
-class BDSEmodel:
+class BDSEmodel(object):
     """
         Tensor sizes: ::
         

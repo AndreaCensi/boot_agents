@@ -1,9 +1,10 @@
-from . import contract, np, Publisher
+from contracts import contract
+import numpy as np
 
 __all__ = ['SymbolsStatistics']
 
 
-class SymbolsStatistics:
+class SymbolsStatistics(object):
     ''' 
         Computes the first- and second-order statistics of a stream of 
         symbols.
@@ -47,7 +48,6 @@ class SymbolsStatistics:
         if len(self.history) > self.window:
             self.history.pop(0)
 
-    @contract(pub=Publisher)
     def publish(self, pub, skim=3):
         if self.num_samples == 0:
             pub.text('warning',
@@ -101,7 +101,7 @@ class SymbolsStatistics:
         X = self.transitions[K, :, :]
         # X[delta, b, a] = number of times from a to b
         T = X.copy()
-        for j in range(int(self.n)): # XXX
+        for j in range(int(self.n)):  # XXX
             n = self.histogram[j]
             if n > 0:
                 T[:, j] = T[:, j] / n

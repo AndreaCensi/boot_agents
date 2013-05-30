@@ -25,7 +25,7 @@ class ServoLongTermMotion():
         return y0, self.Rw
     
     def predict(self, y0):
-        raise NotImplemented()
+        raise NotImplementedError()
         
 new_contract('ServoLongTermMotion', ServoLongTermMotion)
         

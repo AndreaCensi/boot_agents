@@ -1,6 +1,8 @@
 from boot_agents.utils import DerivativeBox2
 
 
+__all__ = ['BGDSPredictor']
+
 class BGDSPredictor():
     
     def __init__(self, bgds_model):

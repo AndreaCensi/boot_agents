@@ -1,6 +1,6 @@
-from . import gradient1d, gradient2d, np
+from . import gradient1d, gradient2d
 from numpy.testing.utils import assert_allclose
-
+import numpy as np
 
 g_examples = [
        ([1, 1, 1, 1], [0, 0, 0, 0]),

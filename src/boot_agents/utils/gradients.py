@@ -1,5 +1,5 @@
-from . import np, contract
-
+from contracts import contract
+import numpy as np
 
 @contract(a='array[N],N>3', returns='array[N]')
 def gradient1d(a):

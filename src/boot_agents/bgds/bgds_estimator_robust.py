@@ -1,10 +1,14 @@
-from . import contract, outer_first_dim, np
-from ..utils import outer
+from . import outer_first_dim
+from boot_agents.utils import outer
 from astatsa.expectation_weighted import ExpectationWeighted
-from astatsa.utils.np_comparisons import check_all_finite
-from boot_agents.utils import  generalized_gradient
-from boot_agents.bgds.bgds_estimator import BGDSEstimator 
+from astatsa.utils import check_all_finite
+from .bgds_estimator import BGDSEstimator
+from boot_agents.utils import generalized_gradient
+from contracts import contract
+import numpy as np
  
+ 
+
 
 class BGDSEstimator1DRobust(BGDSEstimator):
     '''

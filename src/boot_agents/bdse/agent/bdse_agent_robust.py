@@ -1,6 +1,6 @@
 from .bdse_predictor import BDSEPredictor
 from .servo import BDSEServoInterface
-from boot_agents.bdse.model import BDSEEstimatorRobust
+from boot_agents.bdse import BDSEEstimatorRobust
 from boot_agents.robustness import DerivAgentRobust
 from bootstrapping_olympics import UnsupportedSpec
 from conf_tools import instantiate_spec

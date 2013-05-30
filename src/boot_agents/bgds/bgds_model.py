@@ -1,8 +1,10 @@
-from . import contract, np
-from ..misc_utils import display_1d_tensor, display_4d_tensor, display_3d_tensor
-from ..utils import expect_shape, generalized_gradient
+from boot_agents.misc_utils import display_1d_tensor, display_4d_tensor, display_3d_tensor
+from boot_agents.utils import expect_shape, generalized_gradient
+from contracts import contract
+import numpy as np
 
-class BGDSmodel:
+
+class BGDSmodel(object):
     """
         
         Dimensions of G:
@@ -30,7 +32,7 @@ class BGDSmodel:
             self.is2D = True
             self.y_shape = (G.shape[-2], G.shape[-1])
         
-    #@contract(y='array[N]', u='array[K]', returns='array[N]')
+    # @contract(y='array[N]', u='array[K]', returns='array[N]')
     def get_y_dot(self, y, u, gy=None):
         self.check_valid_y(y)
         self.check_valid_u(u)
@@ -86,9 +88,9 @@ class BGDSmodel:
         # self.B: array[KxN]
         
         # FIXME: I am not sure of this, should be tested
-        Ggy = (self.G * gy).squeeze() # K x N 
-        L = Ggy + self.B # K x N
-        return L.T # N x K
+        Ggy = (self.G * gy).squeeze()  # K x N 
+        L = Ggy + self.B  # K x N
+        return L.T  # N x K
             
     @contract(y='array[AxB]', y_dot='array[AxB]')
     def estimate_u_2d(self, y, y_dot, gy=None):

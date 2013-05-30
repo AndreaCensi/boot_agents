@@ -1,4 +1,5 @@
-from . import Queue, contract
+from . import Queue
+from contracts import contract 
 
 __all__ = ['DerivativeBox', 'DerivativeBox2']
 
@@ -14,7 +15,7 @@ class DerivativeBox():
     @contract(y='array', dt='>=0')
     def update(self, y, dt):
         if dt == 0:
-            return # XXX
+            return  # XXX
         self.q_y.update(y)
         self.q_dt.update(dt)
 
@@ -47,7 +48,7 @@ class DerivativeBox2():
     @contract(y='array', dt='>=0')
     def update(self, y, dt):
         if dt == 0:
-            return # XXX
+            return  # XXX
         self.q_y.update(y)
         self.q_dt.update(dt)
 

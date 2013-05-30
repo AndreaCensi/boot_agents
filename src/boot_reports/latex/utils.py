@@ -1,4 +1,4 @@
-from . import logger
+from boot_reports import logger
 from StringIO import StringIO
 from bootstrapping_olympics.utils import isodate
 from reprep import Image_from_array
@@ -23,7 +23,7 @@ def get_sensel_pgftable(V, what, desc='No description given'):
 def jpg_data(rgb, quality=85, optimize=True):
     # http://mail.python.org/pipermail/image-sig/1999-August/000816.html
     import ImageFile
-    ImageFile.MAXBLOCK = 1000000 # default is 64k
+    ImageFile.MAXBLOCK = 1000000  # default is 64k
     im = Image_from_array(rgb)
     tmp = tempfile.NamedTemporaryFile(suffix='.jpg')
     name = tmp.name

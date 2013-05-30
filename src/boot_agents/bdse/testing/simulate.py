@@ -1,7 +1,11 @@
-from . import np, contract
+
+import numpy as np
+from contracts import contract
+
+__all__ = ['BDSSimulator']
 
 
-class BDSSimulator:
+class BDSSimulator(object):
     """ A simulator of BDS models """
 
     def __init__(self, model, y0_dist, u_dist):

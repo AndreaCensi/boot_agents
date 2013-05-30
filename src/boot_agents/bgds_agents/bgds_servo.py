@@ -1,7 +1,9 @@
-from . import contract, np
+from contracts import contract
+import numpy as np
 
+__all__ = ['BGDSServo']
 
-class BGDSServo():
+class BGDSServo(object):
 
     def __init__(self, bds_estimator, commands_spec, gain=0.1):
         self.commands_spec = commands_spec
@@ -26,7 +28,7 @@ class BGDSServo():
             msg = ('Warning: choose_commands() before process_observations()')
             raise Exception(msg)
 
-        raise NotImplemented()
+        raise NotImplementedError()
     
 #         error = self.y - self.goal
 # 

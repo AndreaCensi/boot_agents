@@ -1,4 +1,5 @@
-from . import contract, np
+from contracts import contract
+import numpy as np
 
 
 class BDSServo():

@@ -1,5 +1,8 @@
-from ..utils import generalized_gradient 
-from . import  np, contract
+from boot_agents.utils import generalized_gradient
+from contracts import contract
+import numpy as np
+
+__all__ = ['BGDS']
 
 
 class BGDS(object):

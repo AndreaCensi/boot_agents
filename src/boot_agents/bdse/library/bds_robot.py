@@ -2,6 +2,8 @@ from bootstrapping_olympics import (BootSpec, RobotInterface, RobotObservations,
     EpisodeDesc)
 from contracts import contract
 
+__all__ = ['BDSSystem']
+
 
 class BDSSystem(RobotInterface):
     

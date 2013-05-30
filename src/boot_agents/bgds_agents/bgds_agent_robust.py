@@ -4,7 +4,9 @@ from boot_agents.robustness.deriv_agent_robust import DerivAgentRobust
 from boot_agents.bgds.bgds_estimator_robust import BGDSEstimator1DRobust
 from .bgds_servo import BGDSServo
         
-        
+__all__ = ['BGDSAgent1DRobust']
+
+
 class BGDSAgent1DRobust(DerivAgentRobust):
     
     def init(self, boot_spec):

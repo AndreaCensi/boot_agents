@@ -1,12 +1,13 @@
-from . import np, contract
+from bootstrapping_olympics import StreamSpec
+from contracts import contract
+import numpy as np
 import itertools
 
-from bootstrapping_olympics import StreamSpec
 
 __all__ = ['RandomCanonicalCommand', 'RandomCommand', 'get_canonical_commands']
 
 
-class RandomCanonicalCommand:
+class RandomCanonicalCommand(object):
     ''' Returns a canonical command; if u ~ [min, max], then
         it will sample randomly between [min,0,max]. '''
     # TODO: this assumes certain semantics of the data
@@ -37,7 +38,7 @@ class RandomCommand:
 
 @contract(commands_spec=StreamSpec)
 def get_canonical_commands(commands_spec):
-    assert len(commands_spec.shape()) == 1 # XXX: proper exception
+    assert len(commands_spec.shape()) == 1  # XXX: proper exception
     choices = []
     for i in range(commands_spec.size()):
         lower = commands_spec.streamels.flat[i]['lower']

@@ -1,7 +1,7 @@
 - id: test_random_10x10_2
   desc: Random robot (2D observations)
   code:
-  - bootstrapping_olympics.examples.RandomRobot
+  - bootstrapping_olympics.library.robots.RandomRobot
   - boot_spec:
       observations:
         shape: [10,10]
@@ -16,7 +16,7 @@
 - id: test_random_10_2
   desc: Random robot (1D observations)
   code:
-  - bootstrapping_olympics.examples.RandomRobot
+  - bootstrapping_olympics.library.robots.RandomRobot
   - boot_spec:
       observations:
         shape: [10]
@@ -27,20 +27,3 @@
         format: C
         range: [-1,+1]
         default: [0,0]
-
-# TODO: good treatment of NaN
-# - id: test_random_5nan_2
-#   desc: Random robot (1D observations with invalid)
-#   code:
-#   - bootstrapping_olympics.examples.RandomRobot
-#   - boot_spec:
-#       observations:
-#         shape: [5]
-#         format: [C, I, C, I, C]
-#         range: [[0,1],[0,1],[0,1],[0,1],[0,1]]
-#       commands:
-#         shape: [2]
-#         format: C
-#         range: [-1,+1]
-#         default: [0,0]
-

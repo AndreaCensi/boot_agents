@@ -1,6 +1,8 @@
-from . import np
 import itertools
+import numpy as np
 
+
+__all__ = ['scale_score', 'scale_score_scipy', 'check_scale_score']
 
 # def scale_score(x, kind='quicksort'):
 #    y = x.copy()
