@@ -77,42 +77,6 @@ class BDSEServo(BDSEServoInterface):
         u = clip(u, self.commands_spec)
         return u
     
-    # this is now in servo simple
-    
-#     def choose_commands2(self, K=None):
-#         warnings.warn('Using choose_commands2')
-#         
-#         if self.linpoint == 'current':
-#             u = self.bdse_model.get_servo_descent_direction(self.y, self.goal)
-#         elif self.linpoint == 'goal':
-#             u = -self.bdse_model.get_servo_descent_direction(self.goal, self.y)
-#         elif self.linpoint == 'middle':
-#             u1 = self.bdse_model.get_servo_descent_direction(self.y, self.goal)
-#             u2 = -self.bdse_model.get_servo_descent_direction(self.goal, self.y)
-#             u = 0.5 * u1 + 0.5 * u2
-#         else:
-#             raise ValueError('not implemented %r' % self.linpoint)
-#         
-#         if K is not None:
-#             u = u * K
-#                 
-#         u_raw = u.copy()
-#          
-# 
-#         u_max = np.abs(u).max()
-#         if u_max > 0:
-#             u = u / u_max
-#              
-#         u = u * self.gain
-#  
-#         u = clip(u, self.commands_spec)
-#         
-#         res = {}
-#         res['linpoint'] = self.linpoint
-#         res['u_raw'] = u_raw
-#         res['u'] = u
-#          
-#         return res
 
 
 def clip(x, stream_spec):  # TODO: move away

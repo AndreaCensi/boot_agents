@@ -127,7 +127,6 @@ class BDSEServoLongTerm(BDSEServoInterface):
         DR = D * R
         w = np.sum(DR) / np.sum(R)
         return w
-
         
     @contract(goal='array')
     def set_goal_observations(self, goal):

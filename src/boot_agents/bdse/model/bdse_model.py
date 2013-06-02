@@ -63,10 +63,22 @@ class BDSEmodel(object):
         # TODO: add arbitrary metric
         self.check_valid_y(y)
         self.check_valid_y(y_goal)
-        MyN = self.get_MyN(y)  # should I use average?
+        MyN = self.get_MyN(y)
         e = y_goal - y
         direction = np.tensordot(MyN, e, axes=(0, 0))
         return direction
+
+    @contract(y='array[N]', y_goal='array[N]', metric='None|array[NxN]')
+    def get_servo_descent_direction_L1(self, y, y_goal, metric=None):  # @UnusedVariable
+        # TODO: add arbitrary metric
+        self.check_valid_y(y)
+        self.check_valid_y(y_goal)
+        MyN = self.get_MyN(y)
+        e = y_goal - y
+        e1 = np.sign(e)
+        direction = np.tensordot(MyN, e1, axes=(0, 0))
+        return direction
+    
     
     # From now on, just visualization and other boring stuff
      

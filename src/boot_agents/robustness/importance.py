@@ -32,9 +32,7 @@ class Importance(object):
         gy_valid = np.abs(gy0) < self.max_gy
         y_dot_valid = np.abs(y_dot) < self.max_y_dot
         
-        
         w = y_valid * 1.0 * gy_valid * y_dot_valid
-        
         
         self.w_stats.update(w)
         self.last_w = w  
@@ -68,7 +66,6 @@ class Importance(object):
             pylab.plot(np.nonzero(valid)[0], x[valid], 'ks')
             pylab.plot(np.nonzero(invalid)[0], x[invalid], 'rs')
             
-
         with pub.plot('last_y') as pylab: 
             plot_good_bad(pylab, self.last_y, self.last_y_valid)
             y_axis_set(pylab, -0.1, +1.1)
@@ -99,6 +96,5 @@ class Importance(object):
             x_axis_set(pylab, -1, N)
             y_axis_balanced(pylab)
             turn_off_bottom_and_top(pylab)
-
  
         self.w_stats.publish(pub.section('w_stats'))
