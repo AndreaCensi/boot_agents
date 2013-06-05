@@ -1,22 +1,23 @@
 from .bdse_predictor import BDSEPredictor
 from .servo import BDSEServoInterface
-from boot_agents.bdse import BDSEEstimatorRobust
 from boot_agents.robustness import DerivAgentRobust
 from bootstrapping_olympics import UnsupportedSpec
 from conf_tools import instantiate_spec
 from contracts import contract
+from boot_agents.bdse.model.bdse_estimator_interface import BDSEEstimatorInterface
+from contracts.interface import describe_type
         
 __all__ = ['BDSEAgentRobust']
 
 
 class BDSEAgentRobust(DerivAgentRobust):
     
-    @contract(servo='code_spec')
-    def __init__(self, servo, rcond=1e-8, **others):
+    @contract(servo='code_spec', estimator='code_spec')
+    def __init__(self, servo, estimator, **others):
         print('Servo: %r' % servo)
         DerivAgentRobust.__init__(self, **others)
         self.servo = servo
-        self.rcond = rcond
+        self.estimator_spec = estimator
         
     def init(self, boot_spec):
         DerivAgentRobust.init(self, boot_spec)
@@ -25,8 +26,12 @@ class BDSEAgentRobust(DerivAgentRobust):
             msg = 'This agent only works with 1D signals'
             raise UnsupportedSpec(msg)
 
-        self.estimator = BDSEEstimatorRobust(rcond=self.rcond)
-        
+        self.estimator = instantiate_spec(self.estimator_spec)
+        if not isinstance(self.estimator, BDSEEstimatorInterface):
+            msg = ('Expected a BDSEEstimatorInterface, got %s' 
+                   % describe_type(self.estimator))
+            raise ValueError(msg)
+
         self.commands_spec = boot_spec.get_commands()
 
     def state_vars(self):
@@ -36,9 +41,10 @@ class BDSEAgentRobust(DerivAgentRobust):
         self.estimator.update(y=y, y_dot=y_dot, u=u, w=w)
      
     def publish(self, pub):
-        self.estimator.publish(pub.section('bdse_estimator')) 
-        DerivAgentRobust.publish(self, pub.section('deriv_agent_robust'))
-        
+        with pub.subsection('estimator') as sub:
+            self.estimator.publish(sub)
+        DerivAgentRobust.publish(self, pub)
+             
     def get_predictor(self):
         model = self.estimator.get_model()
         return BDSEPredictor(model)

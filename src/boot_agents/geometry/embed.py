@@ -117,11 +117,11 @@ class Embed(ExpSwitcher):
         else:
             S = self.get_S(2, pub=pub.section('computation'))
 
-        with pub.plot(name='S') as pylab:
+        with pub.plot('S') as pylab:
             style_ieee_halfcol_xy(pylab)
             pylab.plot(S[0, :], S[1, :], 's')
 
-        with pub.plot(name='S_joined') as pylab:
+        with pub.plot('S_joined') as pylab:
             style_ieee_halfcol_xy(pylab)
             pylab.plot(S[0, :], S[1, :], '-')
 

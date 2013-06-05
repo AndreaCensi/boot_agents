@@ -35,12 +35,12 @@ def get_M_from_P_T_Q(P, T, Q, other=None):
     return M
  
     
-
 @contract(Pinv='array[NxN]', T='array[NxNxK]', Q='array[KxK]',
           other='None|dict', returns='array[NxNxK]')
 def get_M_from_Pinv_T_Q(Pinv, T, Q, other=None):
     warnings.warn('Untested')
-    TPinv = obtain_TPinv_from_T_Pinv(T, Pinv)   
+    TPinv = obtain_TPinv_from_T_Pinv(T, Pinv)
+    # TODO: check LinAlg   
     Q_inv = np.linalg.inv(Q)
     M = np.tensordot(TPinv, Q_inv, axes=(2, 0))
 

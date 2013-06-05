@@ -28,7 +28,7 @@ class BDSEEstimatorRobust(BDSEEstimator):
         self.y_mean.merge(other.y_mean)
         self.u_stats.merge(other.u_stats)
 
-  
+
     @contract(u='array[K],K>0,finite',
               y='array[N],N>0,finite',
               y_dot='array[N],finite',

@@ -17,14 +17,14 @@
       - boot_agents.EstStats
       - beta: 3
 
-- id: test_diffeoagent2d_r1
-  desc: "Dev. version (real)"
-  code:
-      - boot_agents.DiffeoAgent2Db
-      - rate: 1
-        delta: 0.29
-        target_resolution: [50,50]
-        ratios: [0.15, 0.03]
+# - id: test_diffeoagent2d_r1
+#   desc: "Dev. version (real)"
+#   code:
+#       - boot_agents.DiffeoAgent2Db
+#       - rate: 1
+#         delta: 0.29
+#         target_resolution: [50,50]
+#         ratios: [0.15, 0.03]
         
 - id: test_expswitchercan_b1
   desc: "Exponential switcher, canonical commands."
@@ -32,12 +32,12 @@
       - boot_agents.ExpSwitcherCanonical
       - beta: 1
 
-- id: test_bdsagent
-  desc: "Dev. version"
-  code:
-      - boot_agents.BDSAgent
-      - beta: 1
-        change_fraction: 0.5
+# - id: test_bdsagent
+#   desc: "Dev. version"
+#   code:
+#       - boot_agents.BDSAgent
+#       - beta: 1
+#         change_fraction: 0.5
 
 - id: test_bgdsagent_C1
   desc: "Dev. version"

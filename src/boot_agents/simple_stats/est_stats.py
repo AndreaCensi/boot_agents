@@ -49,7 +49,7 @@ class EstStats(ExpSwitcher):
 
         pub.text('stats', 'Num samples: %s' % self.y_stats.get_num_samples())
 
-        with pub.plot(name='y_stats') as pylab:
+        with pub.plot('y_bounds') as pylab:
             style_ieee_fullcol_xy(pylab)
             pylab.plot(Ey, label='E(y)')
             pylab.plot(y_max, label='y_max')
@@ -60,7 +60,7 @@ class EstStats(ExpSwitcher):
                         and np.min(y_max) > 0
                         and np.min(y_min) > 0)
         if all_positive:
-            with pub.plot(name='y_stats_log') as pylab:
+            with pub.plot('y_stats_log') as pylab:
                 style_ieee_fullcol_xy(pylab)
                 pylab.semilogy(Ey, label='E(y)')
                 pylab.semilogy(y_max, label='y_max')
@@ -82,5 +82,6 @@ class EstStats(ExpSwitcher):
             s /= s[0]
             pylab.semilogy(s, 'bx-')
 
+        with pub.subsection('y_stats') as sub:
+            self.y_stats.publish(sub)
 
-        self.y_stats.publish(pub.section('y_stats'))

@@ -98,9 +98,12 @@ class BDSEAgent(AgentInterface):
         if self.count < 10:
             self.info('Skipping publishing as count=%d' % self.count)
             return
-
-        self.bdse_estimator.publish(pub.section('estimator'))
-        self.stats.publish(pub.section('stats'))
+        
+        with pub.subsection('estimator') as sub:
+            self.bdse_estimator.publish(sub)
+            
+        with pub.subsection('stats') as sub:
+            self.stats.publish(sub)
 
     def get_predictor(self):
         model = self.bdse_estimator.get_model()

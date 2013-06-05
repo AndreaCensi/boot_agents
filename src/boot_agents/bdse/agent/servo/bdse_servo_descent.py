@@ -28,13 +28,13 @@ class BDSEServoFromDescent(BDSEServoInterface):
           
     @contract(goal='array')
     def set_goal_observations(self, goal):
-        self.goal = goal
+        self._goal = goal
 
     def process_observations(self, obs):
-        self.y = obs['observations']
+        self._y = obs['observations']
  
     def choose_commands_ext(self, K=None):
-        u = self.get_descent_direction(observations=self.y, goal=self.y)
+        u = self.get_descent_direction(observations=self._y, goal=self._goal)
         res = {}
         res['descent'] = u.copy()
             

@@ -1,14 +1,18 @@
 from boot_agents.utils import DerivativeBox2
+from bootstrapping_olympics import PredictorAgentInterface
 
 
 __all__ = ['BGDSPredictor']
 
-class BGDSPredictor():
+class BGDSPredictor(PredictorAgentInterface):
     
     def __init__(self, bgds_model):
         self.model = bgds_model 
         self.comp_y_dot = DerivativeBox2()
         
+    def init(self, boot_spec):
+        pass
+    
     def process_observations(self, obs):
         self.y = obs['observations']
         self.u = obs['commands']

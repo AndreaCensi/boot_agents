@@ -1,4 +1,4 @@
-from . import MeanVariance, Publisher, generalized_gradient
+from . import MeanVariance, generalized_gradient
 from contracts import contract
 import numpy as np
 import warnings
@@ -48,7 +48,6 @@ class ImageStats(object):
                 
         self.num_samples += dt
 
-    @contract(pub=Publisher)
     def publish(self, pub):
         if self.num_samples == 0:
             pub.text('warning',

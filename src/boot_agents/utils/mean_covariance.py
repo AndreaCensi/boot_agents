@@ -11,7 +11,7 @@
 from contracts import contract
 import numpy as np
 from boot_agents import logger
-from . import Expectation, Publisher, cov2corr, outer
+from . import Expectation, cov2corr, outer
 from boot_agents.misc_utils import y_axis_positive, y_axis_extra_space
 from numpy.linalg.linalg import pinv, LinAlgError
 from bootstrapping_olympics.utils import check_all_finite
@@ -106,7 +106,7 @@ class MeanCovariance(object):
                 pickle.dump(self, f)
             logger.error('Did not converge; saved on %s' % filename)
 
-    @contract(pub=Publisher, publish_information='bool')
+    @contract(publish_information='bool')
     def publish(self, pub, publish_information=False):
         if self.num_samples == 0:
             pub.text('warning',
@@ -138,7 +138,6 @@ class MeanCovariance(object):
                 pylab.legend()
                 
             self.print_odd_ones(pub, P, perc=50, ratio=0.2)
-
 
             from boot_agents.misc_utils.tensors_display import pub_tensor2_cov
             pub_tensor2_cov(pub, 'covariance', P)
@@ -174,11 +173,12 @@ class MeanCovariance(object):
         std = np.sqrt(P.diagonal())
         odd, okay = find_odd(std, perc, ratio)
         
+        f = pub.figure()
         pub.text('okay', '%s' % list(okay))
         pub.text('odd', '%s' % list(odd))
         
         std = std.copy()
-        with pub.plot('odd') as pylab:
+        with f.plot('odd') as pylab:
             style_ieee_fullcol_xy(pylab)
             pylab.plot(odd, std[odd], 'rs')
             pylab.plot(okay, std[okay], 'gs')
