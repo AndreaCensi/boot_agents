@@ -1,9 +1,9 @@
 from contracts import contract, new_contract
 import numpy as np
-from reprep import Report
 import itertools
 import warnings
 from .interface import BDSEServoInterface
+from bootstrapping_olympics import ServoAgentInterface
 
 __all__ = ['ServoLongTermMotion', 'BDSEServoLongTerm', 'myexp']
 
@@ -15,6 +15,9 @@ class ServoLongTermMotion():
         self.R = R.astype('float32')
         self.Rw = np.sum(self.R, axis=1)
         
+    def get_visibility(self):
+        return np.mean(self.Rw)
+    
     def get_R(self):
         return self.R
     
@@ -26,6 +29,14 @@ class ServoLongTermMotion():
     
     def predict(self, y0):
         raise NotImplementedError()
+    
+    def display(self, report):
+        f = report.figure(cols=8)
+        report.data('R', self.R).display('scale').add_to(f, caption='R')
+        with f.plot('Rw') as pylab:
+            pylab.plot(self.Rw, '.')
+            # report.data('Rw', self.Rw).display('scale').add_to(f, caption='Rw')
+        report.text('visibility', str(self.get_visibility()))
         
 new_contract('ServoLongTermMotion', ServoLongTermMotion)
         
@@ -34,42 +45,61 @@ class BDSEServoLongTerm(BDSEServoInterface):
     """ This uses long-term prediction. """
     
     # @contract(plans='dict(tuple(tuple, float):ServoLongTermMotion)')
-    def __init__(self, grid, gain=0.045):
+    def __init__(self, grid, gain=0.045, min_visibility=0.2):
         self.plans = None
         self.bdse_model = None
         self.grid = grid
         self.gain = gain
-    
+        self.min_visibility = min_visibility
     
     def init(self, boot_spec):
         self.boot_spec = boot_spec
-        self.commands_spec = boot_spec.get_commands()
-        
+        self.commands_spec = boot_spec.get_commands()    
         
     def set_model(self, model):
         M = model.M
         K = M.shape[2]
         cmds = BDSEServoLongTerm.get_cmds(K=K, **self.grid)
-    
+        print('creating %d plans' % len(cmds))
         plans = {}
         for plan in cmds:
             cmd, t = plan
+            # wrong wrong wrong
+            # no, actually ok
             u = np.array(cmd) * t
             A = np.einsum("abc,c -> ab", M, u)
             R = myexp(A)
             motion = ServoLongTermMotion(R)
-            plans[(plan)] = motion
-        
+            
+            vis = motion.get_visibility()
+            if vis < self.min_visibility:
+                print('%s, %s -> vis %s < %s' % (cmd, t, vis, self.min_visibility))
+            else:
+                plans[plan] = motion
+            
         self.plans = plans
         
     @staticmethod
     def get_cmds(K, mode, grid_max, grid_n):
         assert mode == 'uniform'
         cmds = []
+        
+        ncmds_max = 500
+        ncmds_from_n = lambda n: n ** K
+        while ncmds_from_n(grid_n) > ncmds_max:
+            print('Grid %s gives too many cmds %s' % 
+                  (grid_n, ncmds_from_n(grid_n)))
+            grid_n -= 1
+        
+        assert grid_n >= 3
+        
         base = np.linspace(-grid_max, grid_max, grid_n)
 
-        xs = itertools.product(base, repeat=K)
-
+        xs = list(itertools.product(base, repeat=K))
+        
+        print('Using %d grid -> %d commands' % (grid_n, len(xs)))
+        assert len(xs) == ncmds_from_n(grid_n)
+        
         for x in xs:
             x = np.array(x)
             t = np.linalg.norm(x)
@@ -77,14 +107,20 @@ class BDSEServoLongTerm(BDSEServoInterface):
             cmds.append((tuple(x), t))
         return cmds
     
-    def report(self):
-        r = Report('ServoLongTerm')
-        f = r.figure()
-        for plan, result in self.plans.items():
+    def _get_ordered_plans(self):
+        def order(x):
+            (plan, t), _ = x  # @UnusedVariable
+            return np.linalg.norm(np.array(plan)) * t
+        xs = list(self.plans.items())
+        xs.sort(key=order)
+        return xs
+    
+    def display(self, report):  # @UnusedVariable
+        for i, (plan, action) in enumerate(self._get_ordered_plans()):
             # cmd, time = plan
-            what = str(plan)
-            f.data(what, result > 0).display('scale').add_to(f, caption=what)
-        return r
+            with report.subsection('plan%d' % i) as sub:
+                sub.text('plan', str(plan))
+                action.display(sub) 
         
     @contract(y0='array[N]', y_goal='array[N]', limit='int,>=1')
     def find_best(self, y0, y_goal, limit):
@@ -101,7 +137,7 @@ class BDSEServoLongTerm(BDSEServoInterface):
         sols.sort(key=lambda x: x[0])
         
         sols2 = sols[:limit]
-        print sols2
+        # print sols2
         return [x[1] for x in sols2]
     
     def get_cost(self, y0, y_goal, plan):
@@ -142,6 +178,46 @@ class BDSEServoLongTerm(BDSEServoInterface):
         cmd = np.array(cmd)
         cmd = cmd * self.gain
         return cmd
+
+    def display_query(self, report, observations, goal):  # @UnusedVariable
+        ServoAgentInterface.display_query(self, report, observations, goal)
+        
+        f = report.figure(cols=4)
+        
+        y_goal = goal
+        y0 = observations
+        
+        D = get_distance_map(y0, y_goal)
+        
+        f.data('D', D).display('scale').add_to(f, caption='Distance matrix')
+        
+        plans = self.find_best(y0, y_goal, limit=4)
+        for p in plans:
+            motion = self.plans[p]
+            ygoal1, ygoal1u = motion.predict_inverse(y_goal)
+            R = motion.get_R()
+            
+            DR = D.copy()
+            DR[R > 0] = np.nan
+    
+            ff = report.figure()
+            ff.data('DR', DR).display('scale').add_to(ff, caption='DR')
+            
+            known = ygoal1u > 0
+            unknown = np.logical_not(known)
+            
+            sensels = np.array(range(y0.size))
+            
+            with ff.plot('prediction2') as pylab:
+                pylab.plot(y0, 'b-', label='y0')
+                pylab.plot(sensels[known], ygoal1[known], 'rs', label='ygoal1')
+                pylab.plot(sensels[unknown], ygoal1[unknown], 'rx', label='ygoal1u')
+                
+                #from yc1304.s10_servo_field.plots import plot_style_sensels
+                #plot_style_sensels(pylab)   
+                pylab.legend()
+        
+
 
 
 @contract(A='array[NxN]')

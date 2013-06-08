@@ -7,6 +7,8 @@ from bootstrapping_olympics import (AgentInterface, UnsupportedSpec,
     get_boot_config)
 from conf_tools import instantiate_spec
 from contracts import contract
+from contracts.interface import describe_type
+from boot_agents.bdse.model.bdse_estimator_interface import BDSEEstimatorInterface
 
 
 __all__ = ['BDSEAgent']
@@ -17,8 +19,8 @@ class BDSEAgent(AgentInterface):
         An agent that uses a BDS model.
     '''
     
-    @contract(servo='code_spec')
-    def __init__(self, explorer, servo, rcond=1e-10, skip=1,
+    @contract(servo='code_spec', estimator='code_spec')
+    def __init__(self, explorer, servo, estimator, skip=1,
                  change_fraction=0.0):
         """
             :param explorer: ID of the explorer agent.
@@ -32,7 +34,7 @@ class BDSEAgent(AgentInterface):
         self.skip = skip
         self.change_fraction = change_fraction
         self.servo = servo
-        self.rcond = rcond
+        self.estimator_spec = estimator
 
     def init(self, boot_spec):
         self.boot_spec = boot_spec
@@ -43,7 +45,14 @@ class BDSEAgent(AgentInterface):
         self.count = 0
         self.rd = RemoveDoubles(self.change_fraction)
         self.y_deriv = DerivativeBox()
-        self.bdse_estimator = BDSEEstimator(self.rcond)
+
+        self.bdse_estimator = instantiate_spec(self.estimator_spec)
+        if not isinstance(self.bdse_estimator, BDSEEstimatorInterface):
+            msg = ('Expected a BDSEEstimatorInterface, got %s' 
+                   % describe_type(self.estimator))
+            raise ValueError(msg)
+
+    
         self.y_stats = MeanCovariance()
 
         self.explorer.init(boot_spec)
@@ -116,4 +125,9 @@ class BDSEAgent(AgentInterface):
         model = self.bdse_estimator.get_model()
         servo_agent.set_model(model)
         return servo_agent
+
+    def merge(self, agent2):
+        assert isinstance(agent2, BDSEAgent)
+        self.bdse_estimator.merge(agent2.bdse_estimator)
+
 

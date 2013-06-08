@@ -1,8 +1,8 @@
-from contracts import ContractsMeta, contract
+from .bdse_model import BDSEmodel
 from abc import abstractmethod
-from reprep import Report
-from boot_agents.bdse.model.bdse_model import BDSEmodel
+from contracts import ContractsMeta, contract
 from decent_logs import WithInternalLog
+from reprep import Report
 
 __all__ = ['BDSEEstimatorInterface']
 
@@ -29,7 +29,6 @@ class BDSEEstimatorInterface(WithInternalLog):
     @contract(returns=BDSEmodel)    
     def get_model(self):
         """ Returns the estimated model or raises NotReady. """
-
 
     @abstractmethod
     @contract(pub=Report)

@@ -15,7 +15,7 @@ class BDSEEstimatorRobust(BDSEEstimator):
         
         self.T = ExpectationWeighted()
         self.U = ExpectationWeighted()
-        self.y_mean = ExpectationWeighted()
+        self.y_mean = ExpectationWeighted()  # XXX: not necessary, y_stats.get_mean()
         self.y_stats = MeanCovariance()  # TODO: make robust
         self.u_stats = MeanCovariance()
         self.once = False
@@ -27,7 +27,6 @@ class BDSEEstimatorRobust(BDSEEstimator):
         self.y_stats.merge(other.y_stats)
         self.y_mean.merge(other.y_mean)
         self.u_stats.merge(other.u_stats)
-
 
     @contract(u='array[K],K>0,finite',
               y='array[N],N>0,finite',

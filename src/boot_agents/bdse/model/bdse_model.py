@@ -111,7 +111,6 @@ class BDSEmodel(object):
     def check_valid_y_dot(self, y_dot):
         expect_shape('y_dot', y_dot, (self.n,))
 
-
     @contract(P='array[NxN]', Q='array[KxK]', returns='array[NxNxK]')
     def get_expected_T(self, P, Q):
         """ Expected value of the T statistics. """
@@ -127,7 +126,6 @@ class BDSEmodel(object):
         MyN = self.get_MyN(y_mean)
         # MyN^s_i 
         return np.einsum('si,ij->sj', MyN, Q)
-    
     
     @contract(A='array[NxN]')
     def conjugate(self, A):

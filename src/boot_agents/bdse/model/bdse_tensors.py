@@ -96,3 +96,16 @@ def get_M_from_P_T_Q_alt(P, T, Q, other=None):
     
     M = np.einsum("svi,sx,ij -> vxj", T, P_inv, Q_inv)
     return M
+
+
+def get_M_from_P_T_Q_alt_scaling(P, T, Q):
+    """ 
+        Scales the matrix T by P. (untested)
+    """
+    T = T.copy()
+    W = P * P * P * P
+    W = W / np.sum(W)
+    for k in range(T.shape[2]):
+        T[:, :, k] = T[:, :, k] * W 
+    
+    return get_M_from_P_T_Q(P, T, Q)

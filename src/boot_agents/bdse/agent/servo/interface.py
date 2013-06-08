@@ -11,7 +11,13 @@ class BDSEServoInterface(ServoAgentInterface):
     
     def choose_commands_ext(self):
         """ This can return a dict, of which 'u' are the commands. """
+        u = self.choose_commands()
+        
+        import numpy as np
+        if not np.all(np.isfinite(u)):
+            raise ValueError(str(u))
+        
         res = {}
-        res['u'] = self.choose_commands()
+        res['u'] = u 
         return res
 

@@ -1,15 +1,17 @@
 from .bdse_estimator_interface import BDSEEstimatorInterface
 from .bdse_model import BDSEmodel
 from .bdse_tensors import get_M_from_P_T_Q, get_M_from_Pinv_T_Q
+from boot_agents.bdse.model.bdse_tensors import (get_M_from_P_T_Q_alt,
+    get_M_from_P_T_Q_alt_scaling)
 from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
     pub_tensor2_comp1)
 from boot_agents.utils import Expectation, MeanCovariance, outer
-from contracts import contract
-import numpy as np
-import warnings
-from numpy.linalg.linalg import LinAlgError
 from conf_tools.utils import indent
+from contracts import contract
+from numpy.linalg.linalg import LinAlgError
+import numpy as np
 import traceback
+import warnings
 
 
 __all__ = ['BDSEEstimator']
@@ -29,7 +31,7 @@ class BDSEEstimator(BDSEEstimatorInterface):
     """
 
     @contract(rcond='float,>0')
-    def __init__(self, rcond=1e-10, antisym_T=False, antisym_M=False):
+    def __init__(self, rcond=1e-10, antisym_T=False, antisym_M=False, use_P_scaling=False):
         """
             :param rcond: Threshold for computing pseudo-inverse of P.
             :param antisym_T: If True, the estimate of T is antisymmetrized.
@@ -38,8 +40,11 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.rcond = rcond
         self.antisym_M = antisym_M
         self.antisym_T = antisym_T
+        self.use_P_scaling = use_P_scaling
         self.info('rcond: %f' % rcond)
         self.info('antisym_T: %s' % antisym_T)
+        self.info('antisym_M: %s' % antisym_M)
+        self.info('use_P_scaling: %s' % use_P_scaling)
 
         self.T = Expectation()
         self.U = Expectation()
@@ -47,6 +52,14 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.u_stats = MeanCovariance()
         self.once = False
         
+        
+    def merge(self, other):
+        assert isinstance(other, BDSEEstimator)
+        self.T.merge(other.T)
+        self.U.merge(other.U)
+        self.y_stats.merge(other.y_stats)
+        self.u_stats.merge(other.u_stats)
+
 
     @contract(u='array[K],K>0,finite',
               y='array[N],N>0,finite',
@@ -104,13 +117,16 @@ class BDSEEstimator(BDSEEstimatorInterface):
         if False:
             M = get_M_from_P_T_Q(P, T, Q)
         else:
-            warnings.warn('untested')
-            try:
-                M = get_M_from_Pinv_T_Q(P_inv, T, Q)
-            except LinAlgError as e:
-                msg = 'Could not get_M_from_Pinv_T_Q.\n'
-                msg += indent(traceback.format_exc(e), '> ')
-                raise BDSEEstimatorInterface.NotReady(msg)
+            if hasattr(self, 'use_P_scaling') and self.use_P_scaling:
+                M = get_M_from_P_T_Q_alt_scaling(P, T, Q)
+            else:
+                warnings.warn('untested')
+                try:
+                    M = get_M_from_Pinv_T_Q(P_inv, T, Q)
+                except LinAlgError as e:
+                    msg = 'Could not get_M_from_Pinv_T_Q.\n'
+                    msg += indent(traceback.format_exc(e), '> ')
+                    raise BDSEEstimatorInterface.NotReady(msg)
         
         UQ_inv = np.tensordot(U, Q_inv, axes=(1, 0))
         # This works but badly conditioned
@@ -187,8 +203,16 @@ class BDSEEstimator(BDSEEstimatorInterface):
             T = self.get_T() 
             P = self.y_stats.get_covariance()
             Q = self.u_stats.get_covariance()
-            M = get_M_from_P_T_Q(P, T, Q)
-            pub_tensor3_slice2(sub, 'M_second', M)
+            
+            M1 = get_M_from_P_T_Q(P, T, Q)
+            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q', M1)
+            
+            M2 = get_M_from_P_T_Q_alt(P, T, Q)
+            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt', M2)
+
+            M3 = get_M_from_P_T_Q_alt_scaling(P, T, Q)
+            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt2', M3)
+            
             
 @contract(T='array[NxNxK]', returns='array[NxNxK]')        
 def antisym(T):
