@@ -75,7 +75,7 @@ def obtain_TPinv_from_T_P(T, P):
             msg = 'in obtain_TP_inv_from_TP we found a singular matrix for linalg.solve'
             msg += '; I will try to use the least square solution, but I did not test it'
             warnings.warn(msg)
-            Mk, residuals, rank, s = np.linalg.lstsq(P, Tk)
+            Mk, residuals, rank, s = np.linalg.lstsq(P, Tk)  # @UnusedVariable
         TPinv[:, :, k] = Mk.T  # note transpose (to check)
     return TPinv
 

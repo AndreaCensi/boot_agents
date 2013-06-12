@@ -114,7 +114,7 @@ class Diffeomorphism2D:
         
         if var is None:
             '''
-            var tells how certain we are about the map from pigel (i,j) in var.
+            var tells how certain we are about the map from pixel (i,j) in var.
             which results in an uncertainty of the corresponding mapped pixel in 
             the new image.  
             '''
@@ -125,7 +125,7 @@ class Diffeomorphism2D:
             
             var2 = dd_info * dvar
             
-        if True:  # XX: redundant
+        if False:  # XX: redundant
             assert np.isfinite(dd_info).all()
             assert np.isfinite(var).all()
             assert np.isfinite(im2).all()

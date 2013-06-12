@@ -6,4 +6,4 @@ from .diffeo_estimator_fourier import *
 from .diffeo_estimator_refine import *
 from .diffeo_estimator_refine_fast import *
 from .diffeo_estimator_pixelized import *
-from .image_interpolator import *
+from .interpolators import *

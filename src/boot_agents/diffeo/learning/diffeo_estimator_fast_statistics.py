@@ -5,22 +5,17 @@ the diffeomorphism
 '''
 
 from . import logger
-from .. import (diffeomorphism_to_rgb, contract, np, diffeo_to_rgb_norm,
-    diffeo_to_rgb_angle, angle_legend, diffeo_to_rgb_curv, diffeo_text_stats,
-    Diffeomorphism2D)
+from .. import Diffeomorphism2D
+from PIL import Image  # @UnresolvedImport
 from boot_agents.diffeo.diffeo_basic import diffeo_identity
-from boot_agents.diffeo.plumbing import flat_structure_cache, togrid, add_border
-from boot_agents.utils.nonparametric import scale_score
-from boot_agents.diffeo.learning.diffeo_estimator_fast import DiffeomorphismEstimatorFaster
-import pdb
+from boot_agents.diffeo.learning.diffeo_estimator_fast import (
+    DiffeomorphismEstimatorFaster)
+from matplotlib import cm
+from scipy.optimize.minpack import leastsq
 import itertools
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.linalg as la
-from scipy.optimize.minpack import leastsq
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from PIL import Image #@UnresolvedImport
 
 Order = 'order'
 Similarity = 'sim'
@@ -102,6 +97,7 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
     def fit_variation_parameters(self, data):
         area = np.array(self.area)
         X, Y = np.meshgrid(range(-area[1] / 2 + 1, area[1] / 2 + 1), range(-area[0] / 2 + 1, area[0] / 2 + 1))
+        
         def residual(A):
             res = (variation_function([0, 0], A, (X, Y)).flatten() - data)
 #            res[area/2]
@@ -121,6 +117,7 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
     def fit_P0(self, data, A):
         area = np.array(self.area)
         X, Y = np.meshgrid(range(-area[1] / 2 + 1, area[1] / 2 + 1), range(-area[0] / 2 + 1, area[0] / 2 + 1))
+        
         def residual(P):
             return (variation_function(P, A, (X, Y)).flatten() - data) 
 #        pdb.set_trace()
@@ -156,7 +153,6 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
         dd[:] = -1
         
         X, Y = np.meshgrid(range(-area[1] / 2 + 1, area[1] / 2 + 1), range(-area[0] / 2 + 1, area[0] / 2 + 1))
-#        pdb.set_trace()
         for i in range(self.nsensels):
             best = np.argmin(self.neig_esim_score[i, :])     
             if True:
@@ -221,9 +217,9 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
                     
                 logger.info('bestdispl is: ' + str(bestdispl))
                 
-##                pdb.set_trace()
+# #                pdb.set_trace()
 #                A = self.fit_variation_parameters(self.neig_y_stats[i, :])
-##                A = [200, .5]
+# #                A = [200, .5]
 #                logger.debug(A)
 #                   
 #                P0 = self.fit_P0(self.neig_esim_score[i, :] - np.min(self.neig_esim_score[i, :]), A)
@@ -262,7 +258,7 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
             if self.inference_method == 'sim':
                 first = np.sort(esim_score)[:10]
                 certain = -(first[0] - np.mean(first[1:]))
-                #certain = -np.min(esim_score) / np.mean(esim_score)
+                # certain = -np.min(esim_score) / np.mean(esim_score)
             certain = np.min(esim_score) / self.num_samples
             certain = -np.mean(esim_score) / np.min(esim_score)
             
@@ -297,7 +293,7 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
             logger.warn(('neig_esimmin_score is missing in at least one estimator.' + 
             'Merged estimator will not have neig_eord_score.'))
 
-        #TODO:
+        # TODO:
         if hasattr(self, 'self.neig_y_stats') and hasattr(other, 'self.neig_y_stats'):
             self.self.neig_y_stats += other.self.neig_y_stats
 
@@ -315,13 +311,15 @@ class DiffeomorphismEstimatorFasterStatistics(DiffeomorphismEstimatorFaster):
         else:
             X, Y = mesh
             
-        surf = ax.plot_surface(X, Y, data, linewidth=linewidth, alpha=alpha, rstride=1, cstride=1, antialiased=True, cmap=cm.jet)
-        if contourf:
-            cset = ax.contourf(X, Y, data, zdir='z', offset=0, cmap=cm.jet)
-            cset = ax.contourf(X, Y, data, zdir='x', offset= -area[1] / 2, cmap=cm.jet)
-            cset = ax.contourf(X, Y, data, zdir='y', offset=area[0] / 2, cmap=cm.jet)
+        cmap = cm.jet  # @UnusedVariable @UndefinedVariable
+        surf = ax.plot_surface(X, Y, data, linewidth=linewidth, alpha=alpha,
+                               rstride=1, cstride=1, antialiased=True, cmap=cmap)
+        if contourf:            
+            cset = ax.contourf(X, Y, data, zdir='z', offset=0, cmap=cmap)
+            cset = ax.contourf(X, Y, data, zdir='x', offset=(-area[1] / 2), cmap=cmap)
+            cset = ax.contourf(X, Y, data, zdir='y', offset=area[0] / 2, cmap=cmap)
             cset = ax.contour(X, Y, data, zdir='x', offset=area[1] / 2, colors='k', alpha=0.5)
-            cset = ax.contour(X, Y, data, zdir='y', offset= -area[0] / 2, colors='k', alpha=0.5)
+            cset = ax.contour(X, Y, data, zdir='y', offset=(-area[0] / 2), colors='k', alpha=0.5)
         ax.set_xlabel('x')
         ax.set_ylabel('y')
         ax.set_zlim3d([0, np.max(data) * 2])
@@ -360,7 +358,7 @@ def variation_jacobian_A(P0, A, point):
     return np.array([(1 - np.exp(-A[1] * pdist)), A[0] * pdist * (np.exp(-A[1] * pdist))]).T
 
 
-#blstsquare(residual, y0, bounds)
+# blstsquare(residual, y0, bounds)
 
 def clip_center(image, new_shape):
     shape = np.array(image.shape)

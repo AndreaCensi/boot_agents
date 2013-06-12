@@ -9,6 +9,7 @@ from boot_agents.bdse.agent.servo.interface import BDSEServoInterface
 class BDSEAgentRobust(DerivAgentRobust):
     
     def __init__(self, rcond=1e-8, servo={}, **others):
+        print('Servo: %r' % servo)
         DerivAgentRobust.__init__(self, **others)
         self.servo = servo
         self.rcond = rcond
@@ -24,7 +25,9 @@ class BDSEAgentRobust(DerivAgentRobust):
         
         self.commands_spec = boot_spec.get_commands()
 
-    
+    def state_vars(self):
+        return ['estimator']
+
     def process_observations_robust(self, y, y_dot, u, w):
         self.estimator.update(y=y, y_dot=y_dot, u=u, w=w)
      
@@ -42,6 +45,7 @@ class BDSEAgentRobust(DerivAgentRobust):
 
     def get_servo(self):
         # XXX :repeated code with BDSEAgent
+        print('Servo: %r' % self.servo)
         servo_agent = instantiate_spec(self.servo)
         assert isinstance(servo_agent, BDSEServoInterface)
         servo_agent.init(self.boot_spec)
