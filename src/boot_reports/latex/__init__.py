@@ -2,8 +2,7 @@
     Some utils to include the results of simulations inside 
     a LaTeX document. 
 """
-from .. import getLogger
-logger = getLogger(__name__)
+from boot_reports import logger
 
 
 class Globals:

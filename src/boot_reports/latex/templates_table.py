@@ -1,8 +1,8 @@
-from . import get_resources_dir, logger, call_template
+from . import get_resources_dir, call_template
 from contracts import contract
 from latex_gen import latex_fragment
 import sys
-
+from boot_reports.latex import logger
     
 @contract(nrows='R', ncols='C',
           introws='None|list[R](dict|str)',

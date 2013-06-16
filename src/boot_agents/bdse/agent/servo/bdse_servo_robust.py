@@ -13,8 +13,8 @@ class BDSEServoRobust(BDSEServoFromDescent):
         return self.bdse_model.get_servo_descent_direction(y, goal)        
 
     def get_distance(self, y1, y2):
-        a, b = self.get_censored_y_goal(y1, y2)
-        return np.abs(a - b).sum()
+        a, b = get_censored_y_goal(y1, y2)
+        return np.linalg.norm(a - b)
 
 def get_valid(y):
     im = Importance(max_y_dot=1000, max_gy=0.01, min_y=0, max_y=1)
@@ -24,7 +24,7 @@ def get_valid(y):
     # return np.logical_and(y > 0, y < 1)
     
 def get_censored_y_goal(y, goal):
-    print ''.join('%d' % int(x) for x in get_valid(y))
+    # print ''.join('%d' % int(x) for x in get_valid(y))
     valid = np.logical_and(get_valid(y), get_valid(goal))
     invalid = np.logical_not(valid)
     y = y.copy()

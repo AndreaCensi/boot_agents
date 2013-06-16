@@ -6,6 +6,7 @@ from reprep.plot_utils import (set_thick_ticks, set_left_spines_outward,
     y_axis_set)
 import itertools
 import numpy as np
+from reprep.graphics.filter_posneg import posneg_hinton
  
 
 def pub_text_stats(pub, V):
@@ -89,10 +90,9 @@ def pub_tensor3_slice2(pub, name, V):
         
         fu = section.figure('unnormalized', cols=nslices)
         fn = section.figure('normalized', cols=nslices)
-        
-        #     for i in range(V.shape[2]):
-        #         section.array_as_image('%d' % i, V[:, :, i])
-    
+        fug = section.figure('unnormalizedg', cols=nslices)
+        fng = section.figure('normalizedg', cols=nslices)
+         
         with section.subsection('slices') as slices:        
             
             for i in range(nslices):
@@ -111,12 +111,21 @@ def pub_tensor3_slice2(pub, name, V):
                     du = pub_save_versions2(s, 'unnormalized', rgbu)
                     fu.sub(du)
                 
+                    gray_u = posneg_hinton(tslice)
+                    gray_n = posneg_hinton(tslice, max_value=max_value)
+
+                    dng = pub_save_versions2(s, 'normalizedg', gray_n)
+                    fug.sub(dng)
+                    dug = pub_save_versions2(s, 'unnormalizedg', gray_u)
+                    fng.sub(dug)
+    
     pub_stats(section, V)
+
 
 def pub_save_versions2(sub, name, rgb):
     with sub.subsection(name) as s:
         d = pub_save_versions(s, rgb)
-    return s  
+    return d
     
 
 def pub_save_versions(pub, rgb, png_zoom=4):

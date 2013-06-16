@@ -21,3 +21,6 @@ class BDSEServoRobustL1(BDSEServoRobust):
         # print('servorobustL1: %s' % str(u))        
         return u
     
+    def get_distance(self, y1, y2):
+        a, b = get_censored_y_goal(y1, y2)
+        return np.abs(a - b).sum()

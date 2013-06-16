@@ -8,7 +8,7 @@ import tempfile
 
 def get_sensel_pgftable(V, what, desc='No description given'):
     s = StringIO()
-    s.write('# Created by get_pgf_format()\n')
+    s.write('# Created by get_sensel_pgftable()\n')
     s.write('# %s \n' % isodate())
     s.write('# sensel: counter of the sensel from 0 to n-1.\n')
     s.write('# %s: %s \n' % (what, desc))
