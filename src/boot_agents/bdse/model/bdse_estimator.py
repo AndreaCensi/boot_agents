@@ -1,8 +1,7 @@
 from .bdse_estimator_interface import BDSEEstimatorInterface
 from .bdse_model import BDSEmodel
-from .bdse_tensors import get_M_from_P_T_Q, get_M_from_Pinv_T_Q
-from boot_agents.bdse.model.bdse_tensors import (get_M_from_P_T_Q_alt,
-    get_M_from_P_T_Q_alt_scaling)
+from .bdse_tensors import (get_M_from_P_T_Q_alt, get_M_from_P_T_Q_alt_scaling,
+    get_M_from_P_T_Q, get_M_from_Pinv_T_Q)
 from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
     pub_tensor2_comp1)
 from boot_agents.utils import Expectation, MeanCovariance, outer
@@ -50,8 +49,8 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.U = Expectation()
         self.y_stats = MeanCovariance()
         self.u_stats = MeanCovariance()
+        self.nsamples = 0
         self.once = False
-        
         
     def merge(self, other):
         assert isinstance(other, BDSEEstimator)
@@ -59,13 +58,14 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.U.merge(other.U)
         self.y_stats.merge(other.y_stats)
         self.u_stats.merge(other.u_stats)
-
-
+        self.nsamples += other.nsamples
+    
     @contract(u='array[K],K>0,finite',
               y='array[N],N>0,finite',
               y_dot='array[N],finite', w='>0')
     def update(self, y, u, y_dot, w=1.0):
         self.once = True
+        self.nsamples += 1
         
         self.n = y.size
         self.k = u.size  # XXX: check
@@ -160,6 +160,8 @@ class BDSEEstimator(BDSEEstimatorInterface):
         if not self.once:
             pub.text('warning', 'not updated yet')
             return
+        
+        pub.text('nsamples', '%s' % self.nsamples)
         
         pub.text('rcond', '%g' % self.rcond)
         with pub.subsection('model') as sub:

@@ -8,6 +8,7 @@ import numpy as np
 
 __all__ = ['BDSEEstimatorRobust']
 
+
 class BDSEEstimatorRobust(BDSEEstimator):
 
     def __init__(self, **other):
@@ -34,6 +35,8 @@ class BDSEEstimatorRobust(BDSEEstimator):
               w='array[N]')
     def update(self, y, u, y_dot, w):
         self.once = True
+        self.nsamples += 1
+        
         check_all_finite(y)
         check_all_finite(u)
         check_all_finite(y_dot)
