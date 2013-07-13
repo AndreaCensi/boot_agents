@@ -5,7 +5,6 @@ from bootstrapping_olympics.utils import PredictionStats
 
 from .shape_utils import *
 from .outerproduct import *
-from .cov2corr import *
 from .nonparametric import *
 from .mean_variance import *
 from .mean_covariance import *
@@ -22,3 +21,5 @@ from .image_stats import *
 
 # from .nonparametric_test import *
 from .gradients_test import *
+from astatsa.mean_covariance.cov2corr_imp import cov2corr
+

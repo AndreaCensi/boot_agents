@@ -160,6 +160,14 @@ def pub_svd_decomp(parent, V, rcond=None):
         sub1.array('V', v)
         
 
+def pub_eig_decomp(parent, V):
+    with parent.subsection('eig') as sub:
+        w, v = np.linalg.eig(V)
+        sub.array_as_image('eigen', v)
+        f = sub.figure()
+        with f.plot('eigenvalues') as pylab:
+            pylab.semilogy(w, 's')
+
 def plot_matrix_svd(pylab, M, rcond=None):
     u, s, v = np.linalg.svd(M)  # @UnusedVariable
     sn = s / s[0]
@@ -315,7 +323,7 @@ def iterate_indices(shape):
 def display_4d_tensor(pub, name, G, xlabels, ylabels):
     A = G.shape[0]
     B = G.shape[1]
-    with pub.subsection(name, cols=A) as section:
+    with pub.subsection(name) as section:
         for b, a in iterate_indices((B, A)):
             value = G[a, b, :, :].squeeze()
             label = '%s_%s_%s' % (name, xlabels[a], ylabels[b])
@@ -325,7 +333,7 @@ def display_4d_tensor(pub, name, G, xlabels, ylabels):
 @contract(G='array[AxHxW]', labels='list[A](str)')
 def display_3d_tensor(pub, name, G, labels):
     A = G.shape[0]
-    with pub.subsection(name, cols=A) as section:
+    with pub.subsection(name) as section:
         for a in range(A):
             value = G[a, :, :].squeeze()
             label = '%s_%s' % (name, labels[a])

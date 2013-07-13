@@ -30,7 +30,7 @@ class ImageStats(object):
     def get_num_samples(self):
         return self.num_samples
     
-    @contract(y='array[HxW]')
+    @contract(y='array[HxW]', dt='>0')
     def update(self, y, dt=1.0):
         self.last_y = y.copy()
         
