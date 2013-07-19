@@ -1,11 +1,11 @@
 from .exp_switcher import ExpSwitcher
 from astatsa.expectation import Expectation
-from astatsa.utils.outer_product import outer
-from boot_agents.misc_utils.tensors_display import (pub_svd_decomp,
-    pub_eig_decomp)
+from astatsa.utils import outer
+from boot_agents.misc_utils import pub_svd_decomp, pub_eig_decomp
 from bootstrapping_olympics import UnsupportedSpec
 from reprep.plot_utils.axes import y_axis_set_min
 import numpy as np
+from boot_agents.utils.mean_covariance import MeanCovariance
 
 __all__ = ['EstStatsTh']
 
@@ -27,21 +27,37 @@ class EstStatsTh(ExpSwitcher):
         self.ey = Expectation()
         self.elogy = Expectation()
 
+        self.covy = MeanCovariance()
+        self.covfy = MeanCovariance()
+         
     def merge(self, other):
         self.yy.merge(other.yy)
         self.ylogy.merge(other.ylogy)
         self.einvy.merge(other.einvy)
         self.ey.merge(other.ey)
         self.elogy.merge(other.elogy)
+        self.covy.merge(other.covy)
+        self.covfy.merge(other.covfy)
         
     def process_observations(self, obs):
         y = obs['observations']
+        n = y.size
+#         # XXX
+#         which = np.array(range(y.size)) < 100
+#         y[which] = (y * y)[which]
+        
         dt = obs['dt'].item()
         z = y == 0
         y[z] = 0.5
         yy = outer(y, y)
         dt = 1
-        ylogy = outer(np.log(y), y)
+        logy = np.log(y)
+        
+        # TMP 
+        logy = y * y 
+#         logy[:int(n / 4)] = y[:int(n / 4)] 
+
+        ylogy = outer(logy, y)
         
         self.yy.update(yy, dt)
         self.ylogy.update(ylogy, dt)
@@ -49,9 +65,13 @@ class EstStatsTh(ExpSwitcher):
         invy = 1.0 / y
         self.einvy.update(invy, dt)
         self.ey.update(y, dt)
-        self.elogy.update(np.log(y), dt)
+        self.elogy.update(logy, dt)
+
+        self.covy.update(y, dt)
+        self.covfy.update(logy, dt)
 
     def publish(self, pub):
+#         pub.text('warn', 'using y^3')
         yy = self.yy.get_value()
         ylogy = self.ylogy.get_value()
         
@@ -103,7 +123,7 @@ class EstStatsTh(ExpSwitcher):
             y_axis_set_min(pylab, 0)
         with f.plot('diag', caption='diagonal of x') as pylab:
             pylab.plot(diag, 's')
-            y_axis_set_min(pylab, 0)
+            # y_axis_set_min(pylab, 0)
 
 
 def get_deriv_matrix(n):

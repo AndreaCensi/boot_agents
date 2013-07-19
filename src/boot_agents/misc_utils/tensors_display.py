@@ -165,9 +165,13 @@ def pub_eig_decomp(parent, V):
         w, v = np.linalg.eig(V)
         sub.array_as_image('eigen', v)
         f = sub.figure()
-        with f.plot('eigenvalues') as pylab:
-            pylab.semilogy(w, 's')
-
+        try:
+            with f.plot('eigenvalues') as pylab:
+                pylab.semilogy(w, 's')
+        except:
+            # XXX
+            pass
+        
 def plot_matrix_svd(pylab, M, rcond=None):
     u, s, v = np.linalg.svd(M)  # @UnusedVariable
     sn = s / s[0]

@@ -53,3 +53,10 @@
   code:
       - boot_agents.Embed
       - beta: 1
+
+- id: test_cond30
+  desc: "Estimates the conditional distribution"
+  code:
+  - boot_agents.EstConditionalDistribution
+  - beta: 1
+
