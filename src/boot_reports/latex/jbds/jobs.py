@@ -14,7 +14,6 @@ def job_tex_report(context, output_dir, id_agent, id_robot):
 
 def bds_report(output_dir, report, agent, robot):
     prefix = basename_from_key(dict(id_agent=agent, id_robot=robot))
-#     prefix = '%s-%s' % (agent, robot)
     filename = os.path.join(output_dir, prefix + '.tex')
     filename_doc = os.path.join(output_dir, prefix + '-single.tex')
     preamble = """

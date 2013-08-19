@@ -1,9 +1,10 @@
-from contracts import contract
-import numpy as np
-from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
-from boot_agents.utils import expect_shape
-from geometry import formatm
 from .bdse_tensors import get_expected_T_from_M_P_Q
+from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
+from boot_agents.utils import check_matrix_finite, expect_shape
+from contracts import contract
+from geometry import formatm
+import numpy as np
+
 
 __all__ = ['BDSEmodel']
 
@@ -17,8 +18,11 @@ class BDSEmodel(object):
     
     """
 
-    @contract(M='array[NxNxK],K>=1,N>=1', N='array[NxK]')
+    @contract(M='array[NxNxK],K>=1,N>=1,finite', N='array[NxK],finite')
     def __init__(self, M, N):
+        check_matrix_finite('M', M)
+        check_matrix_finite('N', N)
+            
         # TODO: check finite
         self.M = M
         self.N = N
@@ -77,8 +81,7 @@ class BDSEmodel(object):
         e = y_goal - y
         e1 = np.sign(e)
         direction = np.tensordot(MyN, e1, axes=(0, 0))
-        return direction
-    
+        return direction 
     
     # From now on, just visualization and other boring stuff
      
@@ -142,6 +145,4 @@ class BDSEmodel(object):
         Nz = np.einsum('xs, si  -> xi', A, self.N)
         return BDSEmodel(Mz, Nz)
         
-        
-        
-    
+         

@@ -1,7 +1,8 @@
 from .bdse_estimator import BDSEEstimator
 from astatsa.expectation_weighted import ExpectationWeighted
-from astatsa.utils import check_all_finite
-from boot_agents.utils import MeanCovariance, outer
+from boot_agents.misc_utils.tensors_display import (pub_tensor3_slice2,
+    pub_tensor2_comp1)
+from boot_agents.utils import MeanCovariance, outer, check_matrix_finite
 from contracts import contract
 import numpy as np
 
@@ -34,13 +35,13 @@ class BDSEEstimatorRobust(BDSEEstimator):
               y_dot='array[N],finite',
               w='array[N]')
     def update(self, y, u, y_dot, w):
+        check_matrix_finite('y', y)
+        check_matrix_finite('y_dot', y_dot)
+        check_matrix_finite('u', u)
+        check_matrix_finite('w', w)
+        
         self.once = True
         self.nsamples += 1
-        
-        check_all_finite(y)
-        check_all_finite(u)
-        check_all_finite(y_dot)
-        check_all_finite(w)
         
         self.n = y.size
         self.k = u.size   
@@ -71,3 +72,14 @@ class BDSEEstimatorRobust(BDSEEstimator):
         self.T.update(T_k, T_k_w)
         self.U.update(U_k, U_k_w)
 
+    def publish_learned_tensors(self, sub):
+        BDSEEstimator.publish_learned_tensors(self, sub)
+        with sub.subsection('weights') as s:
+            Tw = self.T.get_mass()
+            Uw = self.U.get_mass()
+            TTw = Tw * self.get_T()
+            pub_tensor3_slice2(s, 'Tw', Tw)
+            pub_tensor3_slice2(s, 'T * Tw', TTw)
+            pub_tensor2_comp1(s, 'Uw', Uw)
+            
+            

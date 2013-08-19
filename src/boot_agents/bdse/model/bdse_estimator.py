@@ -11,6 +11,9 @@ from numpy.linalg.linalg import LinAlgError
 import numpy as np
 import traceback
 import warnings
+from boot_agents.utils import check_matrix_finite
+from astatsa.expectation_weighted.expectation_weighted import ExpectationWeighted
+from astatsa.utils.np_comparisons import assert_allclose
 
 
 __all__ = ['BDSEEstimator']
@@ -64,6 +67,10 @@ class BDSEEstimator(BDSEEstimatorInterface):
               y='array[N],N>0,finite',
               y_dot='array[N],finite', w='>0')
     def update(self, y, u, y_dot, w=1.0):
+        check_matrix_finite('y', y)
+        check_matrix_finite('y_dot', y_dot)
+        check_matrix_finite('u', u)
+
         self.once = True
         self.nsamples += 1
         
@@ -88,36 +95,64 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.T.update(T_k, w)
         self.U.update(U_k, w)
 
+
+
+    @contract(returns='array[NxN],finite')
     def get_P_inv_cond(self):
         P = self.y_stats.get_covariance()
-        if False:
-            P_inv = np.linalg.pinv(P, rcond=self.rcond)
-        if True:
-            P2 = P + np.eye(P.shape[0]) * self.rcond
-            P_inv = np.linalg.inv(P2)
+        P2 = P + np.eye(P.shape[0]) * self.rcond
+        P_inv = inverse_valid(P2, self.get_valid())
+        
+        check_matrix_finite('P_inv', P_inv)
         return P_inv
 
+    @contract(returns='finite')
     def get_T(self):
-        T = self.T.get_value()
+        if isinstance(self.T, ExpectationWeighted):
+            T = self.T.get_value(fill_value=0)
+        else:
+            T = self.T.get_value()
+            
+        check_matrix_finite('T', T)
+
         if self.antisym_T:
             self.info('antisymmetrizing T')
             T = antisym(T)
+
+        mask = 1.0 * self.get_valid_2D()
+        for k in range(T.shape[2]):
+            T[:, :, k] = T[:, :, k] * mask 
+            
         return T
+    
+    def get_U(self):
+        if isinstance(self.T, ExpectationWeighted):
+            U = self.U.get_value(fill_value=0)
+        else:
+            U = self.U.get_value()
+            
+        check_matrix_finite('U', U)
+        return U
+    
     
     def get_model(self):
         T = self.get_T()
-            
-        U = self.U.get_value()
+        U = self.get_U()
+        
         P = self.y_stats.get_covariance()
         Q = self.u_stats.get_covariance()
 
         P_inv = self.get_P_inv_cond()
+        
+        check_matrix_finite('P_inv', P_inv)
         Q_inv = np.linalg.pinv(Q)
+        
+        check_matrix_finite('Q_inv', Q_inv)
 
         if False:
             M = get_M_from_P_T_Q(P, T, Q)
         else:
-            if hasattr(self, 'use_P_scaling') and self.use_P_scaling:
+            if self.use_P_scaling:
                 M = get_M_from_P_T_Q_alt_scaling(P, T, Q)
             else:
                 warnings.warn('untested')
@@ -129,28 +164,19 @@ class BDSEEstimator(BDSEEstimatorInterface):
                     raise BDSEEstimatorInterface.NotReady(msg)
         
         UQ_inv = np.tensordot(U, Q_inv, axes=(1, 0))
+        
         # This works but badly conditioned
+        mask = 1.0 * self.get_valid_2D()
+        for k in range(self.k):
+            M[:, :, k] = M[:, :, k] * mask 
+        
         Myav = np.tensordot(M, self.y_stats.get_mean(), axes=(1, 0))
         N = UQ_inv - Myav
 
         if self.antisym_M:
             self.info('antisymmetrizing M')
             M = antisym(M)
-        
-#         # Note: this does not work, don't know why
-#         if False:
-#             printm('MYav1', Myav)
-#             y2 = np.linalg.solve(P, self.y_stats.get_mean())
-#             Myav2 = np.tensordot(T, y2, axes=(0, 0))
-#             # Myav = np.tensordot(T, y2, axes=(1, 0))
-#             printm('MYav2', Myav2)
-#         if False:
-#             printm('U', U, 'Q_inv', Q_inv)
-#             printm('UQ_inv', UQ_inv, 'Myav', Myav, 'N', N)
-#             printm('u_mean', self.u_stats.get_mean())
-#             printm('u_std', np.sqrt(Q.diagonal()))
-#             printm('y_mean', self.y_stats.get_mean())
-            
+         
         self.Myav = Myav
         self.UQ_inv = UQ_inv
             
@@ -164,6 +190,10 @@ class BDSEEstimator(BDSEEstimatorInterface):
         pub.text('nsamples', '%s' % self.nsamples)
         
         pub.text('rcond', '%g' % self.rcond)
+        pub.text('antisym_M', self.antisym_M)
+        pub.text('antisym_T', self.antisym_T)
+        pub.text('use_P_scaling', self.use_P_scaling)
+
         with pub.subsection('model') as sub:
             try:
                 model = self.get_model()
@@ -172,50 +202,75 @@ class BDSEEstimator(BDSEEstimatorInterface):
                 pub.text('not-ready', str(e))
 
         with pub.subsection('tensors') as sub:
-            T = self.get_T()
-            U = self.U.get_value()
-            P = self.y_stats.get_covariance()
-            Q = self.u_stats.get_covariance()
-            P_inv = np.linalg.pinv(P)
-            P_inv_cond = self.get_P_inv_cond()
-            Q_inv = np.linalg.pinv(Q)
-    #
-    #        TP_inv2 = obtain_TP_inv_from_TP_2(T, P)  
-    #        M2 = np.tensordot(TP_inv2, Q_inv, axes=(2, 0))
-        
-            pub_tensor3_slice2(sub, 'T', T)
-            pub_tensor2_comp1(sub, 'U', U)
-            pub_tensor2_cov(sub, 'P', P, rcond=self.rcond)
-            pub_tensor2_cov(sub, 'P_inv', P_inv)
-            pub_tensor2_cov(sub, 'P_inv_cond', P_inv_cond)
-            pub_tensor2_cov(sub, 'Q', Q)
-            pub_tensor2_cov(sub, 'Q_inv', Q_inv)
-            # Might not have been computed
-            # pub_tensor2_comp1(sub, 'Myav', self.Myav)
-            # pub_tensor2_comp1(sub, 'UQ_inv', self.UQ_inv)
+            self.publish_learned_tensors(sub)
 
         with pub.subsection('y_stats') as sub:
             self.y_stats.publish(sub)
 
         with pub.subsection('u_stats') as sub:
             self.u_stats.publish(sub)
-          
-        with pub.subsection('alternative', robust=True) as sub:
-            sub.text('info', 'This is estimating without conditioning P')
-            T = self.get_T() 
-            P = self.y_stats.get_covariance()
-            Q = self.u_stats.get_covariance()
+        
+        if True:
+            with pub.subsection('alternative', robust=True) as sub:
+                sub.text('info', 'This is estimating without conditioning P')
+                T = self.get_T() 
+                P = self.y_stats.get_covariance()
+                Q = self.u_stats.get_covariance()
+                
+                M1 = get_M_from_P_T_Q(P, T, Q)
+                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q', M1)
+                
+                M2 = get_M_from_P_T_Q_alt(P, T, Q)
+                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt', M2)
+    
+                M3 = get_M_from_P_T_Q_alt_scaling(P, T, Q)
+                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt2', M3)
             
-            M1 = get_M_from_P_T_Q(P, T, Q)
-            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q', M1)
-            
-            M2 = get_M_from_P_T_Q_alt(P, T, Q)
-            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt', M2)
+    @contract(returns='array[N](bool)')
+    def get_valid(self):
+        """ Returns a bool array indicating whether the corresponding 
+            sensel must be considered valid or not. """ 
+        P = self.y_stats.get_covariance()
+        d = P.diagonal()
+        l, m, p = np.percentile(d, [25, 50, 75])
+        w = (p - l) * 1.5
+        threshold = m - w 
+        print('threshold: %s' % threshold)
+        return d > threshold
+    
+    def get_valid_2D(self):
+        valid = self.get_valid()
+        return outer(valid, valid)
 
-            M3 = get_M_from_P_T_Q_alt_scaling(P, T, Q)
-            pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt2', M3)
-            
-            
+
+    def publish_learned_tensors(self, sub):
+        T = self.get_T()
+        U = self.get_U()
+        P = self.y_stats.get_covariance()
+        Q = self.u_stats.get_covariance()
+        P_inv = np.linalg.pinv(P)
+        P_inv_cond = self.get_P_inv_cond()
+        Q_inv = np.linalg.pinv(Q)
+
+        pub_tensor3_slice2(sub, 'T', T)
+        pub_tensor2_comp1(sub, 'U', U)
+        pub_tensor2_cov(sub, 'P', P, rcond=self.rcond)
+        pub_tensor2_cov(sub, 'P_inv', P_inv)
+        pub_tensor2_cov(sub, 'P_inv_cond', P_inv_cond)
+        pub_tensor2_cov(sub, 'Q', Q)
+        pub_tensor2_cov(sub, 'Q_inv', Q_inv)
+    
+        valid = self.get_valid()
+        f = sub.figure()
+        with f.plot('diag_cov') as pylab:
+            P = self.y_stats.get_covariance()
+            d = P.diagonal()
+            pylab.plot(d, '.')
+        with f.plot('valid') as pylab:
+            pylab.plot(valid, '.')
+        
+        
+        
 @contract(T='array[NxNxK]', returns='array[NxNxK]')        
 def antisym(T):
     """ Antisymmetrizes a tensor with respect to the first two dimensions. """
@@ -230,5 +285,25 @@ def antisym2d(M):
     """ Antisymmetrizes a matrix """
     return 0.5 * (M - M.T)
 
+@contract(P='array[NxN]', valid='array[N](bool)', returns='array[NxN],finite')
+def inverse_valid(P, valid):
+    n = P.shape[0]
+    nvalid = np.sum(valid)
+    projector, = np.nonzero(valid)
 
+    Pp = P[projector, :][:, projector]
+    assert_allclose(Pp.shape, (nvalid, nvalid))
+    Pp_inv = np.linalg.inv(Pp)
+    P_inv = np.zeros((n, n))
+#     v = outer(valid, valid)
+#     print v.shape
+    print Pp_inv.shape
+    print P_inv.shape
+    for i, p in enumerate(projector):
+        P_inv[p, projector] = Pp_inv[i, :] 
+#     P_inv[v] = Pp_inv
+    return P_inv
+    
+    
+    
     

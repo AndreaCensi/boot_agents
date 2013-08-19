@@ -1,14 +1,12 @@
 from .bdse_predictor import BDSEPredictor
 from .misc_statistics import MiscStatistics
 from .servo import BDSEServoInterface
-from boot_agents.bdse.model import BDSEEstimator
+from boot_agents.bdse.model import BDSEEstimatorInterface
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
 from bootstrapping_olympics import (AgentInterface, UnsupportedSpec,
     get_boot_config)
 from conf_tools import instantiate_spec
-from contracts import contract
-from contracts.interface import describe_type
-from boot_agents.bdse.model.bdse_estimator_interface import BDSEEstimatorInterface
+from contracts import contract, describe_type
 
 
 __all__ = ['BDSEAgent']

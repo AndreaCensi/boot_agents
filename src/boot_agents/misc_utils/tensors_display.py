@@ -76,7 +76,7 @@ if False:
          
 
 @contract(V='array[MxNxK]')
-def pub_tensor3_slice2(pub, name, V):
+def pub_tensor3_slice2(pub, name, V, draw_hinton=False):
     """ Displays a 3D tensor, with shape [nxnxk] """
     with pub.subsection(name) as section:
         section.array('value', V)
@@ -90,9 +90,11 @@ def pub_tensor3_slice2(pub, name, V):
         
         fu = section.figure('unnormalized', cols=nslices)
         fn = section.figure('normalized', cols=nslices)
-        fug = section.figure('unnormalizedg', cols=nslices)
-        fng = section.figure('normalizedg', cols=nslices)
-         
+        
+        if draw_hinton:
+            fug = section.figure('unnormalizedg', cols=nslices)
+            fng = section.figure('normalizedg', cols=nslices)
+             
         with section.subsection('slices') as slices:        
             
             for i in range(nslices):
@@ -111,13 +113,14 @@ def pub_tensor3_slice2(pub, name, V):
                     du = pub_save_versions2(s, 'unnormalized', rgbu)
                     fu.sub(du)
                 
-                    gray_u = posneg_hinton(tslice)
-                    gray_n = posneg_hinton(tslice, max_value=max_value)
-
-                    dng = pub_save_versions2(s, 'normalizedg', gray_n)
-                    fug.sub(dng)
-                    dug = pub_save_versions2(s, 'unnormalizedg', gray_u)
-                    fng.sub(dug)
+                    if draw_hinton:
+                        gray_u = posneg_hinton(tslice)
+                        gray_n = posneg_hinton(tslice, max_value=max_value)
+    
+                        dng = pub_save_versions2(s, 'normalizedg', gray_n)
+                        fug.sub(dng)
+                        dug = pub_save_versions2(s, 'unnormalizedg', gray_u)
+                        fng.sub(dug)
     
     pub_stats(section, V)
 
