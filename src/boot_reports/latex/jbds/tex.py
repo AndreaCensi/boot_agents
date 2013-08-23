@@ -8,7 +8,7 @@ __all__ = ['jbds_bds_report']
 
 @contract(frag=LatexEnvironment)
 def jbds_bds_report(frag, report, prefix, label_prefix,
-                    agent, robot, prefix_paths, width_cm=2.2):
+                    agent, robot, prefix_paths, width_cm=2.2):  # @UnusedVariable
     def wcm(x):
         return '%.2fcm' % x
     

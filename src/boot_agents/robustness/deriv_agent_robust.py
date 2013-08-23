@@ -4,7 +4,9 @@ from bootstrapping_olympics import AgentInterface
 from conf_tools import instantiate_spec
 import warnings
 
+
 __all__ = ['DerivAgentRobust']
+
 
 class DerivAgentRobust(AgentInterface):
     """ 
@@ -62,7 +64,9 @@ class DerivAgentRobust(AgentInterface):
         pass
     
     def publish(self, pub):
-        self.importance.publish(pub.section('importance'))
+        with pub.subsection('importance') as sub:
+            if sub:
+                self.importance.publish(sub)
 
 
     def choose_commands(self):

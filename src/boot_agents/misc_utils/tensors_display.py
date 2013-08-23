@@ -58,27 +58,31 @@ if False:
         pieces = get_pieces(V, n)
         for k, piece in enumerate(pieces):
             with sub.subsection('%d' % k) as subk:
-                value = piece['value']
-                rgb = posneg(value)
-                rgb = rgb_zoom(rgb, zoom)
-                # XXX
-                subk.r.data_rgb('png', rgb, mime=MIME_PNG)
-                rel = subk.section('rel')
-                rel.r.data('x', piece['xfrac'])
-                rel.r.data('y', piece['yfrac'])
-                rel.r.data('width', piece['wfrac'])
-                rel.r.data('height', piece['wfrac'])
-                pixels = subk.section('pixels')
-                pixels.r.data('x', piece['x'])
-                pixels.r.data('y', piece['y'])
-                pixels.r.data('width', piece['w'])
-                pixels.r.data('height', piece['h'])
-         
+                if subk:
+                    value = piece['value']
+                    rgb = posneg(value)
+                    rgb = rgb_zoom(rgb, zoom)
+                    # XXX
+                    subk.r.data_rgb('png', rgb, mime=MIME_PNG)
+                    rel = subk.section('rel')
+                    rel.r.data('x', piece['xfrac'])
+                    rel.r.data('y', piece['yfrac'])
+                    rel.r.data('width', piece['wfrac'])
+                    rel.r.data('height', piece['wfrac'])
+                    pixels = subk.section('pixels')
+                    pixels.r.data('x', piece['x'])
+                    pixels.r.data('y', piece['y'])
+                    pixels.r.data('width', piece['w'])
+                    pixels.r.data('height', piece['h'])
+             
 
 @contract(V='array[MxNxK]')
 def pub_tensor3_slice2(pub, name, V, draw_hinton=False):
     """ Displays a 3D tensor, with shape [nxnxk] """
     with pub.subsection(name) as section:
+        if not section:
+            return
+        
         section.array('value', V)
         
         nslices = V.shape[2]
@@ -127,9 +131,9 @@ def pub_tensor3_slice2(pub, name, V, draw_hinton=False):
 
 def pub_save_versions2(sub, name, rgb):
     with sub.subsection(name) as s:
-        d = pub_save_versions(s, rgb)
+        if s:
+            d = pub_save_versions(s, rgb)
     return d
-    
 
 def pub_save_versions(pub, rgb, png_zoom=4):
     if False:
@@ -143,6 +147,8 @@ def pub_save_versions(pub, rgb, png_zoom=4):
 def pub_tensor2_cov(pub, name, V, rcond=None):
     """ Publishes a tensor which is supposed to represent a covariance. """
     with pub.subsection(name) as sub:
+        if not sub:
+            return
         sub.array_as_image('posneg', V)  # XXX: redundant, but don't want to change code
         sub.array('value', V)
         
@@ -155,6 +161,8 @@ def pub_tensor2_cov(pub, name, V, rcond=None):
 
 def pub_svd_decomp(parent, V, rcond=None):
     with parent.subsection('svd') as sub1:
+        if not sub1:
+            return
         f = sub1.figure()
         with f.plot('plot') as pylab:
             u, s, v = plot_matrix_svd(pylab, V, rcond=rcond)
@@ -165,6 +173,8 @@ def pub_svd_decomp(parent, V, rcond=None):
 
 def pub_eig_decomp(parent, V):
     with parent.subsection('eig') as sub:
+        if not sub:
+            return
         w, v = np.linalg.eig(V)
         sub.array_as_image('eigen', v)
         f = sub.figure()
@@ -177,7 +187,12 @@ def pub_eig_decomp(parent, V):
         
 def plot_matrix_svd(pylab, M, rcond=None):
     u, s, v = np.linalg.svd(M)  # @UnusedVariable
+    if not np.any(s > 0):
+        pylab.text(0, 0, 'no positive SVs')
+        return u, s, v
+
     sn = s / s[0]
+    
     pylab.semilogy(sn, 'bx-')
     if rcond is not None:
         pylab.semilogy(np.ones(sn.shape) * rcond, 'k--')
@@ -188,10 +203,11 @@ def plot_matrix_svd(pylab, M, rcond=None):
 def pub_tensor2(pub, name, V):
     """ Publishes a generic 2D tensor """
     with pub.subsection(name) as section:
-        section.array('value', V)  # TODO
-        value_rgb = posneg(V)
-        pub_save_versions(section, value_rgb)
-        pub_stats(section, V)
+        if section:
+            section.array('value', V)  # TODO
+            value_rgb = posneg(V)
+            pub_save_versions(section, value_rgb)
+            pub_stats(section, V)
 
 
 class BV1Style:
@@ -207,9 +223,15 @@ def pub_tensor2_comp1(pub, name, V):
         Assumes that it can be either pos or neg.
     """
     with pub.subsection(name) as section:
+        if not section:
+            return
+        
         section.array('value', V)
         
         with section.subsection('slices') as sub:
+            if not sub:
+                return
+            
             f = sub.figure() 
             
             figsize = BV1Style.figsize
@@ -219,49 +241,52 @@ def pub_tensor2_comp1(pub, name, V):
             nsensels = V.shape[0]
             y_max = np.max(np.abs(V))
             for i in range(V.shape[1]):
-                sub2 = sub.section('%d' % i)
-                sub2.array('value', V[:, i])
-                
-                f2 = sub2.figure()
-                
-                with f2.plot('plot') as pylab: 
-                    pylab.plot(V[:, i], '.')
-                    style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V[:, i])))
+                with sub.subsection('%d' % i) as sub2:
+                    if not sub2:
+                        continue
                     
-                # This is scaled with the maximum of all slices
-                with f2.plot('plot_scaled') as pylab: 
-                    pylab.plot(V[:, i], '.')
-                    style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V)))
+                    sub2.array('value', V[:, i])
+                    
+                    f2 = sub2.figure()
+                    
+                    with f2.plot('plot') as pylab: 
+                        pylab.plot(V[:, i], '.')
+                        style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V[:, i])))
+                        
+                    # This is scaled with the maximum of all slices
+                    with f2.plot('plot_scaled') as pylab: 
+                        pylab.plot(V[:, i], '.')
+                        style_1d_sensel_func(pylab, n=nsensels, y_max=np.max(np.abs(V)))
+                    
+                    if False:
+                        with sub2.plot('plotB', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **dots_format)
+                            style_1d_sensel_func(pylab, n=nsensels,
+                                                 y_max=np.max(np.abs(V[:, i])))
+                        with sub2.plot('plotBn', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **dots_format)
+                            style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
                 
-                if False:
-                    with sub2.plot('plotB', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **dots_format)
-                        style_1d_sensel_func(pylab, n=nsensels,
-                                             y_max=np.max(np.abs(V[:, i])))
-                    with sub2.plot('plotBn', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **dots_format)
-                        style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
-            
-                    with sub2.plot('plotBna', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **dots_format)
-                        style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
-                        # no left axis
-                        turn_off_left_and_right(pylab)
-            
-                    with sub2.plot('plotC', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **line_format)
-                        style_1d_sensel_func(pylab, n=nsensels,
-                                             y_max=np.max(np.abs(V[:, i])))
-                    with sub2.plot('plotCn', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **dots_format)
-                        style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
-            
-                    with sub2.plot('plotCna', figsize=figsize) as pylab:
-                        pylab.plot(V[:, i], **dots_format)
-                        style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
-                        # no left axis
-                        turn_off_left_and_right(pylab)
+                        with sub2.plot('plotBna', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **dots_format)
+                            style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
+                            # no left axis
+                            turn_off_left_and_right(pylab)
                 
+                        with sub2.plot('plotC', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **line_format)
+                            style_1d_sensel_func(pylab, n=nsensels,
+                                                 y_max=np.max(np.abs(V[:, i])))
+                        with sub2.plot('plotCn', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **dots_format)
+                            style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
+                
+                        with sub2.plot('plotCna', figsize=figsize) as pylab:
+                            pylab.plot(V[:, i], **dots_format)
+                            style_1d_sensel_func(pylab, n=nsensels, y_max=y_max)
+                            # no left axis
+                            turn_off_left_and_right(pylab)
+                    
             # And now all together
             dots_format_all = dict(**dots_format)
             if 'color' in dots_format_all:

@@ -2,18 +2,18 @@ from .bdse_estimator_interface import BDSEEstimatorInterface
 from .bdse_model import BDSEmodel
 from .bdse_tensors import (get_M_from_P_T_Q_alt, get_M_from_P_T_Q_alt_scaling,
     get_M_from_P_T_Q, get_M_from_Pinv_T_Q)
+from astatsa.expectation_weighted import ExpectationWeighted
+from astatsa.utils import assert_allclose
 from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
     pub_tensor2_comp1)
-from boot_agents.utils import Expectation, MeanCovariance, outer
+from boot_agents.utils import (Expectation, MeanCovariance, outer,
+    check_matrix_finite)
 from conf_tools.utils import indent
 from contracts import contract
 from numpy.linalg.linalg import LinAlgError
 import numpy as np
 import traceback
 import warnings
-from boot_agents.utils import check_matrix_finite
-from astatsa.expectation_weighted.expectation_weighted import ExpectationWeighted
-from astatsa.utils.np_comparisons import assert_allclose
 
 
 __all__ = ['BDSEEstimator']
@@ -33,7 +33,9 @@ class BDSEEstimator(BDSEEstimatorInterface):
     """
 
     @contract(rcond='float,>0')
-    def __init__(self, rcond=1e-10, antisym_T=False, antisym_M=False, use_P_scaling=False):
+    def __init__(self, rcond=1e-10,
+                 antisym_T=False, antisym_M=False,
+                 use_P_scaling=False, invalid_P_threshold=None):  # invalid_P_threshold = 1.5
         """
             :param rcond: Threshold for computing pseudo-inverse of P.
             :param antisym_T: If True, the estimate of T is antisymmetrized.
@@ -43,10 +45,12 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.antisym_M = antisym_M
         self.antisym_T = antisym_T
         self.use_P_scaling = use_P_scaling
+        self.invalid_P_threshold = invalid_P_threshold
         self.info('rcond: %f' % rcond)
         self.info('antisym_T: %s' % antisym_T)
         self.info('antisym_M: %s' % antisym_M)
         self.info('use_P_scaling: %s' % use_P_scaling)
+        self.info('discard_P_threshold: %s' % invalid_P_threshold)
 
         self.T = Expectation()
         self.U = Expectation()
@@ -195,53 +199,60 @@ class BDSEEstimator(BDSEEstimatorInterface):
         pub.text('use_P_scaling', self.use_P_scaling)
 
         with pub.subsection('model') as sub:
-            try:
-                model = self.get_model()
-                model.publish(sub)
-            except BDSEEstimatorInterface.NotReady as e:
-                pub.text('not-ready', str(e))
+            if sub:
+                try:
+                    model = self.get_model()
+                    model.publish(sub)
+                except BDSEEstimatorInterface.NotReady as e:
+                    pub.text('not-ready', str(e))
 
         with pub.subsection('tensors') as sub:
-            self.publish_learned_tensors(sub)
+            if sub:
+                self.publish_learned_tensors(sub)
 
         with pub.subsection('y_stats') as sub:
-            self.y_stats.publish(sub)
+            if sub:
+                self.y_stats.publish(sub)
 
         with pub.subsection('u_stats') as sub:
-            self.u_stats.publish(sub)
+            if sub:
+                self.u_stats.publish(sub)
         
         if True:
             with pub.subsection('alternative', robust=True) as sub:
-                sub.text('info', 'This is estimating without conditioning P')
-                T = self.get_T() 
-                P = self.y_stats.get_covariance()
-                Q = self.u_stats.get_covariance()
-                
-                M1 = get_M_from_P_T_Q(P, T, Q)
-                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q', M1)
-                
-                M2 = get_M_from_P_T_Q_alt(P, T, Q)
-                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt', M2)
-    
-                M3 = get_M_from_P_T_Q_alt_scaling(P, T, Q)
-                pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt2', M3)
+                if sub:
+                    sub.text('info', 'This is estimating without conditioning P')
+                    T = self.get_T() 
+                    P = self.y_stats.get_covariance()
+                    Q = self.u_stats.get_covariance()
+                    
+                    M1 = get_M_from_P_T_Q(P, T, Q)
+                    pub_tensor3_slice2(sub, 'get_M_from_P_T_Q', M1)
+                    
+                    M2 = get_M_from_P_T_Q_alt(P, T, Q)
+                    pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt', M2)
+        
+                    M3 = get_M_from_P_T_Q_alt_scaling(P, T, Q)
+                    pub_tensor3_slice2(sub, 'get_M_from_P_T_Q_alt2', M3)
             
     @contract(returns='array[N](bool)')
     def get_valid(self):
         """ Returns a bool array indicating whether the corresponding 
-            sensel must be considered valid or not. """ 
-        P = self.y_stats.get_covariance()
-        d = P.diagonal()
-        l, m, p = np.percentile(d, [25, 50, 75])
-        w = (p - l) * 1.5
-        threshold = m - w 
-        print('threshold: %s' % threshold)
-        return d > threshold
+            sensel must be considered valid or not. """
+        if self.invalid_P_threshold is None:
+            return np.ones(self.n, 'bool')
+        else:
+            P = self.y_stats.get_covariance()
+            d = P.diagonal()
+            l, m, p = np.percentile(d, [25, 50, 75])
+            w = (p - l) * self.invalid_P_threshold 
+            threshold = m - w 
+            self.info('P threshold: %s' % threshold)
+            return d > threshold
     
     def get_valid_2D(self):
         valid = self.get_valid()
         return outer(valid, valid)
-
 
     def publish_learned_tensors(self, sub):
         T = self.get_T()

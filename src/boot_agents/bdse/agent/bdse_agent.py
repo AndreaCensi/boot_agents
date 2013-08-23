@@ -107,10 +107,12 @@ class BDSEAgent(AgentInterface):
             return
         
         with pub.subsection('estimator') as sub:
-            self.bdse_estimator.publish(sub)
+            if sub:
+                self.bdse_estimator.publish(sub)
             
         with pub.subsection('stats') as sub:
-            self.stats.publish(sub)
+            if sub:
+                self.stats.publish(sub)
 
     def get_predictor(self):
         model = self.bdse_estimator.get_model()

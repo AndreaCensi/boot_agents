@@ -75,11 +75,12 @@ class BDSEEstimatorRobust(BDSEEstimator):
     def publish_learned_tensors(self, sub):
         BDSEEstimator.publish_learned_tensors(self, sub)
         with sub.subsection('weights') as s:
-            Tw = self.T.get_mass()
-            Uw = self.U.get_mass()
-            TTw = Tw * self.get_T()
-            pub_tensor3_slice2(s, 'Tw', Tw)
-            pub_tensor3_slice2(s, 'T * Tw', TTw)
-            pub_tensor2_comp1(s, 'Uw', Uw)
+            if s:
+                Tw = self.T.get_mass()
+                Uw = self.U.get_mass()
+                TTw = Tw * self.get_T()
+                pub_tensor3_slice2(s, 'Tw', Tw)
+                pub_tensor3_slice2(s, 'T * Tw', TTw)
+                pub_tensor2_comp1(s, 'Uw', Uw)
             
             
