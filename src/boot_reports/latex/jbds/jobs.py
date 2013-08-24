@@ -1,9 +1,9 @@
-from quickapp.report_manager import basename_from_key
-from latex_gen.frags import latex_document, latex_fragment
-
-import os
 from boot_reports.latex.jbds.tex import jbds_bds_report
-from conf_tools.utils.friendly_paths import friendly_path
+from conf_tools.utils import friendly_path
+from latex_gen import latex_document, latex_fragment
+from quickapp.report_manager import basename_from_key
+import os
+
 
 __all__ = ['job_tex_report']
 
