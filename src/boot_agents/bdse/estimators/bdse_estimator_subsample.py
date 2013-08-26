@@ -1,6 +1,6 @@
 from boot_agents.bdse.model.bdse_estimator_interface import (
     BDSEEstimatorInterface)
-from conf_tools.code_specs import instantiate_spec
+from conf_tools import instantiate_spec
 from contracts import contract
 import numpy as np
 
