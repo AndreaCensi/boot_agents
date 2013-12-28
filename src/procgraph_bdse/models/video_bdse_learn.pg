@@ -20,26 +20,38 @@ r ->|img_from_report url='estimator/tensors/U/slices/0/value'| -> U0
 r ->|img_from_report url='estimator/tensors/U/slices/1/value'| -> U1
 r ->|img_from_report url='estimator/tensors/U/slices/2/value'| -> U2
 
-P -> |posneg| -> |resize width=$W| -> |border| -> P_rgb
-T0 -> |posneg| -> |resize width=$W| -> |border| -> T0_rgb
-T1 -> |posneg| -> |resize width=$W| -> |border| -> T1_rgb
-T2 -> |posneg| -> |resize width=$W| -> |border| -> T2_rgb
+P -> |posneg| -> |resize width=$W| -> P_rgb_nb -> |border| -> P_rgb
+T0 -> |posneg| -> |resize width=$W| -> T0_rgb_nb ->|border| -> T0_rgb
+T1 -> |posneg| -> |resize width=$W| -> T1_rgb_nb -> |border| -> T1_rgb
+T2 -> |posneg| -> |resize width=$W| -> T2_rgb_nb -> |border| -> T2_rgb
 
 U0 -> |plot_U_slice W=$W| -> U0_rgb
 U1 -> |plot_U_slice W=$W| -> U1_rgb
 U2 -> |plot_U_slice W=$W| -> U2_rgb
 
 |solid  width=$W height=$W color=[1,1,1]|-> white
+|solid  width=$W height=$W color=[0,1,0]|-> green
 
-P_rgb, T0_rgb, T1_rgb, T2_rgb, white, U0_rgb, U1_rgb, U2_rgb -> |grid cols=4 pad=4 bgcolor=[1,1,1]| -> rgb
+P_rgb, T0_rgb, T1_rgb, T2_rgb, white, U0_rgb, U1_rgb, U2_rgb -> |grid cols=4 pad=4 bgcolor=[1,1,1]| -> |mencoder file='${basename}_all_wb.mp4'|
+P_rgb, T0_rgb, T1_rgb, T2_rgb, green, U0_rgb, U1_rgb, U2_rgb -> |grid cols=4 pad=4 bgcolor=[0,1,0]| -> |mencoder file='${basename}_all_gs.mp4'|
+                                      T0_rgb, T1_rgb, T2_rgb -> |grid cols=3 pad=4 bgcolor=[1,1,1]| -> |mencoder file='${basename}_T_wb.mp4'|
+                                      T0_rgb, T1_rgb, T2_rgb -> |grid cols=3 pad=4 bgcolor=[0,1,0]| -> |mencoder file='${basename}_T_gs.mp4'|
+                                      U0_rgb, U1_rgb, U2_rgb -> |grid cols=3 pad=4 bgcolor=[1,1,1]| -> |mencoder file='${basename}_U_wb.mp4'|
+                                      U0_rgb, U1_rgb, U2_rgb -> |grid cols=3 pad=4 bgcolor=[0,1,0]| -> |mencoder file='${basename}_U_gs.mp4'|
 
+P_rgb_nb -> |mencoder file='${basename}_P_nb.mp4'|
+T0_rgb_nb -> |mencoder file='${basename}_T0_nb.mp4'|
+T1_rgb_nb -> |mencoder file='${basename}_T1_nb.mp4'|
+T2_rgb_nb -> |mencoder file='${basename}_T2_nb.mp4'|
+U0_rgb -> |mencoder file='${basename}_U0.mp4'|
+U1_rgb -> |mencoder file='${basename}_U1.mp4'|
+U2_rgb -> |mencoder file='${basename}_U2.mp4'|
 
-rgb -> |mencoder file='${basename}.mp4'|
 
 --- model plot_U_slice
 input U
 config W
 output rgb
 
-|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks,dottedzero] symmetric=1| -> |border| ->|output name=rgb|
+|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks, dottedzero] symmetric=1| -> |border| ->|output name=rgb|
 
