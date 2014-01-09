@@ -1,11 +1,13 @@
+import numpy as np
+from contracts import contract
 
-from . import (compute_gradient_information_matrix, contract,
-     outer_first_dim, np, BGDSmodel)
+from . import (compute_gradient_information_matrix,
+     outer_first_dim, BGDSmodel)
 from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tensor,
     display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
-from boot_agents.utils.gradients import generalized_gradient
-from bootstrapping_olympics.utils.np_comparisons import check_all_finite
+from boot_agents.utils import generalized_gradient
+from bootstrapping_olympics.utils import check_all_finite
 
 
 __all__ = ['BGDSEstimator']

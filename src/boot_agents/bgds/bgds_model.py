@@ -2,6 +2,10 @@ from boot_agents.misc_utils import display_1d_tensor, display_4d_tensor, display
 from boot_agents.utils import expect_shape, generalized_gradient
 from contracts import contract
 import numpy as np
+import warnings
+
+
+__all__ = ['BGDSmodel']
 
 
 class BGDSmodel(object):
@@ -95,18 +99,19 @@ class BGDSmodel(object):
     @contract(y='array[AxB]', y_dot='array[AxB]')
     def estimate_u_2d(self, y, y_dot, gy=None):
         # FIXME: this must be fixed, still uses old conventions
+        warnings.warn('FIXME: BGDSmodel:estimate_u_2d() this must be fixed, still uses old conventions')
         if gy is None:
             gy = generalized_gradient(y)
 
         A, B = y.shape
         n = A * B
-        K = self.H.shape[0]
+        K = self.G.shape[0]
 
         # FIXME: G
-        H = self.H
-        # H = (K x 2 x H x W )
+        G = self.G
+        # G = (K x 2 x H x W )
         # gy = (2 x H x W )
-        Hgy = np.tensordot(H * gy, [1, 1], axes=(1, 0))
+        Hgy = np.tensordot(G * gy, [1, 1], axes=(1, 0))
 
         # This was the slower implementation:
         #        a = np.zeros((n, K))
