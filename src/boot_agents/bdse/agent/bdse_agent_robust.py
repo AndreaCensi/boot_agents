@@ -1,11 +1,11 @@
 from .bdse_predictor import BDSEPredictor
 from .servo import BDSEServoInterface
+from boot_agents.bdse import BDSEEstimatorInterface
 from boot_agents.robustness import DerivAgentRobust
 from bootstrapping_olympics import UnsupportedSpec
 from conf_tools import instantiate_spec
-from contracts import contract
-from boot_agents.bdse.model.bdse_estimator_interface import BDSEEstimatorInterface
-from contracts.interface import describe_type
+from contracts import contract, describe_type
+        
         
 __all__ = ['BDSEAgentRobust']
 
@@ -42,7 +42,8 @@ class BDSEAgentRobust(DerivAgentRobust):
      
     def publish(self, pub):
         with pub.subsection('estimator') as sub:
-            self.estimator.publish(sub)
+            if sub:
+                self.estimator.publish(sub)
         DerivAgentRobust.publish(self, pub)
              
     def get_predictor(self):
@@ -55,7 +56,7 @@ class BDSEAgentRobust(DerivAgentRobust):
 
     def get_servo(self):
         # XXX :repeated code with BDSEAgent
-        print('Servo: %r' % self.servo)
+        # print('Servo: %r' % self.servo)
         servo_agent = instantiate_spec(self.servo)
         assert isinstance(servo_agent, BDSEServoInterface)
         servo_agent.init(self.boot_spec)

@@ -16,6 +16,10 @@ class BDSEPredictor(PredictorAgentInterface):
         dt = obs['dt'].item()
         self.comp_y_dot.update(self.y, dt)
         
+    def init(self, boot_spec):
+        # TODO: add check
+        pass
+    
     def predict_y(self, dt):
         y_dot = self.model.get_y_dot(y=self.y, u=self.u)
         return self.y + y_dot * dt

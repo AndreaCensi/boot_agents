@@ -1,0 +1,41 @@
+--- model video_bdse_learn2
+""" Learning tensor for BDS, for a robot with 2 commands """
+config basename
+config id_agent
+config id_robot
+config W = 256
+config interval= 100
+input agent
+input robot
+input obs
+
+|input name=agent| -> |sieve n=$interval| -> agent ->  |make_agent_report subneeded=['estimator/tensors/T', 'estimator/tensors/U']| -> r 
+
+
+r ->|img_from_report url='estimator/tensors/T/slices/0/value'| -> T0
+r ->|img_from_report url='estimator/tensors/T/slices/1/value'| -> T1
+# r ->|img_from_report url='estimator/tensors/T/slices/2/value'| -> T2
+r ->|img_from_report url='estimator/tensors/U/slices/0/value'| -> U0
+r ->|img_from_report url='estimator/tensors/U/slices/1/value'| -> U1
+# r ->|img_from_report url='estimator/tensors/U/slices/2/value'| -> U2
+
+T0 -> |posneg| -> |resize width=$W| -> |border| -> T0_rgb
+T1 -> |posneg| -> |resize width=$W| -> |border| -> T1_rgb
+# T2 -> |posneg| -> |resize width=$W| -> |border| -> T2_rgb
+
+U0 -> |plot_U_slice W=$W| -> U0_rgb
+U1 -> |plot_U_slice W=$W| -> U1_rgb
+# U2 -> |plot_U_slice W=$W| -> U2_rgb
+
+T0_rgb, T1_rgb, U0_rgb, U1_rgb -> |grid cols=2 pad=4 bgcolor=[1,1,1]| -> rgb
+
+
+rgb -> |mencoder file='${basename}.mp4'|
+
+--- model plot_U_slice
+input U
+config W
+output rgb
+
+|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks,dottedzero] symmetric=1| -> |border| ->|output name=rgb|
+

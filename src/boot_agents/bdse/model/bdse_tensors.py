@@ -4,6 +4,7 @@ import numpy as np
 from numpy.linalg.linalg import LinAlgError
 
 import warnings
+from geometry.formatting import formatm
 
 
 @contract(M='array[NxNxK]', P='array[NxN]', Q='array[KxK]', returns='array[NxNxK]')
@@ -26,8 +27,15 @@ def get_M_from_P_T_Q(P, T, Q, other=None):
             M^{v}_{xj} = T^{svi} Pinv_{sx} Qinv_{ij}
             
     """
-    TPinv = obtain_TPinv_from_T_P(T, P)   
-    Q_inv = np.linalg.inv(Q)
+    TPinv = obtain_TPinv_from_T_P(T, P)
+    try:   
+        Q_inv = np.linalg.inv(Q)
+    except LinAlgError:
+        msg = 'Q tensor is singular:\n ' + formatm('Q', Q)
+        from bootstrapping_olympics import logger
+        logger.error(msg)
+        Q_inv = np.linalg.pinv(Q)
+        
     M = np.tensordot(TPinv, Q_inv, axes=(2, 0))
 
     if other is not None:

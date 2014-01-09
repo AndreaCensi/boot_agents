@@ -1,9 +1,9 @@
-from quickapp.report_manager import basename_from_key
-from latex_gen.frags import latex_document, latex_fragment
-
-import os
 from boot_reports.latex.jbds.tex import jbds_bds_report
-from conf_tools.utils.friendly_paths import friendly_path
+from conf_tools.utils import friendly_path
+from latex_gen import latex_document, latex_fragment
+from quickapp.report_manager import basename_from_key
+import os
+
 
 __all__ = ['job_tex_report']
 
@@ -14,7 +14,6 @@ def job_tex_report(context, output_dir, id_agent, id_robot):
 
 def bds_report(output_dir, report, agent, robot):
     prefix = basename_from_key(dict(id_agent=agent, id_robot=robot))
-#     prefix = '%s-%s' % (agent, robot)
     filename = os.path.join(output_dir, prefix + '.tex')
     filename_doc = os.path.join(output_dir, prefix + '-single.tex')
     preamble = """
