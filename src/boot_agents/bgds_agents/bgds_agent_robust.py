@@ -1,9 +1,11 @@
-from boot_agents.bgds.bgds_predictor import BGDSPredictor
-from bootstrapping_olympics.interfaces import UnsupportedSpec 
-from boot_agents.robustness.deriv_agent_robust import DerivAgentRobust
 from boot_agents.bgds.bgds_estimator_robust import BGDSEstimator1DRobust
+from boot_agents.bgds.bgds_predictor import BGDSPredictor
+from boot_agents.robustness.deriv_agent_robust import DerivAgentRobust
+from bootstrapping_olympics.interfaces import UnsupportedSpec
+
 from .bgds_servo import BGDSServo
-        
+
+
 __all__ = ['BGDSAgent1DRobust']
 
 

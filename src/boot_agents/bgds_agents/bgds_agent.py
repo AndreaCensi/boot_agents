@@ -1,13 +1,12 @@
+from contracts import contract
+
+from boot_agents.bgds import BGDSEstimator, BGDSPredictor, smooth2d
 from boot_agents.simple_stats import ExpSwitcher
 from boot_agents.utils import DerivativeBox, Expectation, RemoveDoubles
-from boot_agents.bgds import BGDSEstimator
-from boot_agents.bgds import BGDSPredictor
-from boot_agents.bgds import smooth2d
 from bootstrapping_olympics import UnsupportedSpec
-from contracts import contract
+import numpy as np
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
-import numpy as np
 
 
 __all__ = ['BGDSAgent']
@@ -154,7 +153,6 @@ class BGDSAgent(ExpSwitcher):
 
     def publish_u_stats(self, pub):
         T = len(self.u_stats)
-        print('Obtained %d obs' % T)
         K = 2  # FIXME: change this
         u_act = np.zeros((T, K))
         u_est = np.zeros((T, K))
@@ -245,7 +243,7 @@ def plot_with_colors(pylab,
                                     label='estimated', **kwargs)
 
 
-@contract(y='array[HxW]', scales='list[M](float,>=0)',
+@contract(y='array[HxW]', scales='list[M](0|(float,>=0))',
                   returns='array[Hx(W*M)]')
 def create_scales(y, scales):
     data = []
