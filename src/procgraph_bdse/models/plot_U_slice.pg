@@ -1,0 +1,7 @@
+--- model plot_U_slice
+input U
+config W
+output rgb
+
+|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks, dottedzero] symmetric=1| -> |border| ->|output name=rgb|
+

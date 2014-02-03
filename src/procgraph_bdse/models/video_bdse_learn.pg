@@ -46,12 +46,3 @@ T2_rgb_nb -> |mencoder file='${basename}_T2_nb.mp4'|
 U0_rgb -> |mencoder file='${basename}_U0.mp4'|
 U1_rgb -> |mencoder file='${basename}_U1.mp4'|
 U2_rgb -> |mencoder file='${basename}_U2.mp4'|
-
-
---- model plot_U_slice
-input U
-config W
-output rgb
-
-|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks, dottedzero] symmetric=1| -> |border| ->|output name=rgb|
-

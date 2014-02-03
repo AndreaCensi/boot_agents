@@ -31,11 +31,3 @@ T0_rgb, T1_rgb, U0_rgb, U1_rgb -> |grid cols=2 pad=4 bgcolor=[1,1,1]| -> rgb
 
 
 rgb -> |mencoder file='${basename}.mp4'|
-
---- model plot_U_slice
-input U
-config W
-output rgb
-
-|input name=U| -> |plot title='' format='.' width=$W fancy_styles=[dickinsonA, turn_off_all_axes, noxticks, noyticks,dottedzero] symmetric=1| -> |border| ->|output name=rgb|
-
