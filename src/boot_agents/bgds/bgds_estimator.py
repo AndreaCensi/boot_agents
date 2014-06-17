@@ -1,13 +1,14 @@
-import numpy as np
 from contracts import contract
+
+from boot_agents.utils import generalized_gradient
+from bootstrapping_olympics.utils import check_all_finite
+import numpy as np
 
 from . import (compute_gradient_information_matrix,
      outer_first_dim, BGDSmodel)
 from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tensor,
     display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
-from boot_agents.utils import generalized_gradient
-from bootstrapping_olympics.utils import check_all_finite
 
 
 __all__ = ['BGDSEstimator']
@@ -46,6 +47,16 @@ class BGDSEstimator(object):
         self.H_needs_update = True
 
         self.once = False
+
+    def merge(self, other):
+        assert isinstance(other, BGDSEstimator)
+        self.Q.merge(other.Q)
+        self.P.merge(other.P)
+        self.G.merge(other.G)
+        self.B.merge(other.B)
+        self.C_needs_update = True
+        self.R_needs_update = True
+        self.H_needs_update = True
         
     def get_model(self):
         return BGDSmodel(self.get_H(), self.get_C())

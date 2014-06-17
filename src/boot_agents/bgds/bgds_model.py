@@ -1,8 +1,10 @@
+import warnings
+
+from contracts import contract
+
 from boot_agents.misc_utils import display_1d_tensor, display_4d_tensor, display_3d_tensor
 from boot_agents.utils import expect_shape, generalized_gradient
-from contracts import contract
 import numpy as np
-import warnings
 
 
 __all__ = ['BGDSmodel']

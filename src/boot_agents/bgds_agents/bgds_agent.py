@@ -233,6 +233,11 @@ class BGDSAgent(ExpSwitcher):
         model = self.bgds_estimator.get_model()
         return BGDSPredictor(model)
 
+    def merge(self, agent2):
+        assert isinstance(agent2, BGDSAgent)
+        self.bgds_estimator.merge(agent2.bgds_estimator)
+
+
 
 def plot_with_colors(pylab,
                      timestamps, values, values_giving_colors,
