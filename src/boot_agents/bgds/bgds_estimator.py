@@ -4,11 +4,12 @@ from boot_agents.utils import generalized_gradient
 from bootstrapping_olympics.utils import check_all_finite
 import numpy as np
 
-from . import (compute_gradient_information_matrix,
-     outer_first_dim, BGDSmodel)
 from ..misc_utils import (display_3d_tensor, display_4d_tensor, display_1d_tensor,
     display_1d_field, iterate_indices)
 from ..utils import Expectation, outer
+from .bgds_model import BGDSmodel
+from .utils import outer_first_dim, \
+    compute_gradient_information_matrix
 
 
 __all__ = ['BGDSEstimator']
@@ -194,22 +195,23 @@ class BGDSEstimator(object):
         u_labels = ['cmd%s' % k for k in range(K)]
         grad_labels = ['h', 'v']
 
-        acc = pub.section('accumulators')
-        display_4d_tensor(acc, 'G', G, xlabels=u_labels, ylabels=grad_labels)
-        display_3d_tensor(acc, 'B', B, labels=u_labels)
-        display_4d_tensor(acc, 'P', P, xlabels=grad_labels,
-                          ylabels=grad_labels)
-        display_4d_tensor(acc, 'R', R, xlabels=grad_labels,
-                          ylabels=grad_labels)
+        with pub.subsection('accumulators') as acc:
+            display_4d_tensor(acc, 'G', G, xlabels=u_labels, ylabels=grad_labels)
+            display_3d_tensor(acc, 'B', B, labels=u_labels)
+            display_4d_tensor(acc, 'P', P, xlabels=grad_labels,
+                              ylabels=grad_labels)
+            display_4d_tensor(acc, 'R', R, xlabels=grad_labels,
+                              ylabels=grad_labels)
 
-        model = self.get_model()
-        model.publish(pub.section('model'))
+        with pub.subsection('model') as sub:
+            model = self.get_model()
+            model.publish(sub)
 
-        data = pub.section('last_data')
-        data.array_as_image('last_y', self.last_y, filter='scale')
-        data.array_as_image('last_y_dot', self.last_y_dot, filter='scale')
-        data.array_as_image('last_gy_h', self.last_gy[0, :, :])
-        data.array_as_image('last_gy_v', self.last_gy[1, :, :])
+        with pub.subsection('last_data') as data:
+            data.array_as_image('last_y', self.last_y, filter='scale')
+            data.array_as_image('last_y_dot', self.last_y_dot, filter='scale')
+            data.array_as_image('last_gy_h', self.last_gy[0, :, :])
+            data.array_as_image('last_gy_v', self.last_gy[1, :, :])
 
     def publish_1d(self, pub):
         G = self.get_G()

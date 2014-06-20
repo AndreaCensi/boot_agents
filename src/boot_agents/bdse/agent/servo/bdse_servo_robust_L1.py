@@ -1,6 +1,8 @@
-from .bdse_servo_robust import BDSEServoRobust
 import numpy as np
-from boot_agents.bdse.agent.servo.bdse_servo_robust import get_censored_y_goal
+
+from .bdse_servo_robust import BDSEServoRobust, get_censored_y_goal
+
+
 __all__ = ['BDSEServoRobustL1']
 
 

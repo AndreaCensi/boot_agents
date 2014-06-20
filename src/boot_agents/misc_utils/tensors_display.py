@@ -1,13 +1,15 @@
-from boot_agents.misc_utils import y_axis_balanced
+import itertools
+
 from contracts import contract
+
+from boot_agents.misc_utils import y_axis_balanced
+import numpy as np
 from reprep import MIME_JPG, posneg, rgb_zoom, MIME_PNG
+from reprep.graphics.filter_posneg import posneg_hinton
 from reprep.plot_utils import (set_thick_ticks, set_left_spines_outward,
     turn_off_left_and_right, turn_off_right, turn_off_bottom_and_top, x_axis_set,
     y_axis_set)
-import itertools
-import numpy as np
-from reprep.graphics.filter_posneg import posneg_hinton
- 
+
 
 def pub_text_stats(pub, V):
     """ Create statistics for the tensor """
@@ -353,24 +355,36 @@ def iterate_indices(shape):
 @contract(G='array[AxBxHxW]',
           xlabels='list[A](str)', ylabels='list[B](str)')
 def display_4d_tensor(pub, name, G, xlabels, ylabels):
+    """ Creates a subsection of name "name" in which to display
+        elements of G.
+    
+        Creates: ::
+         
+            pub / <name> / figure1 (Figure)
+            pub / <name> / <name>_<xlabel>_<ylabel>
+             
+    """
     A = G.shape[0]
     B = G.shape[1]
     with pub.subsection(name) as section:
+        f = section.figure(cols=G.shape[1])  # XXX: could be either 0 or 1
         for b, a in iterate_indices((B, A)):
             value = G[a, b, :, :].squeeze()
             label = '%s_%s_%s' % (name, xlabels[a], ylabels[b])
             section.array_as_image(label, value)
+            f.sub(section.last(), caption=label)
 
 
 @contract(G='array[AxHxW]', labels='list[A](str)')
 def display_3d_tensor(pub, name, G, labels):
     A = G.shape[0]
     with pub.subsection(name) as section:
+        f = section.figure(cols=G.shape[0])
         for a in range(A):
             value = G[a, :, :].squeeze()
             label = '%s_%s' % (name, labels[a])
             section.array_as_image(label, value)
-
+            f.sub(section.last(), caption=label)
 
 @contract(value='array[Kx1xN]|array[KxN]')
 def display_1d_tensor(pub, name, value):
