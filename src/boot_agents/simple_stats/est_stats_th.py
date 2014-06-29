@@ -1,11 +1,13 @@
-from .exp_switcher import ExpSwitcher
 from astatsa.expectation import Expectation
 from astatsa.utils import outer
 from boot_agents.misc_utils import pub_svd_decomp, pub_eig_decomp
-from bootstrapping_olympics import UnsupportedSpec
-from reprep.plot_utils.axes import y_axis_set_min
-import numpy as np
 from boot_agents.utils.mean_covariance import MeanCovariance
+from bootstrapping_olympics import UnsupportedSpec
+import numpy as np
+from reprep.plot_utils.axes import y_axis_set_min
+
+from .exp_switcher import ExpSwitcher
+
 
 __all__ = ['EstStatsTh']
 

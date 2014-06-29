@@ -1,5 +1,6 @@
-from bootstrapping_olympics import AgentInterface
 from boot_agents.utils import get_canonical_commands
+from bootstrapping_olympics import AgentInterface
+
 
 __all__ = ['CanonicalCommandsAgent']
 

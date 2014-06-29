@@ -1,8 +1,10 @@
-from .exp_switcher import ExpSwitcher
 from boot_agents.utils import MeanCovariance, cov2corr
 from bootstrapping_olympics import UnsupportedSpec
-from reprep.plot_utils import style_ieee_fullcol_xy
 import numpy as np
+from reprep.plot_utils import style_ieee_fullcol_xy
+
+from .exp_switcher import ExpSwitcher
+
 
 __all__ = ['EstStats']
 
@@ -19,15 +21,17 @@ class EstStats(ExpSwitcher):
             raise UnsupportedSpec('I assume 1D signals.')
 
         self.y_stats = MeanCovariance()
+#         self.last_t = None
 
     def merge(self, other):
         self.y_stats.merge(other.y_stats)
    
-   
     def process_observations(self, obs):
         y = obs['observations']
-        dt = obs['dt'].item()
-        self.y_stats.update(y, dt)
+#         if self.last_t is not None:
+#             dt = obs['timestamp'] - self.last_t
+        self.y_stats.update(y)
+#         self.last_t = obs['timestamp']
 
     def get_state(self):
         return dict(y_stats=self.y_stats)
@@ -36,8 +40,12 @@ class EstStats(ExpSwitcher):
         self.y_stats = state['y_stats']
 
     def publish(self, pub):
+        if not 'y_stats' in self.__dict__:
+            pub.text('warning', 'Not init()ialized yet.')
+            return
+
         if self.y_stats.get_num_samples() == 0:
-            pub.text('warning', 'Too early to publish anything.')
+            pub.text('warning', 'Too early to publish anything (num_samples=0).')
             return
         Py = self.y_stats.get_covariance()
         Ry = self.y_stats.get_correlation()

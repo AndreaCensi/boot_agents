@@ -1,6 +1,7 @@
-import numpy as np
 from boot_agents.utils import RandomCanonicalCommand, RandomCommand
 from bootstrapping_olympics import AgentInterface
+import numpy as np
+
 
 __all__ = ['RandomSwitcher', 'ExpSwitcher', 'ExpSwitcherCanonical']
 

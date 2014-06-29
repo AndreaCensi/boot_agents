@@ -1,9 +1,12 @@
-from .exp_switcher import ExpSwitcher
-from boot_agents.utils import SymbolsStatistics
-from bootstrapping_olympics import UnsupportedSpec, ValueFormats
 from contracts import contract
+
+from boot_agents.utils import SymbolsStatistics
 from geometry import mds, euclidean_distances
 import numpy as np
+from streamels import UnsupportedSpec, ValueFormats
+
+from .exp_switcher import ExpSwitcher
+
 
 __all__ = ['SymbolsStats']
 

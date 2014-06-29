@@ -77,7 +77,6 @@ class EstConditionalDistribution(ExpSwitcher):
         self.index = index
         self.ncells = ncells
         ExpSwitcher.__init__(self, **kwargs)
-        
 
     def init(self, boot_spec):
         ExpSwitcher.init(self, boot_spec)

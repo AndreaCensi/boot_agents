@@ -1,7 +1,9 @@
-from .bdse_estimator_interface import BDSEEstimatorInterface
-from .bdse_model import BDSEmodel
-from .bdse_tensors import (get_M_from_P_T_Q_alt, get_M_from_P_T_Q_alt_scaling,
-    get_M_from_P_T_Q, get_M_from_Pinv_T_Q)
+import traceback
+import warnings
+
+from contracts import contract
+from numpy.linalg.linalg import LinAlgError
+
 from astatsa.expectation_weighted import ExpectationWeighted
 from astatsa.utils import assert_allclose
 from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
@@ -9,11 +11,12 @@ from boot_agents.misc_utils import (pub_tensor2_cov, pub_tensor3_slice2,
 from boot_agents.utils import (Expectation, MeanCovariance, outer,
     check_matrix_finite)
 from conf_tools.utils import indent
-from contracts import contract
-from numpy.linalg.linalg import LinAlgError
 import numpy as np
-import traceback
-import warnings
+
+from .bdse_estimator_interface import BDSEEstimatorInterface
+from .bdse_model import BDSEmodel
+from .bdse_tensors import (get_M_from_P_T_Q_alt, get_M_from_P_T_Q_alt_scaling,
+    get_M_from_P_T_Q, get_M_from_Pinv_T_Q)
 
 
 __all__ = ['BDSEEstimator']

@@ -1,5 +1,7 @@
-from .exp_switcher import ExpSwitcher
 from collections import defaultdict
+
+from .exp_switcher import ExpSwitcher
+
 
 __all__ = ['CmdStats']
 
