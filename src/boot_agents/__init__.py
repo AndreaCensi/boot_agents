@@ -10,6 +10,7 @@ from .misc_utils import *
 from .simple_stats import *
 from .geometry import *
 from .robustness import *
+from .recursive import *
 
 from .bdse import *
 from .bgds import *

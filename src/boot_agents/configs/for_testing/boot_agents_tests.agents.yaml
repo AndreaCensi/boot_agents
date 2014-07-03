@@ -60,3 +60,11 @@
   - boot_agents.EstConditionalDistribution
   - beta: 1
 
+
+- id: test_remove_dead
+  desc: Remove dead pixels
+  code:
+  - boot_agents.RemoveDead
+  - perc: 50
+    ratio: 0.2
+

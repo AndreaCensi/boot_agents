@@ -21,17 +21,13 @@ class EstStats(ExpSwitcher):
             raise UnsupportedSpec('I assume 1D signals.')
 
         self.y_stats = MeanCovariance()
-#         self.last_t = None
 
     def merge(self, other):
         self.y_stats.merge(other.y_stats)
    
     def process_observations(self, obs):
         y = obs['observations']
-#         if self.last_t is not None:
-#             dt = obs['timestamp'] - self.last_t
         self.y_stats.update(y)
-#         self.last_t = obs['timestamp']
 
     def get_state(self):
         return dict(y_stats=self.y_stats)

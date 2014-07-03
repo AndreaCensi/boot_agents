@@ -1,9 +1,10 @@
+from contracts import contract
 
 from astatsa.mean_covariance import MeanCovariance as MeanCovarianceBase
 from boot_agents.misc_utils import y_axis_positive, y_axis_extra_space
-from contracts import contract
-from reprep.plot_utils import style_ieee_fullcol_xy
 import numpy as np
+from reprep.plot_utils import style_ieee_fullcol_xy
+
 
 __all__ = ['MeanCovariance']
 
@@ -74,20 +75,24 @@ class MeanCovariance(MeanCovarianceBase):
             pub.text('stats', stats)
 
     def print_odd_ones(self, pub, P, perc=50, ratio=0.2):
-        std = np.sqrt(P.diagonal())
-        odd, okay = find_odd(std, perc, ratio)
+        odd, okay = get_odd_measurements(P, perc, ratio)
         
         f = pub.figure()
         pub.text('okay', '%s' % list(okay))
         pub.text('odd', '%s' % list(odd))
         
-        std = std.copy()
+        std = np.sqrt(P.diagonal())
         with f.plot('odd') as pylab:
             style_ieee_fullcol_xy(pylab)
             pylab.plot(odd, std[odd], 'rs')
             pylab.plot(okay, std[okay], 'gs')
             y_axis_extra_space(pylab)
             
+
+def get_odd_measurements(P, perc, ratio):
+    std = np.sqrt(P.diagonal())
+    odd, okay = find_odd(std, perc, ratio)
+    return odd, okay
             
 def find_odd(values, perc, ratio):
     """ Writes the ones that have smaller variance.
