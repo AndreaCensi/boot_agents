@@ -2,11 +2,10 @@ from contracts import contract
 
 from boot_agents.utils import MeanCovariance
 from boot_agents.utils.mean_covariance import get_odd_measurements
-from bootstrapping_olympics import RepresentationNuisanceCausal
-from bootstrapping_olympics import UnsupportedSpec
+from bootstrapping_olympics import RepresentationNuisanceCausal, UnsupportedSpec
 from bootstrapping_olympics.library.agents import MultiLevelBase
 from bootstrapping_olympics.library.nuisances import Select
-from bootstrapping_olympics.library.nuisances_causal.simple_rnc_obs import SimpleRNCObs
+from bootstrapping_olympics.library.nuisances_causal import SimpleRNCObs
 
 
 __all__ = ['RemoveDead']

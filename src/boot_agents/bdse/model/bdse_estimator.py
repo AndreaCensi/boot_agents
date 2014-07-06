@@ -197,9 +197,9 @@ class BDSEEstimator(BDSEEstimatorInterface):
         pub.text('nsamples', '%s' % self.nsamples)
         
         pub.text('rcond', '%g' % self.rcond)
-        pub.text('antisym_M', self.antisym_M)
-        pub.text('antisym_T', self.antisym_T)
-        pub.text('use_P_scaling', self.use_P_scaling)
+        pub.text('antisym_M', str(self.antisym_M))
+        pub.text('antisym_T', str(self.antisym_T))
+        pub.text('use_P_scaling', str(self.use_P_scaling))
 
         with pub.subsection('model') as sub:
             if sub:

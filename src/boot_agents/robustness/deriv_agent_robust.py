@@ -1,8 +1,9 @@
 from abc import abstractmethod
+import warnings
+
 from boot_agents.utils import DerivativeBox, RemoveDoubles
 from bootstrapping_olympics import AgentInterface
 from conf_tools import instantiate_spec
-import warnings
 
 
 __all__ = ['DerivAgentRobust']
@@ -67,7 +68,6 @@ class DerivAgentRobust(AgentInterface):
         with pub.subsection('importance') as sub:
             if sub:
                 self.importance.publish(sub)
-
 
     def choose_commands(self):
         return self.explorer.choose_commands()

@@ -37,10 +37,14 @@ class ExpSwitcher(AgentInterface):
         interval = RandomExponential(self.beta)
         value = RandomCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
+        self.last_timestamp = None
         self.dt = 0
 
     def process_observations(self, observations):
-        self.dt = float(observations['dt'])
+        timestamp = observations['timestamp']
+        if self.last_timestamp is not None:
+            self.dt = timestamp - self.last_timestamp
+        self.last_timestamp = timestamp
 
     def choose_commands(self):
         if self.switcher is None:
@@ -70,10 +74,15 @@ class ExpSwitcherCanonical(AgentInterface):
         interval = RandomExponential(self.beta)
         value = RandomCanonicalCommand(boot_spec.get_commands())
         self.switcher = RandomSwitcher(interval, value)
+
+        self.last_timestamp = None
         self.dt = 0
 
     def process_observations(self, observations):
-        self.dt = float(observations['dt'])
+        timestamp = observations['timestamp']
+        if self.last_timestamp is not None:
+            self.dt = timestamp - self.last_timestamp
+        self.last_timestamp = timestamp
 
     def choose_commands(self):
         return self.switcher.get_value(self.dt)

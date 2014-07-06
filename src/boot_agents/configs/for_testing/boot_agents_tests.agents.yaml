@@ -39,14 +39,50 @@
 #       - beta: 1
 #         change_fraction: 0.5
 
-- id: test_bgdsagent_C1
-  desc: "Dev. version"
+
+- id: "test_bdser_er2_i1_sr"
+  desc: "BDSE agent robust, antisym, servo robust L1"
   code:
-      - boot_agents.BGDSAgent
-      - beta: 1
-        skip: 1
-        scales: [0.0, 1.0]
-        # scales: [0.0, 1.0, 4.0]
+  - boot_agents.BDSEAgentRobust
+  - explorer: test_expswitchercan_b1
+    estimator: 
+    - boot_agents.BDSEEstimatorRobust
+    - rcond: 0.0001
+      antisym_T: true    
+      antisym_M: false
+    importance: 
+    - boot_agents.Importance
+    - max_y_dot: 0.1
+      max_gy: 1000 # this does not penalizes gradients
+      min_y: 0
+      max_y: 1
+    servo: 
+    - boot_agents.BDSEServoRobust # XXX
+    - gain: 0.1
+
+
+- id: test_bdsesagent2
+  desc: A BDS agent that decouples the computation of derivative
+  code:
+  - boot_agents.BDSEAgent2
+  - explorer: test_expswitchercan_b1
+    estimator: 
+    - boot_agents.BDSEEstimator
+    - rcond: 0.0001
+      antisym_T: true    
+      antisym_M: false
+    servo: 
+    - boot_agents.BDSEServo # XXX
+    - gain: 0.1
+
+- id: test_bdseagent2_complete
+  desc: ...
+  code:
+  - bootstrapping_olympics.library.agents.NuisanceAgent
+  - agent: test_bdsesagent2
+    nuisances: 
+    - dderivative
+
 
 - id: test_embed_b1
   desc: "Dev. version"
@@ -67,4 +103,25 @@
   - boot_agents.RemoveDead
   - perc: 50
     ratio: 0.2
+
+
+- id: test_multi1
+  desc: An example of a multi-level agent.
+  code:
+  - bootstrapping_olympics.library.agents.MultiLevelAgent
+  - agents: 
+    - test_remove_dead
+    - test_obs_normalize_max
+    - test_eststats_t3al
+
+
+- id: test_bgdsagent_C1
+  desc: "Dev. version"
+  code:
+      - boot_agents.BGDSAgent
+      - beta: 1
+        skip: 1
+        scales: [0.0, 1.0]
+        # scales: [0.0, 1.0, 4.0]
+
 
