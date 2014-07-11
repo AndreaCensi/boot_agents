@@ -95,6 +95,7 @@
   code:
   - boot_agents.EstConditionalDistribution
   - beta: 1
+    index: 0
 
 
 - id: test_remove_dead
@@ -112,7 +113,7 @@
   - agents: 
     - test_remove_dead
     - test_obs_normalize_max
-    - test_eststats_t3al
+    - test_eststats_t3
 
 
 - id: test_bgdsagent_C1

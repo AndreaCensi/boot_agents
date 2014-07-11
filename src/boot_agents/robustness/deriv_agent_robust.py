@@ -2,14 +2,14 @@ from abc import abstractmethod
 import warnings
 
 from boot_agents.utils import DerivativeBox, RemoveDoubles
-from bootstrapping_olympics import AgentInterface
 from conf_tools import instantiate_spec
+from bootstrapping_olympics import BasicAgent, LearningAgent
 
 
 __all__ = ['DerivAgentRobust']
 
 
-class DerivAgentRobust(AgentInterface):
+class DerivAgentRobust(BasicAgent, LearningAgent):
     """ 
         Generic agent that looks at the derivative,
         and knows how to compute the importance 

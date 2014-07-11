@@ -2,8 +2,10 @@ from contracts import contract, describe_type
 
 from boot_agents.bdse.model import BDSEEstimatorInterface
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
-from bootstrapping_olympics import (AgentInterface, UnsupportedSpec,
+from bootstrapping_olympics import (UnsupportedSpec,
     get_boot_config)
+from bootstrapping_olympics.interfaces.agent import (BasicAgent, LearningAgent,
+    PredictingAgent, ServoingAgent, ExploringAgent)
 from conf_tools import instantiate_spec
 
 from .bdse_predictor import BDSEPredictor
@@ -14,7 +16,8 @@ from .servo import BDSEServoInterface
 __all__ = ['BDSEAgent']
 
 
-class BDSEAgent(AgentInterface):
+class BDSEAgent(BasicAgent, ExploringAgent, ServoingAgent,
+                LearningAgent, PredictingAgent):
     '''
         An agent that uses a BDS model.
     '''

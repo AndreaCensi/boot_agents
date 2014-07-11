@@ -1,22 +1,26 @@
-from .interface import BDSEServoInterface
-from bootstrapping_olympics import BootSpec
-from contracts import contract
-import numpy as np
 from abc import abstractmethod
+
+from contracts import contract
+
+from bootstrapping_olympics import BootSpec
+import numpy as np
+
+from .interface import BDSEServoInterface
+
 
 __all__ = ['BDSEServoFromDescent']
 
 
 class BDSEServoFromDescent(BDSEServoInterface):
     """ All strategies that return a descent direction which is clipped. """
-    
+
+    def __init__(self, gain=0.1):
+        self.gain = gain
+
     @abstractmethod
     @contract(returns='array', observations='array', goal='array')
     def get_descent_direction(self, observations, goal):
         pass
-          
-    def __init__(self, gain=0.1):
-        self.gain = gain
       
     @contract(boot_spec=BootSpec)
     def init(self, boot_spec):

@@ -1,9 +1,11 @@
-from .bdse_estimator import BDSEEstimator
+from contracts import contract
+
 from astatsa.expectation_weighted import ExpectationWeighted
 from boot_agents.misc_utils import pub_tensor3_slice2, pub_tensor2_comp1
 from boot_agents.utils import MeanCovariance, outer, check_matrix_finite
-from contracts import contract
 import numpy as np
+
+from .bdse_estimator import BDSEEstimator
 
 
 __all__ = ['BDSEEstimatorRobust']

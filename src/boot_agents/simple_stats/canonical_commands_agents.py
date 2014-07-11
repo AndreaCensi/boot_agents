@@ -1,10 +1,10 @@
 from boot_agents.utils import get_canonical_commands
-from bootstrapping_olympics import AgentInterface
+from bootstrapping_olympics import BasicAgent, ExploringAgent
 
 
 __all__ = ['CanonicalCommandsAgent']
 
-class CanonicalCommandsAgent(AgentInterface):
+class CanonicalCommandsAgent(BasicAgent, ExploringAgent):
     """ 
         This is an agent that chooses one "canonical" command
         for episode and sticks to it. 

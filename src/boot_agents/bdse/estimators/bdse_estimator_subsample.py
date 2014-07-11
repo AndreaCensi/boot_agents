@@ -1,7 +1,8 @@
-from boot_agents.bdse.model import BDSEEstimatorInterface
-from conf_tools import instantiate_spec
 from contracts import contract
 from numpy.random import RandomState
+
+from boot_agents.bdse.model import BDSEEstimatorInterface
+from conf_tools import instantiate_spec
 
 
 __all__ = ['BDSEEstimatorSubsample']

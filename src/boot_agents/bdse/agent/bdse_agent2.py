@@ -2,7 +2,9 @@ from contracts import contract, describe_type
 
 from boot_agents.bdse.model import BDSEEstimatorInterface
 from boot_agents.utils import MeanCovariance
-from bootstrapping_olympics import (AgentInterface, UnsupportedSpec,
+from bootstrapping_olympics import (BasicAgent, LearningAgent,
+    PredictingAgent, ServoingAgent, ExploringAgent)
+from bootstrapping_olympics import (UnsupportedSpec,
     get_boot_config)
 from conf_tools import instantiate_spec
 from streamels import CompositeStreamSpec
@@ -27,7 +29,7 @@ def check_composite_signal_and_deriv(stream_spec):
         raise UnsupportedSpec(msg)
 
 
-class BDSEAgent2(AgentInterface):
+class BDSEAgent2(BasicAgent, ExploringAgent, LearningAgent, ServoingAgent, PredictingAgent):
     '''
         This agent needs to have pre-computed derivative.
     '''

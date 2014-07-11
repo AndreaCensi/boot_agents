@@ -4,6 +4,8 @@ from boot_agents.bgds import BGDSEstimator, BGDSPredictor, smooth2d
 from boot_agents.simple_stats import ExpSwitcher
 from boot_agents.utils import DerivativeBox, Expectation, RemoveDoubles
 from bootstrapping_olympics import UnsupportedSpec
+from bootstrapping_olympics.interfaces.agent import (LearningAgent,
+    PredictingAgent, ServoingAgent)
 import numpy as np
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
@@ -14,7 +16,7 @@ __all__ = ['BGDSAgent']
 MINIMUM_FOR_PREDICTION = 200  # XXX
 
 
-class BGDSAgent(ExpSwitcher):
+class BGDSAgent(ExpSwitcher, LearningAgent, PredictingAgent, ServoingAgent):
     '''
         Skip: only consider every $skip observations.
         

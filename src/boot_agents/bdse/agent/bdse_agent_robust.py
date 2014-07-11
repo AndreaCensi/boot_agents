@@ -1,12 +1,14 @@
-from .bdse_predictor import BDSEPredictor
-from .servo import BDSEServoInterface
+from contracts import contract, describe_type
+
 from boot_agents.bdse import BDSEEstimatorInterface
 from boot_agents.robustness import DerivAgentRobust
 from bootstrapping_olympics import UnsupportedSpec
 from conf_tools import instantiate_spec
-from contracts import contract, describe_type
-        
-        
+
+from .bdse_predictor import BDSEPredictor
+from .servo import BDSEServoInterface
+
+
 __all__ = ['BDSEAgentRobust']
 
 

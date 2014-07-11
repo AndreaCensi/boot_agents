@@ -1,5 +1,5 @@
 from boot_agents.utils import RandomCanonicalCommand, RandomCommand
-from bootstrapping_olympics import AgentInterface
+from bootstrapping_olympics import BasicAgent, ServoingAgent
 import numpy as np
 
 
@@ -22,7 +22,7 @@ class RandomSwitcher(object):
         return self.output
 
 
-class ExpSwitcher(AgentInterface):
+class ExpSwitcher(BasicAgent, ServoingAgent):
     ''' A simple agent that switches commands randomly according 
         to an exponential distribution. 
         
@@ -64,7 +64,7 @@ class RandomExponential():
         return np.random.exponential(self.beta, 1)
 
 
-class ExpSwitcherCanonical(AgentInterface):
+class ExpSwitcherCanonical(BasicAgent, ServoingAgent):
     ''' Only canonical commands are chosen. '''
 
     def __init__(self, beta):
