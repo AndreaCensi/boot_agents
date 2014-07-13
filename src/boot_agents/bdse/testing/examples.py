@@ -1,9 +1,9 @@
 from .. import BDSEmodel
-import numpy as np
-import contracts as contract
-from .simulate import BDSSimulator
 from ..model.bdse_estimator import BDSEEstimator
-from geometry.manifolds.tests.checks_generation import fancy_test_decorator
+from .simulate import BDSSimulator
+from contracts import contract
+from geometry.manifolds.tests import fancy_test_decorator
+import numpy as np
 
 
 @contract(n='int,>=1', k='int,>=1')

@@ -29,7 +29,8 @@ def check_composite_signal_and_deriv(stream_spec):
         raise UnsupportedSpec(msg)
 
 
-class BDSEAgent2(BasicAgent, ExploringAgent, LearningAgent, ServoingAgent, PredictingAgent):
+class BDSEAgent2(BasicAgent, ExploringAgent, 
+                 LearningAgent, ServoingAgent, PredictingAgent):
     '''
         This agent needs to have pre-computed derivative.
     '''

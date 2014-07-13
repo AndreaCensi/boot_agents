@@ -1,9 +1,11 @@
 from abc import abstractmethod
+from boot_agents.utils import DerivativeBox, RemoveDoubles
+from bootstrapping_olympics import (BasicAgent, LearningAgent, 
+    get_conftools_agents)
+from conf_tools import instantiate_spec
+from contracts import contract
 import warnings
 
-from boot_agents.utils import DerivativeBox, RemoveDoubles
-from conf_tools import instantiate_spec
-from bootstrapping_olympics import BasicAgent, LearningAgent
 
 
 __all__ = ['DerivAgentRobust']
@@ -15,17 +17,18 @@ class DerivAgentRobust(BasicAgent, LearningAgent):
         and knows how to compute the importance 
     """
     
+    @contract(importance='code_spec',
+              explorer='str|code_spec|isinstance(ExploringAgent)')
     def __init__(self, importance, explorer):
         """ importance: spec to instantiate """
         self.importance = instantiate_spec(importance)
-        self.explorer = explorer  
+        _, self.explorer = get_conftools_agents().instance_smarter(explorer)  
         self.y_deriv = DerivativeBox()
         self.rd = RemoveDoubles(0.5)  # XXX
         self.count = 0
         
     def init(self, boot_spec):
-        warnings.warn('Must do this properly')
-        # self.explorer.init(boot_spec)
+        self.explorer.init(boot_spec)
         self.boot_spec = boot_spec
         self.commands_spec = boot_spec.get_commands()
 

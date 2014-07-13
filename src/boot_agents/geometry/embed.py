@@ -1,14 +1,15 @@
 from boot_agents.simple_stats import ExpSwitcher
 from boot_agents.utils import DerivativeBox, MeanCovariance, scale_score
-from bootstrapping_olympics import UnsupportedSpec
+from bootstrapping_olympics import LearningAgent, UnsupportedSpec
 from geometry import double_center, inner_product_embedding, mds
 from reprep.plot_utils import style_ieee_halfcol_xy
 import numpy as np
 
+
 __all__ = ['Embed']
 
 
-class Embed(ExpSwitcher):
+class Embed(ExpSwitcher, LearningAgent):
 
     def __init__(self, statistic='y_corr', scale_score=False, **kwargs):  # @UnusedVariable
         ExpSwitcher.__init__(self, **kwargs)

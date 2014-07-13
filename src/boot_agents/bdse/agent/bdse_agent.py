@@ -1,16 +1,14 @@
-from contracts import contract, describe_type
-
-from boot_agents.bdse.model import BDSEEstimatorInterface
-from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
-from bootstrapping_olympics import (UnsupportedSpec,
-    get_boot_config)
-from bootstrapping_olympics.interfaces.agent import (BasicAgent, LearningAgent,
-    PredictingAgent, ServoingAgent, ExploringAgent)
-from conf_tools import instantiate_spec
-
 from .bdse_predictor import BDSEPredictor
 from .misc_statistics import MiscStatistics
 from .servo import BDSEServoInterface
+from boot_agents.bdse.model import BDSEEstimatorInterface
+from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
+from bootstrapping_olympics import (BasicAgent, ExploringAgent, LearningAgent, 
+    PredictingAgent, ServoingAgent, UnsupportedSpec, get_boot_config)
+from conf_tools import instantiate_spec
+from contracts import contract, describe_type
+
+
 
 
 __all__ = ['BDSEAgent']
@@ -120,10 +118,16 @@ class BDSEAgent(BasicAgent, ExploringAgent, ServoingAgent,
                 self.stats.publish(sub)
 
     def get_predictor(self):
+        if self.count == 0:
+            msg = 'get_predictor() called but count == 0.'
+            raise ValueError(msg)
         model = self.bdse_estimator.get_model()
         return BDSEPredictor(model)
 
     def get_servo(self):
+        if self.count == 0:
+            msg = 'get_servo() called but count == 0.'
+            raise ValueError(msg)
         servo_agent = instantiate_spec(self.servo)
         servo_agent.init(self.boot_spec)
         assert isinstance(servo_agent, BDSEServoInterface)

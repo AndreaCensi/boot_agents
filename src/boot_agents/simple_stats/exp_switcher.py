@@ -1,5 +1,6 @@
 from boot_agents.utils import RandomCanonicalCommand, RandomCommand
-from bootstrapping_olympics import BasicAgent, ServoingAgent
+from bootstrapping_olympics import BasicAgent, ExploringAgent, ServoingAgent
+from bootstrapping_olympics.interfaces.agent_misc import check_inited
 import numpy as np
 
 
@@ -22,7 +23,7 @@ class RandomSwitcher(object):
         return self.output
 
 
-class ExpSwitcher(BasicAgent, ServoingAgent):
+class ExpSwitcher(BasicAgent, ExploringAgent, ServoingAgent):
     ''' A simple agent that switches commands randomly according 
         to an exponential distribution. 
         
@@ -41,12 +42,16 @@ class ExpSwitcher(BasicAgent, ServoingAgent):
         self.dt = 0
 
     def process_observations(self, observations):
+        check_inited(self, 'last_timestamp')
+        
         timestamp = observations['timestamp']
         if self.last_timestamp is not None:
             self.dt = timestamp - self.last_timestamp
         self.last_timestamp = timestamp
 
     def choose_commands(self):
+        check_inited(self, 'last_timestamp')
+        
         if self.switcher is None:
             msg = 'choose_commands() called before init().'
             raise Exception(msg)
@@ -64,7 +69,7 @@ class RandomExponential():
         return np.random.exponential(self.beta, 1)
 
 
-class ExpSwitcherCanonical(BasicAgent, ServoingAgent):
+class ExpSwitcherCanonical(BasicAgent, ExploringAgent, ServoingAgent):
     ''' Only canonical commands are chosen. '''
 
     def __init__(self, beta):

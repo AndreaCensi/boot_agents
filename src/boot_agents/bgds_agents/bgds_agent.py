@@ -1,19 +1,18 @@
-from contracts import contract
-
 from boot_agents.bgds import BGDSEstimator, BGDSPredictor, smooth2d
 from boot_agents.simple_stats import ExpSwitcher
 from boot_agents.utils import DerivativeBox, Expectation, RemoveDoubles
-from bootstrapping_olympics import UnsupportedSpec
-from bootstrapping_olympics.interfaces.agent import (LearningAgent,
-    PredictingAgent, ServoingAgent)
-import numpy as np
+from bootstrapping_olympics import (
+    LearningAgent, PredictingAgent, ServoingAgent, UnsupportedSpec)
+from contracts import contract
 from reprep import MIME_PDF
 from reprep.plot_utils import x_axis_set, y_axis_set
+import numpy as np
+
 
 
 __all__ = ['BGDSAgent']
 
-MINIMUM_FOR_PREDICTION = 200  # XXX
+# MINIMUM_FOR_PREDICTION = 200  # XXX
 
 
 class BGDSAgent(ExpSwitcher, LearningAgent, PredictingAgent, ServoingAgent):
@@ -103,7 +102,8 @@ class BGDSAgent(ExpSwitcher, LearningAgent, PredictingAgent, ServoingAgent):
         self.last_y = y
 
         # TODO: implement this separately
-        if False and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
+    
+        if False: # and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
             # TODO: do for 1D
             if self.count % 200 == 0 or self.model is None:
                 self.info('Updating BGDS model.')
@@ -143,7 +143,7 @@ class BGDSAgent(ExpSwitcher, LearningAgent, PredictingAgent, ServoingAgent):
             example_smooth = create_scales(example, self.scales)
             sec.array_as_image('example_smooth', example_smooth)
 
-            if self.count > MINIMUM_FOR_PREDICTION:
+            if True: #if self.count > MINIMUM_FOR_PREDICTION:
                 sec = pub.section('reliability')
                 sec.array_as_image('y_disag',
                                    self.y_disag.get_value(), filter='posneg')
@@ -232,6 +232,11 @@ class BGDSAgent(ExpSwitcher, LearningAgent, PredictingAgent, ServoingAgent):
                     x_axis_set(pylab, episode_bounds[0], episode_bounds[1])
 
     def get_predictor(self):
+        self.info('get_predictor() at count = %s (skip %d)' 
+                  % (self.count, self.skip))
+        if self.count == 0:
+            msg = 'No observation processed yet.'
+            raise ValueError(msg)
         model = self.bgds_estimator.get_model()
         return BGDSPredictor(model)
 

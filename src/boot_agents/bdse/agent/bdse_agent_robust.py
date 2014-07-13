@@ -1,22 +1,25 @@
-from contracts import contract, describe_type
-
-from boot_agents.bdse import BDSEEstimatorInterface
-from boot_agents.robustness import DerivAgentRobust
-from bootstrapping_olympics import UnsupportedSpec
-from conf_tools import instantiate_spec
-
 from .bdse_predictor import BDSEPredictor
 from .servo import BDSEServoInterface
+from boot_agents.bdse import BDSEEstimatorInterface
+from boot_agents.robustness import DerivAgentRobust
+from bootstrapping_olympics import (ExploringAgent, PredictingAgent, 
+    ServoingAgent, UnsupportedSpec)
+from conf_tools import instantiate_spec
+from contracts import contract, describe_type
+
+
 
 
 __all__ = ['BDSEAgentRobust']
 
 
-class BDSEAgentRobust(DerivAgentRobust):
+class BDSEAgentRobust(DerivAgentRobust,
+                      ServoingAgent,
+                      PredictingAgent,
+                      ExploringAgent):
     
     @contract(servo='code_spec', estimator='code_spec')
     def __init__(self, servo, estimator, **others):
-        print('Servo: %r' % servo)
         DerivAgentRobust.__init__(self, **others)
         self.servo = servo
         self.estimator_spec = estimator
@@ -48,17 +51,26 @@ class BDSEAgentRobust(DerivAgentRobust):
                 self.estimator.publish(sub)
         DerivAgentRobust.publish(self, pub)
              
-    def get_predictor(self):
-        model = self.estimator.get_model()
-        return BDSEPredictor(model)
  
     def merge(self, agent2):
         assert isinstance(agent2, BDSEAgentRobust)
         self.estimator.merge(agent2.estimator)
 
+    def get_predictor(self):
+        if self.count == 0:
+            msg = 'get_servo() called but count == 0.'
+            raise ValueError(msg)
+
+        model = self.estimator.get_model()
+        return BDSEPredictor(model)
+
     def get_servo(self):
         # XXX :repeated code with BDSEAgent
         # print('Servo: %r' % self.servo)
+        if self.count == 0:
+            msg = 'get_servo() called but count == 0.'
+            raise ValueError(msg)
+
         servo_agent = instantiate_spec(self.servo)
         assert isinstance(servo_agent, BDSEServoInterface)
         servo_agent.init(self.boot_spec)
