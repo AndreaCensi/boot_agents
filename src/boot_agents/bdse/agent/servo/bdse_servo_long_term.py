@@ -213,7 +213,7 @@ class BDSEServoLongTerm(BDSEServoInterface):
                 pylab.plot(sensels[known], ygoal1[known], 'rs', label='ygoal1')
                 pylab.plot(sensels[unknown], ygoal1[unknown], 'rx', label='ygoal1u')
                 
-                #from yc1304.s10_servo_field.plots import plot_style_sensels
+                #from yc1 304.s10_servo_field.plots import plot_style_sensels
                 #plot_style_sensels(pylab)   
                 pylab.legend()
         
