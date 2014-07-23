@@ -2,21 +2,21 @@ from boot_agents.utils import MeanCovariance, cov2corr
 from bootstrapping_olympics import UnsupportedSpec
 import numpy as np
 from reprep.plot_utils import style_ieee_fullcol_xy
-
-from .exp_switcher import ExpSwitcher
+from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
+from blocks.library.timed.checks import check_timed_named
+from blocks.interface import Sink
 
 
 __all__ = ['EstStats']
 
 
-class EstStats(ExpSwitcher):
+class EstStats(BasicAgent, LearningAgent):
     ''' 
         A simple agent that estimates various statistics 
         of the observations. 
     '''
 
     def init(self, boot_spec):
-        ExpSwitcher.init(self, boot_spec)
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 1D signals.')
 
@@ -24,11 +24,27 @@ class EstStats(ExpSwitcher):
 
     def merge(self, other):
         self.y_stats.merge(other.y_stats)
-   
-    def process_observations(self, obs):
-        y = obs['observations']
-        self.y_stats.update(y)
 
+
+    def get_learner_as_sink(self):
+        class LearnSink(Sink):
+            def __init__(self, y_stats):
+                self.y_stats = y_stats
+            def reset(self):
+                pass
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                timestamp, (signal, obs) = value  # @UnusedVariable
+                if not signal in ['observations', 'commands']:
+                    msg = 'Invalid signal %r to learner.' % signal
+                    raise ValueError(msg)
+                
+                if signal == 'observations':
+                    self.y_stats.update(obs, dt=1.0)
+                
+        return LearnSink(self.y_stats)
+    
+    
     def get_state(self):
         return dict(y_stats=self.y_stats)
 

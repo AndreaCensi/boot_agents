@@ -1,4 +1,3 @@
-from boot_agents.utils import get_canonical_commands
 from bootstrapping_olympics import BasicAgent, ExploringAgent
 
 
@@ -11,6 +10,8 @@ class CanonicalCommandsAgent(BasicAgent, ExploringAgent):
     """
 
     def init(self, boot_spec):
+        from boot_agents.utils import get_canonical_commands
+
         self.commands = get_canonical_commands(boot_spec.get_commands())
 
         self.info('Found %d canonical commands.' % len(self.commands))

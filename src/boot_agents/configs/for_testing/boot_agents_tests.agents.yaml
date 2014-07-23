@@ -1,21 +1,4 @@
-
-- id: test_cmdstats_t3
-  desc: "Commands stats"
-  code:
-      - boot_agents.CmdStats
-      - beta: 3
-
-- id: test_expswitcher_t1
-  desc: Switches randomly between commands with an exponential switching time.
-  code:
-      - boot_agents.ExpSwitcher
-      - beta: 1
-          
-- id: test_eststats_t3
-  desc: "Estimate stats"
-  code:
-      - boot_agents.EstStats
-      - beta: 3
+ 
 
 # - id: test_diffeoagent2d_r1
 #   desc: "Dev. version (real)"
@@ -26,12 +9,6 @@
 #         target_resolution: [50,50]
 #         ratios: [0.15, 0.03]
         
-- id: test_expswitchercan_b1
-  desc: "Exponential switcher, canonical commands."
-  code:
-      - boot_agents.ExpSwitcherCanonical
-      - beta: 1
-
 # - id: test_bdsagent
 #   desc: "Dev. version"
 #   code:

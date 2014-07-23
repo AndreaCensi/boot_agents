@@ -1,0 +1,31 @@
+- id: cmd_stats
+  desc: Commands statistics
+  code: 
+  - boot_agents_stats.CmdStats
+  - {}
+
+- id: est_stats_2d
+  desc: Stats for 2D data
+  code: 
+  - boot_agents_stats.EstStats2D
+  - {}
+
+- id: est_stats
+  desc: Simple stats
+  code: 
+  - boot_agents_stats.EstStats
+  - {}
+
+- id: symbol_stats_3
+  desc: Symbol stats
+  code:
+  - boot_agents_stats.SymbolsStats
+  - window: 3
+  
+- id: est_conditional_16
+  desc: Conditional distribution stats
+  code:
+  - boot_agents_stats.EstConditionalDistribution
+  - index: 0
+    ncells: 16
+    

@@ -1,5 +1,5 @@
 from blocks import SimpleBlackBox
-from boot_agents.simple_stats.exp_switcher import ExpSwitcher
+from boot_agents_explorers.exp_switcher import ExpSwitcher
 from boot_agents.utils import MeanCovariance
 from boot_agents.utils.mean_covariance import get_odd_measurements
 from bootstrapping_olympics import (ExploringAgent, LearningAgent, 

@@ -1,24 +1,10 @@
-__version__ = '1.2dev1'
+from .exp_switcher import *
+from .canonical_commands_agents import *
 
-import logging
-
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-from .misc_utils import *
-from .simple_stats import *
-from .geometry import *
-from .robustness import *
-from .recursive import *
-
-from .bdse import *
-from .bgds import *
-from .bgds_agents import *
 
 def jobs_comptests(context):
     from pkg_resources import resource_filename  # @UnresolvedImport
-    dirname = resource_filename("boot_agents", "configs")
+    dirname = resource_filename("boot_agents_explorers", "configs")
 
     from bootstrapping_olympics import get_boot_config
     from comptests import jobs_registrar
@@ -31,5 +17,4 @@ def jobs_comptests(context):
     j1 = jobs_registrar(context, boot_config)
 
     return j1
-
 

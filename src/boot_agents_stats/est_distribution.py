@@ -1,8 +1,9 @@
-from .exp_switcher import ExpSwitcher
+from blocks.interface import Sink
+from blocks.library.timed.checks import check_timed_named
 from bootstrapping_olympics import UnsupportedSpec
+from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
 from contracts import contract
 import numpy as np
-from boot_agents.utils.nonparametric import scale_score
 
 __all__ = ['EstConditionalDistribution']
 
@@ -63,7 +64,7 @@ class EstConditional(object):
         self.mass_total += other.mass_total
         
 
-class EstConditionalDistribution(ExpSwitcher):
+class EstConditionalDistribution(BasicAgent, LearningAgent):
     ''' 
         A simple agent that estimates various distributions of the 
         observations.
@@ -76,10 +77,8 @@ class EstConditionalDistribution(ExpSwitcher):
         '''
         self.index = index
         self.ncells = ncells
-        ExpSwitcher.__init__(self, **kwargs)
 
     def init(self, boot_spec):
-        ExpSwitcher.init(self, boot_spec)
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 1D signals.')
 
@@ -94,23 +93,37 @@ class EstConditionalDistribution(ExpSwitcher):
         for i in range(self.n):
             self.estimators[i].merge(other.estimators[i])   
    
-    def process_observations(self, obs):
-        y = obs['observations']
+
+    def get_learner_as_sink(self):
+        class LearnSink(Sink):
+            def __init__(self, agent):
+                self.agent = agent
+            def reset(self):
+                pass
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                timestamp, (signal, obs) = value  # @UnusedVariable
+                if not signal in ['observations', 'commands']:
+                    msg = 'Invalid signal %r to learner.' % signal
+                    raise ValueError(msg)
+                
+                if signal == 'observations':
+                    self.agent.update(obs)
+                
+        return LearnSink()
+       
+    def update(self, y):
         a = y[self.index]
         for i in range(self.n):
             self.estimators[i].update(a, y[i])
-        
-#     def get_state(self):
-#         return dict(y_stats=self.y_stats)
-# 
-#     def set_state(self, state):
-#         self.y_stats = state['y_stats']
+         
 
     def publish(self, pub):
         if self.estimators[0].get_num_samples() == 0:
             pub.text('warning', 'Too early to publish anything.')
             return
-        
+        from boot_agents.utils.nonparametric import scale_score
+
         for i in range(self.n):
             with pub.subsection('c%03d' % i) as sub:
                 f = sub.figure()

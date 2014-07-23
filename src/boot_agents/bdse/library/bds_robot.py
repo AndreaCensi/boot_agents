@@ -32,7 +32,7 @@ class BDSSystem(RobotInterface):
     def set_commands(self, commands, commands_source):
         ''' Send the given commands. '''
 
-    @contract(returns=RobotObservations)
-    def get_observations(self):
-        ''' Get observations. Must return an instance of RobotObservations. '''
+#     @contract(returns=RobotObservations)
+#     def get_observations(self):
+#         ''' Get observations. Must return an instance of RobotObservations. '''
 

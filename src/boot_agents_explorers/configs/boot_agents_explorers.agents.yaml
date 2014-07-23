@@ -1,0 +1,12 @@
+
+- id: test_expswitcher_t1
+  desc: Switches randomly between commands with an exponential switching time.
+  code:
+      - boot_agents_explorers.ExpSwitcher
+      - beta: 1
+
+- id: test_expswitchercan_b1
+  desc: "Exponential switcher, canonical commands."
+  code:
+      - boot_agents_explorers.ExpSwitcherCanonical
+      - beta: 1

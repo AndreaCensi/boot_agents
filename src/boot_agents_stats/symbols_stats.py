@@ -1,29 +1,24 @@
 from contracts import contract
 
-from boot_agents.utils import SymbolsStatistics
 from geometry import mds, euclidean_distances
 import numpy as np
 from streamels import UnsupportedSpec, ValueFormats
 
-from .exp_switcher import ExpSwitcher
+from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
+from blocks.library.timed.checks import check_timed_named
+from blocks.interface import Sink
 
 
 __all__ = ['SymbolsStats']
 
 
-class SymbolsStats(ExpSwitcher):
-    ''' 
-        A simple agent that estimates various statistics 
-        of the observations. 
-    '''
+class SymbolsStats(BasicAgent, LearningAgent):
 
-    def __init__(self, beta, window):
-        ExpSwitcher.__init__(self, beta)
+    @contract(window='int,>=1')
+    def __init__(self, window):
         self.window = window
 
     def init(self, boot_spec):
-        ExpSwitcher.init(self, boot_spec)
-
         streamels = boot_spec.get_observations().get_streamels()
         if ((streamels.size != 1) or
             (streamels[0]['kind'] != ValueFormats.Discrete)):
@@ -37,13 +32,36 @@ class SymbolsStats(ExpSwitcher):
                    % nsymbols)
             raise Exception(msg)
 
+        from boot_agents.utils import SymbolsStatistics
+
         self.y_stats = SymbolsStatistics(nsymbols, window=self.window)
 
-    def process_observations(self, obs):
-        y = obs['observations']
-        dt = obs['dt'].item()
-        symbol = y[0].item() - self.lower
-        self.y_stats.update(symbol, dt)
+
+    def get_learner_as_sink(self):
+        class LearnSink(Sink):
+            def __init__(self, y_stats, lower):
+                self.y_stats = y_stats
+                self.lower = lower
+            def reset(self):
+                pass
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                timestamp, (signal, obs) = value  # @UnusedVariable
+                if not signal in ['observations', 'commands']:
+                    msg = 'Invalid signal %r to learner.' % signal
+                    raise ValueError(msg)
+                
+                if signal == 'observations':
+                    symbol = obs[0].item() - self.lower
+                    self.y_stats.update(symbol, dt=1.0)
+                
+        return LearnSink(self.y_stats, self.lower)
+    
+#     def process_observations(self, obs):
+#         y = obs['observations']
+#         dt = obs['dt'].item()
+#         symbol = y[0].item() - self.lower
+#         self.y_stats.update(symbol, dt)
 
     def publish(self, pub):
         self.y_stats.publish(pub.section('y_stats'))

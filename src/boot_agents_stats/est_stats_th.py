@@ -1,24 +1,23 @@
 from astatsa.expectation import Expectation
 from astatsa.utils import outer
-from boot_agents.misc_utils import pub_svd_decomp, pub_eig_decomp
-from boot_agents.utils.mean_covariance import MeanCovariance
-from bootstrapping_olympics import UnsupportedSpec
-import numpy as np
+from blocks.interface import Sink
+from blocks.library.timed.checks import check_timed_named
+from bootstrapping_olympics import LearningAgent, UnsupportedSpec
 from reprep.plot_utils.axes import y_axis_set_min
+import numpy as np
+from bootstrapping_olympics.interfaces.agent import BasicAgent
 
-from .exp_switcher import ExpSwitcher
 
 
 __all__ = ['EstStatsTh']
 
 
-class EstStatsTh(ExpSwitcher):
+class EstStatsTh(BasicAgent, LearningAgent):
     ''' 
 
     '''
 
     def init(self, boot_spec):
-        ExpSwitcher.init(self, boot_spec)
         # TODO: check float
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 2D signals.')
@@ -28,6 +27,8 @@ class EstStatsTh(ExpSwitcher):
         self.einvy = Expectation()
         self.ey = Expectation()
         self.elogy = Expectation()
+    
+        from boot_agents.utils.mean_covariance import MeanCovariance
 
         self.covy = MeanCovariance()
         self.covfy = MeanCovariance()
@@ -41,19 +42,35 @@ class EstStatsTh(ExpSwitcher):
         self.covy.merge(other.covy)
         self.covfy.merge(other.covfy)
         
-    def process_observations(self, obs):
-        y = obs['observations']
+        
+    def get_learner_as_sink(self):
+        class LearnSink(Sink):
+            def __init__(self, agent):
+                self.agent = agent
+            def reset(self):
+                pass
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                timestamp, (signal, x) = value  # @UnusedVariable
+                if not signal in ['observations', 'commands']:
+                    msg = 'Invalid signal %r to learner.' % signal
+                    raise ValueError(msg)
+                
+                if signal == 'observations':
+                    self.agent.update(x)
+                
+        return LearnSink(self)
+        
+    def update(self, y, dt=1.0):
         n = y.size
 #         # XXX
 #         which = np.array(range(y.size)) < 100
 #         y[which] = (y * y)[which]
         
-        dt = obs['dt'].item()
         z = y == 0
         y[z] = 0.5
         yy = outer(y, y)
         dt = 1
-        logy = np.log(y)
         
         # TMP 
         logy = y * y 
@@ -82,7 +99,9 @@ class EstStatsTh(ExpSwitcher):
         yy = symmetrize(yy)
         ylogy = symmetrize(ylogy)
         
-        
+        from boot_agents.misc_utils import pub_eig_decomp, pub_svd_decomp
+        from boot_agents.utils.mean_covariance import MeanCovariance
+
         with pub.subsection('yy') as sub:
             sub.array_as_image('val', yy)
             pub_svd_decomp(sub, yy)
