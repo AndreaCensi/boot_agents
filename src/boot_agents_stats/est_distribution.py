@@ -1,7 +1,5 @@
-from blocks.interface import Sink
-from blocks.library.timed.checks import check_timed_named
-from bootstrapping_olympics import UnsupportedSpec
-from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent, UnsupportedSpec
 from contracts import contract
 import numpy as np
 
@@ -110,7 +108,7 @@ class EstConditionalDistribution(BasicAgent, LearningAgent):
                 if signal == 'observations':
                     self.agent.update(obs)
                 
-        return LearnSink()
+        return LearnSink(self)
        
     def update(self, y):
         a = y[self.index]

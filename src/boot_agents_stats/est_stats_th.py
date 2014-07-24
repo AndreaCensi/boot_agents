@@ -1,12 +1,7 @@
-from astatsa.expectation import Expectation
-from astatsa.utils import outer
-from blocks.interface import Sink
-from blocks.library.timed.checks import check_timed_named
-from bootstrapping_olympics import LearningAgent, UnsupportedSpec
-from reprep.plot_utils.axes import y_axis_set_min
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent, UnsupportedSpec
+from reprep.plot_utils import y_axis_set_min
 import numpy as np
-from bootstrapping_olympics.interfaces.agent import BasicAgent
-
 
 
 __all__ = ['EstStatsTh']
@@ -21,6 +16,8 @@ class EstStatsTh(BasicAgent, LearningAgent):
         # TODO: check float
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 2D signals.')
+
+        from astatsa.expectation import Expectation
 
         self.yy = Expectation()
         self.ylogy = Expectation()
@@ -61,12 +58,8 @@ class EstStatsTh(BasicAgent, LearningAgent):
                 
         return LearnSink(self)
         
-    def update(self, y, dt=1.0):
-        n = y.size
-#         # XXX
-#         which = np.array(range(y.size)) < 100
-#         y[which] = (y * y)[which]
-        
+    def update(self, y):
+        from astatsa.utils import outer
         z = y == 0
         y[z] = 0.5
         yy = outer(y, y)

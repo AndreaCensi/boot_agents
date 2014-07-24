@@ -1,8 +1,5 @@
-from boot_agents.utils import ImageStats
-from bootstrapping_olympics import UnsupportedSpec
-from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
-from blocks.interface import Sink
-from blocks.library.timed.checks import check_timed_named
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent, UnsupportedSpec
 
 __all__ = ['EstStats2D']
 
@@ -17,6 +14,8 @@ class EstStats2D(BasicAgent, LearningAgent):
         # TODO: check float
         if len(boot_spec.get_observations().shape()) != 2:
             raise UnsupportedSpec('I assume 2D signals.')
+
+        from boot_agents.utils import ImageStats
 
         self.y_stats = ImageStats()
 
@@ -37,7 +36,7 @@ class EstStats2D(BasicAgent, LearningAgent):
                     raise ValueError(msg)
                 
                 if signal == 'observations':
-                    self.y_stats.update(obs, dt=1.0)
+                    self.y_stats.update(obs.astype('float64'), dt=1.0)
                 
         return LearnSink(self.y_stats)
         

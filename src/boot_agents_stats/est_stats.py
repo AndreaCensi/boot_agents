@@ -1,10 +1,7 @@
-from boot_agents.utils import MeanCovariance, cov2corr
-from bootstrapping_olympics import UnsupportedSpec
-import numpy as np
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent, UnsupportedSpec
 from reprep.plot_utils import style_ieee_fullcol_xy
-from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
-from blocks.library.timed.checks import check_timed_named
-from blocks.interface import Sink
+import numpy as np
 
 
 __all__ = ['EstStats']
@@ -19,6 +16,8 @@ class EstStats(BasicAgent, LearningAgent):
     def init(self, boot_spec):
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 1D signals.')
+
+        from boot_agents.utils import MeanCovariance, cov2corr
 
         self.y_stats = MeanCovariance()
 
@@ -40,7 +39,7 @@ class EstStats(BasicAgent, LearningAgent):
                     raise ValueError(msg)
                 
                 if signal == 'observations':
-                    self.y_stats.update(obs, dt=1.0)
+                    self.y_stats.update(obs.astype('float64'), dt=1.0)
                 
         return LearnSink(self.y_stats)
     
@@ -98,6 +97,8 @@ class EstStats(BasicAgent, LearningAgent):
         pub.array_as_image('Ry0', Ry0, caption='corr(y) - no diagonal')
 
         pub.array_as_image('Py_inv', Py_inv)
+        from boot_agents.utils import cov2corr
+
         pub.array_as_image('Py_inv_n', cov2corr(Py_inv))
 
         with pub.plot('Py_svd') as pylab:  # XXX: use spectrum

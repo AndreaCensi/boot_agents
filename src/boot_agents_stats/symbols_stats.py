@@ -1,12 +1,9 @@
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent
 from contracts import contract
-
-from geometry import mds, euclidean_distances
-import numpy as np
+from geometry import euclidean_distances, mds
 from streamels import UnsupportedSpec, ValueFormats
-
-from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
-from blocks.library.timed.checks import check_timed_named
-from blocks.interface import Sink
+import numpy as np
 
 
 __all__ = ['SymbolsStats']

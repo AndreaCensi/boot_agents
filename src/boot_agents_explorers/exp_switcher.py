@@ -1,5 +1,5 @@
-from blocks.library.simple.instantaneous import Instantaneous
-from blocks.library.timed.checks import check_timed_named
+from blocks.library import Instantaneous
+from blocks import  check_timed_named
 from bootstrapping_olympics import BasicAgent, ExploringAgent, ServoingAgent
 import numpy as np
 
@@ -60,6 +60,7 @@ class ExpSwitcher(BasicAgent, ExploringAgent, ServoingAgent):
             
             def reset(self):
                 Instantaneous.reset(self)
+                self.agent.last_timestamp = None
 
             def transform_value(self, value):
                 check_timed_named(value)
@@ -71,7 +72,7 @@ class ExpSwitcher(BasicAgent, ExploringAgent, ServoingAgent):
                 cmd = self.agent.choose_commands(timestamp)
                 return timestamp, ('commands', cmd)
             
-        return ExpSwitcherExplorer(self.boot_spec) 
+        return ExpSwitcherExplorer(self) 
     
 
     def get_servo_system(self):

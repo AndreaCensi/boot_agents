@@ -1,7 +1,6 @@
+from blocks import Sink, check_timed_named
+from bootstrapping_olympics import BasicAgent, LearningAgent
 from collections import defaultdict
-from bootstrapping_olympics.interfaces.agent import LearningAgent, BasicAgent
-from blocks.interface import Sink
-from blocks.library.timed.checks import check_timed_named
 
 __all__ = ['CmdStats']
 
@@ -34,7 +33,6 @@ class CmdStats(BasicAgent, LearningAgent):
         self.episodes = defaultdict(CommandStatistics)
 
 
-
     def get_learner_as_sink(self):
         class LearnSink(Sink):
             def __init__(self, cmd_stats):
@@ -51,7 +49,7 @@ class CmdStats(BasicAgent, LearningAgent):
                 if signal == 'commands':
                     self.cmd_stats.update(x)
                 
-        return LearnSink()
+        return LearnSink(self)
     
     
     def update(self, x):
