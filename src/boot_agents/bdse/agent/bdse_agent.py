@@ -3,7 +3,7 @@ from .misc_statistics import MiscStatistics
 from .servo import BDSEServoInterface
 from boot_agents.bdse.model import BDSEEstimatorInterface
 from boot_agents.utils import DerivativeBox, MeanCovariance, RemoveDoubles
-from bootstrapping_olympics import (BasicAgent, ExploringAgent, LearningAgent, 
+from bootstrapping_olympics import (BasicAgent, LearningAgent, 
     PredictingAgent, ServoingAgent, UnsupportedSpec, get_boot_config)
 from conf_tools import instantiate_spec
 from contracts import contract, describe_type
@@ -14,8 +14,10 @@ from contracts import contract, describe_type
 __all__ = ['BDSEAgent']
 
 
-class BDSEAgent(BasicAgent, ExploringAgent, ServoingAgent,
-                LearningAgent, PredictingAgent):
+class BDSEAgent(BasicAgent, 
+                ServoingAgent,
+                LearningAgent, 
+                PredictingAgent):
     '''
         An agent that uses a BDS model.
     '''
@@ -53,7 +55,6 @@ class BDSEAgent(BasicAgent, ExploringAgent, ServoingAgent,
                    % describe_type(self.estimator))
             raise ValueError(msg)
 
-    
         self.y_stats = MeanCovariance()
 
         self.explorer.init(boot_spec)

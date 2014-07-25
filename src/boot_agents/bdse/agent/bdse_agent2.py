@@ -66,7 +66,6 @@ class BDSEAgent2(BasicAgent, ExploringAgent,
                    % describe_type(self.estimator))
             raise ValueError(msg)
 
-
         self.y_stats = MeanCovariance()
 
         self.explorer.init(boot_spec)
