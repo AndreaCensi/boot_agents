@@ -11,25 +11,20 @@ from .simple_stats import *
 from .geometry import *
 from .robustness import *
 from .recursive import *
-
-from .bdse import *
-from .bgds import *
-from .bgds_agents import *
+from .deriv import *
+#from boot_agents_bdse import *
+#from boot_agents_bgds import *
 
 def jobs_comptests(context):
-    from pkg_resources import resource_filename  # @UnresolvedImport
-    dirname = resource_filename("boot_agents", "configs")
-
-    from bootstrapping_olympics import get_boot_config
-    from comptests import jobs_registrar
-
-    boot_config = get_boot_config()
-    boot_config.load(dirname)
+    from conf_tools import GlobalConfig
+    GlobalConfig.global_load_dirs(['boot_agents.configs'])
 
     # unittests for boot olympics
     import bootstrapping_olympics.unittests
-    j1 = jobs_registrar(context, boot_config)
 
-    return j1
+    # instance    
+    from comptests import jobs_registrar
+    from bootstrapping_olympics import get_boot_config
+    jobs_registrar(context, get_boot_config())
 
 

@@ -103,3 +103,11 @@
         # scales: [0.0, 1.0, 4.0]
 
 
+- id: deriv_agent_dummy
+  desc: "Dummy version of deriv agent"
+  code:
+  - boot_agents.DerivAgentDummy
+  - {}
+
+  
+

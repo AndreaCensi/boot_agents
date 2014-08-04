@@ -1,0 +1,28 @@
+# TODO: other parameters
+# antisym_T=False, antisym_M=False,
+# use_P_scaling=False, invalid_P_threshold=None)
+
+- id: bdse_estimator_base_rc0
+  desc: "The simplest estimator"
+  code:
+  - bdse.BDSEEstimator
+  - rcond: 0
+
+- id: bdse_estimator_base_rc05
+  desc: "The simplest estimator"
+  code:
+  - bdse.BDSEEstimator
+  - rcond: 0.00001
+
+- id: bdse_estimator_robust_rc0
+  desc: "Robustified estimator"
+  code:
+  - bdse.BDSEEstimatorRobust
+  - rcond: 0
+
+- id: bdse_estimator_robust_rc05
+  desc: "Robustified estimator"
+  code:
+  - bdse.BDSEEstimatorRobust
+  - rcond: 0.00001
+

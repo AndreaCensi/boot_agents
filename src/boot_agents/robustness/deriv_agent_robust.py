@@ -4,7 +4,6 @@ from bootstrapping_olympics import (BasicAgent, LearningAgent,
     get_conftools_agents)
 from conf_tools import instantiate_spec
 from contracts import contract
-import warnings
 
 
 

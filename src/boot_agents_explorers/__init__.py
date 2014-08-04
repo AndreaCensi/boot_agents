@@ -3,18 +3,13 @@ from .canonical_commands_agents import *
 
 
 def jobs_comptests(context):
-    from pkg_resources import resource_filename  # @UnresolvedImport
-    dirname = resource_filename("boot_agents_explorers", "configs")
-
-    from bootstrapping_olympics import get_boot_config
-    from comptests import jobs_registrar
-
-    boot_config = get_boot_config()
-    boot_config.load(dirname)
+    from conf_tools import GlobalConfig
+    GlobalConfig.global_load_dirs(['boot_agents_explorers.configs'])
 
     # unittests for boot olympics
     import bootstrapping_olympics.unittests
-    j1 = jobs_registrar(context, boot_config)
-
-    return j1
+    
+    from comptests import jobs_registrar
+    from bootstrapping_olympics import get_boot_config
+    jobs_registrar(context, get_boot_config())
 

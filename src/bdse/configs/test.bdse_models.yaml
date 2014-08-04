@@ -1,0 +1,44 @@
+- id: zero31
+  desc: ""
+  code: 
+  - bdse.bdse_zero
+  - n: 3
+    k: 1
+
+- id: rand21
+  desc: ""
+  code: 
+  - bdse.bdse_random
+  - n: 2
+    k: 1
+
+- id: rand32
+  desc: ""
+  code: 
+  - bdse.bdse_random
+  - n: 3
+    k: 2
+
+- id: indip1
+  desc: ""
+  code: 
+  - bdse.bdse_ex_one_command_indip
+  - n: 1
+    k: 1
+
+- id: indip3
+  desc: ""
+  code: 
+  - bdse.bdse_ex_one_command_indip
+  - n: 3
+    k: 3
+
+- id: indip_3_1
+  desc: ""
+  code: 
+  - bdse.bdse_ex_one_command_indip
+  - n: 3
+    k: 1
+
+
+
