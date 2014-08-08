@@ -1,10 +1,9 @@
 """ Algebra of BDS tensors """
+from astatsa.utils import formatm
 from contracts import contract
-from geometry.formatting import formatm # XXX
 from numpy.linalg.linalg import LinAlgError
 import numpy as np
 import warnings
-
 
 
 @contract(M='array[NxNxK]', P='array[NxN]', Q='array[KxK]', returns='array[NxNxK]')

@@ -1,5 +1,3 @@
-from bootstrapping_olympics import Publisher
-
 from astatsa.expectation import Expectation, ExpectationFast
 from bootstrapping_olympics.utils import PredictionStats
 
@@ -23,7 +21,5 @@ from .gradients import *
 
 from .image_stats import *
 
-
-# from .nonparametric_test import *
 from .gradients_test import *
 from astatsa.mean_covariance.cov2corr_imp import cov2corr

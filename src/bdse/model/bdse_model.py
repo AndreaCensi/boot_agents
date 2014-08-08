@@ -1,8 +1,7 @@
 from .bdse_tensors import get_expected_T_from_M_P_Q
+from astatsa.utils import check_matrix_finite, expect_shape, formatm
 from contracts import contract
-from geometry import formatm
 import numpy as np
-from astatsa.utils import expect_shape, check_matrix_finite
         
 
 __all__ = ['BDSEmodel']

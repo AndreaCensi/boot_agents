@@ -1,20 +1,20 @@
-from blocks import SimpleBlackBox
-from blocks.library import Identity, Route, SampledDerivInst, WrapTMfromT
+from blocks import SimpleBlackBox, series
+from blocks.library import (CollectSignals, Identity, InstantaneousTF, Route, 
+    SampledDerivInst, SyncRep, WrapTMfromT)
 from contracts import contract
-from blocks.composition import series
-from blocks.library.timed_named.collect import CollectSignals
-from blocks.library.simple.instantaneous import InstantaneousTF
-from blocks.library.timed.checks import check_timed_named, check_timed
 from contracts.utils import check_isinstance
+from blocks.library.simple.info import Info
 
 __all__ = [
     'get_sync_deriv_box',
 ]
 
 @contract(returns=SimpleBlackBox)
-def get_sync_deriv_box(y_name='y', 
-                       u_name='u', 
-                       out_name='y_u'):
+def get_sync_deriv_box(
+#                        y_name='y', 
+#                        u_name='u', 
+#                        out_name='y_u',
+                       ):
     """ 
         Returns a black box that takes as input:
     
@@ -25,20 +25,22 @@ def get_sync_deriv_box(y_name='y',
         
             y_u = dict(y=..., u=...)
     """ 
-    deriv = WrapTMfromT(SampledDerivInst())
-    
-    r = Route([
-          # pass u through
-           ({'u':'u'}, Identity(), {'u':'u'}),
-          # pass y through
-          #({'y':'y'}, Identity(), {'y':'y'}),
-          # derivative 
-          ({'y':'y'}, deriv, {'y':'y_y_dot'}),
-        ])
-    
-    rs = series(r, 
-                CollectSignals(['u', 'y_y_dot'], error_if_incomplete=True), 
-                InstantaneousTF(repack))
+    rs = series(
+            SyncRep(master='y'),
+            Info('after-sync-rep'),     
+            Route([
+              # pass u through
+               ({'u':'u'}, Identity(), {'u':'u'}),
+              # pass y through
+              #({'y':'y'}, Identity(), {'y':'y'}),
+              # derivative 
+              ({'y':'y'}, 
+                WrapTMfromT(SampledDerivInst()), 
+               {'y':'y_y_dot'}),
+            ]),
+            CollectSignals(['u', 'y_y_dot'], ignore_if_incomplete=True), 
+            InstantaneousTF(repack),
+        )
 
     return rs
 

@@ -1,9 +1,8 @@
-from contracts import contract
-
 from astatsa.mean_covariance import MeanCovariance as MeanCovarianceBase
-from boot_agents.misc_utils import y_axis_positive, y_axis_extra_space
-import numpy as np
+from boot_agents.misc_utils import y_axis_extra_space, y_axis_positive
+from contracts import contract
 from reprep.plot_utils import style_ieee_fullcol_xy
+import numpy as np
 
 
 __all__ = ['MeanCovariance']

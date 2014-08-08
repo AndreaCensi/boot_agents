@@ -1,11 +1,11 @@
 from .generation import for_all_bdse_models, for_all_bdse_models_estimators
 from .simulate import BDSSimulator
 from bdse import BDSEEstimator, BDSEmodel
-import numpy as np
 from contracts.utils import check_isinstance
+import numpy as np
 
 @for_all_bdse_models
-def check_instantiation(id_model, model):
+def check_instantiation(id_model, model):  # @UnusedVariable
     check_isinstance(model, BDSEmodel)
 
 @for_all_bdse_models

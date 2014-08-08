@@ -16,6 +16,7 @@ from .deriv import *
 #from boot_agents_bgds import *
 
 def jobs_comptests(context):
+    # config
     from conf_tools import GlobalConfig
     GlobalConfig.global_load_dirs(['boot_agents.configs'])
 
