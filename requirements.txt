@@ -4,6 +4,7 @@
 -e git+https://github.com/AndreaCensi/comptests.git@env_fault#egg=comptests
 -e git+https://github.com/AndreaCensi/conf_tools.git@env_fault#egg=ConfTools
 -e git+https://github.com/AndreaCensi/system_cmd.git@env_fault#egg=SystemCmd
+-e git+https://github.com/AndreaCensi/rawlogs.git@env_fault#egg=rawlogs
 -e git+https://github.com/AndreaCensi/hdflogs.git@env_fault#egg=hdflogs
 
 -e git+https://github.com/AndreaCensi/boot_olympics.git@env_fault#egg=BootOlympics
