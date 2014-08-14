@@ -1,2 +1,10 @@
+-e git+https://github.com/AndreaCensi/contracts.git@env_fault#egg=PyContracts
+-e git+https://github.com/AndreaCensi/reprep.git@env_fault#egg=reprep
+-e git+https://github.com/AndreaCensi/compmake.git@env_fault#egg=compmake
+-e git+https://github.com/AndreaCensi/comptests.git@env_fault#egg=comptests
+-e git+https://github.com/AndreaCensi/conf_tools.git@env_fault#egg=ConfTools
+-e git+https://github.com/AndreaCensi/system_cmd.git@env_fault#egg=SystemCmd
+-e git+https://github.com/AndreaCensi/hdflogs.git@env_fault#egg=hdflogs
+
 -e git+https://github.com/AndreaCensi/boot_olympics.git@env_fault#egg=BootOlympics
 -e git+https://github.com/AndreaCensi/astatsa.git@env_fault#egg=astatsa
