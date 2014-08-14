@@ -1,10 +1,10 @@
-from .deriv_agent import DerivAgent
 from blocks import Sink
-from blocks.library import check_timed_named
+from blocks.library.timed.checks import check_timed_named
 from contracts.utils import check_isinstance
+from boot_agents.robustness.deriv_agent_robust import DerivAgentRobust
 
 __all__ = [
-    'DerivAgentDummy',
+    'DerivAgentRobustDummy',
 ]
 
 class DummySinkT(Sink):
@@ -15,14 +15,12 @@ class DummySinkT(Sink):
         (_, (_, x)) = value
         check_isinstance(x, dict)
         x['y']
-        x['y_dot']
         x['u']
+        x['y_dot']
+        x['w']
         
     
-class DerivAgentDummy(DerivAgent):
-
-    def init(self, boot_spec):
-        pass
+class DerivAgentRobustDummy(DerivAgentRobust):
  
-    def get_learner_u_y_y_dot(self):
+    def get_learner_u_y_y_dot_w(self):
         return DummySinkT()

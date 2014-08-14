@@ -1,14 +1,14 @@
 from .sync_box import get_sync_deriv_box
 from abc import abstractmethod
 from blocks import Sink, series
-from bootstrapping_olympics import LearningAgent
+from bootstrapping_olympics import BasicAgent, LearningAgent
 from contracts import contract
 
 __all__ = [
     'DerivAgent',
 ]
 
-class DerivAgent(LearningAgent):
+class DerivAgent(BasicAgent, LearningAgent):
     """ 
         Base class for agents that learn by looking at sequences
         of (y, y_dot, u).

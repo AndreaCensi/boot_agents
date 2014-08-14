@@ -1,14 +1,14 @@
 from abc import abstractmethod
-from boot_agents.utils import DerivativeBox, RemoveDoubles
-from bootstrapping_olympics import (BasicAgent, LearningAgent, 
-    get_conftools_agents)
+from blocks import check_timed_named, series
+from blocks.library import Instantaneous
+from boot_agents.deriv.sync_box import get_sync_deriv_box
+from bootstrapping_olympics import BasicAgent, LearningAgent
 from conf_tools import instantiate_spec
-from contracts import contract
+from contracts import check_isinstance, contract
 
-
-
-__all__ = ['DerivAgentRobust']
-
+__all__ = [
+    'DerivAgentRobust',
+]
 
 class DerivAgentRobust(BasicAgent, LearningAgent):
     """ 
@@ -16,60 +16,44 @@ class DerivAgentRobust(BasicAgent, LearningAgent):
         and knows how to compute the importance 
     """
     
-    @contract(importance='code_spec',
-              explorer='str|code_spec|isinstance(ExploringAgent)')
-    def __init__(self, importance, explorer):
+    @contract(importance='code_spec')
+    def __init__(self, importance):
         """ importance: spec to instantiate """
         self.importance = instantiate_spec(importance)
-        _, self.explorer = get_conftools_agents().instance_smarter(explorer)  
-        self.y_deriv = DerivativeBox()
-        self.rd = RemoveDoubles(0.5)  # XXX
         self.count = 0
         
     def init(self, boot_spec):
-        self.explorer.init(boot_spec)
-        self.boot_spec = boot_spec
-        self.commands_spec = boot_spec.get_commands()
-
-    def process_observations(self, obs):
-        dt = float(obs['dt'])
-        u = obs['commands']
-        y0 = obs['observations']
-        episode_start = obs['episode_start']
-        self.count += 1 
-        self.rd.update(y0)
-        if not self.rd.ready():
-            return
-
-        if episode_start:
-            self.y_deriv.reset()
-            return
-
-        self.y_deriv.update(y0, dt)
-
-        if not self.y_deriv.ready():
-            return
-
-        y_sync, y_dot_sync = self.y_deriv.get_value()
-
-        y_dot = y_dot_sync.astype('float32')
-        y = y_sync.astype('float32')
-        u = u.astype('float32')
-        
-        w = self.importance.get_importance(y, y_dot).astype('float32')
-        
-        self.process_observations_robust(y=y, y_dot=y_dot, u=u, w=w)
-
-        self.last_y = y_sync
-
-    @abstractmethod    
-    def process_observations_robust(self, y, y_dot, u, w):
+        # TODO: check
         pass
-    
+
+    def get_learner_as_sink(self):
+        sink1 = self.get_learner_u_y_y_dot_w()
+        
+        class ComputeImportance(Instantaneous):
+            def __init__(self, importance):
+                self.importance = importance
+            def transform_value(self, value):
+                check_timed_named(value)
+                _, (_, v) = value 
+                check_isinstance(v, dict)
+                y = v['y']
+                y_dot = v['y_dot']            
+                w = self.importance.get_importance(y, y_dot).astype('float32')
+                u = v['u']
+                return dict(u=u,y=y,y_dot=y_dot,w=w)
+            
+        compute_importance = ComputeImportance(self.importance)
+        return series(get_sync_deriv_box(), compute_importance, sink1)
+
+
+    @abstractmethod
+    def get_learner_u_y_y_dot_w(self):
+        """ 
+            Returns a Sink that receives dictionaries
+            dict(y=..., y_dot=..., u=..., w=)
+        """
+
     def publish(self, pub):
         with pub.subsection('importance') as sub:
             if sub:
                 self.importance.publish(sub)
-
-    def choose_commands(self):
-        return self.explorer.choose_commands()

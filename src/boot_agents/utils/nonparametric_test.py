@@ -1,11 +1,7 @@
-from boot_agents.utils import scale_score, check_scale_score
-from bootstrapping_olympics.utils import assert_allclose
-import numpy as np
-from boot_agents.utils import scale_score_scipy
+from boot_agents.utils import check_scale_score, scale_score, scale_score_scipy
+from bootstrapping_olympics.utils import InAWhile, assert_allclose
 import itertools
-from bootstrapping_olympics.utils.in_a_while import InAWhile
-
-
+import numpy as np
 
 
 algos = {

@@ -12,53 +12,9 @@
 # - id: test_bdsagent
 #   desc: "Dev. version"
 #   code:
-#       - boot_agents.BDSAgent
+#       - boot_agents_bdse.BDSAgent
 #       - beta: 1
 #         change_fraction: 0.5
-
-
-- id: "test_bdser_er2_i1_sr"
-  desc: "BDSE agent robust, antisym, servo robust L1"
-  code:
-  - boot_agents.BDSEAgentRobust
-  - explorer: test_expswitchercan_b1
-    estimator: 
-    - boot_agents.BDSEEstimatorRobust
-    - rcond: 0.0001
-      antisym_T: true    
-      antisym_M: false
-    importance: 
-    - boot_agents.Importance
-    - max_y_dot: 0.1
-      max_gy: 1000 # this does not penalizes gradients
-      min_y: 0
-      max_y: 1
-    servo: 
-    - boot_agents.BDSEServoRobust # XXX
-    - gain: 0.1
-
-
-- id: test_bdsesagent2
-  desc: A BDS agent that decouples the computation of derivative
-  code:
-  - boot_agents.BDSEAgent2
-  - explorer: test_expswitchercan_b1
-    estimator: 
-    - boot_agents.BDSEEstimator
-    - rcond: 0.0001
-      antisym_T: true    
-      antisym_M: false
-    servo: 
-    - boot_agents.BDSEServo # XXX
-    - gain: 0.1
-
-- id: test_bdseagent2_complete
-  desc: ...
-  code:
-  - bootstrapping_olympics.library.agents.NuisanceAgent
-  - agent: test_bdsesagent2
-    nuisances: 
-    - dderivative
 
 
 - id: test_embed_b1
@@ -104,9 +60,16 @@
 
 
 - id: deriv_agent_dummy
-  desc: "Dummy version of deriv agent"
+  desc: "Dummy version of DerivAgent"
   code:
   - boot_agents.DerivAgentDummy
+  - {}
+
+  
+- id: deriv_agent_robust_dummy
+  desc: "Dummy version of DerivAgentRobust"
+  code:
+  - boot_agents.DerivAgentRobustDummy
   - {}
 
   

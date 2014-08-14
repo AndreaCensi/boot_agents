@@ -1,3 +1,9 @@
+from .bds_robot import *
+from .bdse_agent import *
+from .bdse_agent2 import *
+from .bdse_agent_robust import *
+from .bdse_predictor import *
+from .servo import *
 
 def jobs_comptests(context):
     from conf_tools import GlobalConfig

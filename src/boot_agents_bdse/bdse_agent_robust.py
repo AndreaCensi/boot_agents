@@ -1,22 +1,21 @@
-from boot_agents_bdse.bdse_predictor import BDSEPredictor
+from .bdse_predictor import BDSEPredictor
 from .servo import BDSEServoInterface
-from boot_agents.bdse import BDSEEstimatorInterface
-from boot_agents.robustness import DerivAgentRobust
-from bootstrapping_olympics import (ExploringAgent, PredictingAgent, 
-    ServoingAgent, UnsupportedSpec)
+from bdse import BDSEEstimatorInterface
+from blocks import Sink, check_timed_named
+from boot_agents import DerivAgentRobust
+from bootstrapping_olympics import (PredictingAgent, ServoingAgent, 
+    UnsupportedSpec)
 from conf_tools import instantiate_spec
-from contracts import contract, describe_type
+from contracts import check_isinstance, contract, describe_type
 
-
-
-
-__all__ = ['BDSEAgentRobust']
+__all__ = [
+    'BDSEAgentRobust',
+]
 
 
 class BDSEAgentRobust(DerivAgentRobust,
                       ServoingAgent,
-                      PredictingAgent,
-                      ExploringAgent):
+                      PredictingAgent):
     
     @contract(servo='code_spec', estimator='code_spec')
     def __init__(self, servo, estimator, **others):
@@ -42,9 +41,34 @@ class BDSEAgentRobust(DerivAgentRobust,
     def state_vars(self):
         return ['estimator']
 
-    def process_observations_robust(self, y, y_dot, u, w):
-        self.estimator.update(y=y, y_dot=y_dot, u=u, w=w)
+    def get_learner_u_y_y_dot_w(self):
+         
+        class MySink(Sink):
+            def __init__(self, agent):
+                self.agent = agent
+            def reset(self):
+                pass
+            def put(self, value, block=False, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                (_, (name, x)) = value  # @UnusedVariable
+                check_isinstance(x, dict)
+                
+                y = x['y_dot']
+                y_dot = x['y']
+                u = x['u']
+                w = x['w']
+                
+                u=u.astype('float32')
+                y=y.astype('float32')
+                y_dot=y_dot.astype('float32')
+                
+                self.agent.estimator.update(u=u, y=y,y_dot=y_dot, w=w)
+
+        return MySink(self) 
      
+    def get_servo_system(self):
+        raise NotImplementedError()
+    
     def publish(self, pub):
         with pub.subsection('estimator') as sub:
             if sub:
