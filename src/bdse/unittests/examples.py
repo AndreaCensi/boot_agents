@@ -37,13 +37,15 @@ def check_learning(id_model, model, id_estimator, estimator):
 
     #    nsteps = 1
     #    nstart = 50000
-    nsteps = 1
-    nstart = 50000
+    nsteps = 100
+    nstart = 5
     #    nstart = 5000000
     dt = 0.1
     count = 0
+    print estimator
+    print estimator.update
     for _ in range(nstart):
-        for  y, u, y_dot in simulator.get_simulation(nsteps, dt):
+        for y, u, y_dot in simulator.get_simulation(nsteps, dt):
             # printm('u', u)
             estimator.update(y, u, y_dot)
             count += 1
