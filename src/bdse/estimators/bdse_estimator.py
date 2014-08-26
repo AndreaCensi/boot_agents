@@ -1,7 +1,6 @@
 from .interface import BDSEEstimatorInterface
 from astatsa.expectation import Expectation
 from astatsa.expectation_weighted import ExpectationWeighted
-from astatsa.mean_covariance import MeanCovariance
 from astatsa.utils import assert_allclose, check_matrix_finite, outer
 from bdse import (BDSEmodel, get_M_from_P_T_Q, get_M_from_P_T_Q_alt, 
     get_M_from_P_T_Q_alt_scaling, get_M_from_Pinv_T_Q)
@@ -11,6 +10,7 @@ from numpy.linalg.linalg import LinAlgError
 import numpy as np
 import traceback
 import warnings
+from boot_agents.utils.mean_covariance import MeanCovariance as MeanCovariancePlus
 
 __all__ = [
     'BDSEEstimator',
@@ -49,12 +49,10 @@ class BDSEEstimator(BDSEEstimatorInterface):
         self.info('use_P_scaling: %s' % use_P_scaling)
         self.info('discard_P_threshold: %s' % invalid_P_threshold)
 
-        
-
         self.T = Expectation()
         self.U = Expectation()
-        self.y_stats = MeanCovariance()
-        self.u_stats = MeanCovariance()
+        self.y_stats = MeanCovariancePlus()
+        self.u_stats = MeanCovariancePlus()
         self.nsamples = 0
         self.once = False
         

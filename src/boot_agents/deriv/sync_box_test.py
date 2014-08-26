@@ -60,6 +60,9 @@ class SyncBoxTest(BlocksTest):
             (6.0, ('y_u', dict(y=14.0, y_dot=+0.0, u=6.0))),
         ]
         
-        bbox = get_sync_deriv_box()
+        bbox = get_sync_deriv_box(
+                                  y_name='y', 
+                                  u_name='u', 
+                                  out_name='y_u')
 
         self.check_bbox_results(bbox, data, expected)
