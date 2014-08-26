@@ -33,11 +33,14 @@ class BDSEEstimatorRobust(BDSEEstimator):
     @contract(u='array[K],K>0,finite',
               y='array[N],N>0,finite',
               y_dot='array[N],finite',
-              w='array[N]')
-    def update(self, y, u, y_dot, w):
+              w='None|array[N]')
+    def update(self, y, u, y_dot, w=None):
         check_matrix_finite('y', y)
         check_matrix_finite('y_dot', y_dot)
         check_matrix_finite('u', u)
+        
+        if w is None:
+            w = np.ones(y.shape)
         check_matrix_finite('w', w)
         
         self.once = True

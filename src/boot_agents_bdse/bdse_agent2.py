@@ -8,24 +8,12 @@ from boot_agents.utils import MeanCovariance
 from bootstrapping_olympics import (PredictingAgent, ServoingAgent, 
     UnsupportedSpec)
 from conf_tools import instantiate_spec
-from contracts import check_isinstance, contract, describe_type
+from contracts import check_isinstance, contract
 
 
 __all__ = [
     'BDSEAgent2',
 ]
-
-# def check_composite_signal_and_deriv(stream_spec):
-#     """ Checks that this is a composite stream with 
-#         two components 'signal' and 'signal_deriv'. """
-#     if not isinstance(stream_spec, CompositeStreamSpec):
-#         msg = 'Expected composite, got %r' % stream_spec
-#         raise UnsupportedSpec(msg)
-#     comps = stream_spec.get_components()
-#     expected = ['signal', 'signal_deriv']
-#     if not set(comps) == set(expected):
-#         msg = 'Expected %s components, got %s.' % (set(comps), expected)
-#         raise UnsupportedSpec(msg)
 
 
 class BDSEAgent2(DerivAgent,  
@@ -43,6 +31,7 @@ class BDSEAgent2(DerivAgent,
         """
         self.servo = servo
         _, self.bdse_estimator = get_conftools_bdse_estimators().instance_smarter(estimator) 
+        check_isinstance(self.bdse_estimator, BDSEEstimatorInterface)
 
     def init(self, boot_spec):
         self.boot_spec = boot_spec
@@ -51,12 +40,6 @@ class BDSEAgent2(DerivAgent,
         if len(obs_spec.shape()) != 1:
             msg = 'This agent can only work with 1D signals, got %s.' % boot_spec
             raise UnsupportedSpec(msg)
-
-        self.bdse_estimator = instantiate_spec(self.estimator_spec)
-        if not isinstance(self.bdse_estimator, BDSEEstimatorInterface):
-            msg = ('Expected a BDSEEstimatorInterface, got %s'
-                   % describe_type(self.estimator))
-            raise ValueError(msg)
 
         self.y_stats = MeanCovariance()
 
@@ -102,7 +85,7 @@ class BDSEAgent2(DerivAgent,
         return MySync(self) 
 
     def display(self, report):
-        if not 'bdse_estimator' in self.__dict__:
+        if not 'boot_spec' in self.__dict__:
             report.text('warn', 'not init()ed yet: %s' % self.__dict__)
             return
         with report.subsection('estimator') as sub:
@@ -130,3 +113,16 @@ class BDSEAgent2(DerivAgent,
         self.bdse_estimator.merge(agent2.bdse_estimator)
 
 
+
+
+# def check_composite_signal_and_deriv(stream_spec):
+#     """ Checks that this is a composite stream with 
+#         two components 'signal' and 'signal_deriv'. """
+#     if not isinstance(stream_spec, CompositeStreamSpec):
+#         msg = 'Expected composite, got %r' % stream_spec
+#         raise UnsupportedSpec(msg)
+#     comps = stream_spec.get_components()
+#     expected = ['signal', 'signal_deriv']
+#     if not set(comps) == set(expected):
+#         msg = 'Expected %s components, got %s.' % (set(comps), expected)
+#         raise UnsupportedSpec(msg)

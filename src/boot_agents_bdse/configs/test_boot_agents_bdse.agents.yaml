@@ -19,7 +19,7 @@
     - gain: 0.1
 
 
-- id: test_bdsesagent2
+- id: test_bdseagent2
   desc: A BDS agent that decouples the computation of derivative
   code:
   - boot_agents_bdse.BDSEAgent2

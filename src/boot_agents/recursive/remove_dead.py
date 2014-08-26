@@ -1,7 +1,7 @@
-from blocks import SimpleBlackBox
-from boot_agents_explorers.exp_switcher import ExpSwitcher
+from blocks import SimpleBlackBox, Sink, check_timed_named
 from boot_agents.utils import MeanCovariance
 from boot_agents.utils.mean_covariance import get_odd_measurements
+from boot_agents_explorers.exp_switcher import ExpSwitcher
 from bootstrapping_olympics import (ExploringAgent, LearningAgent, 
     RepresentationNuisanceCausal, UnsupportedSpec)
 from bootstrapping_olympics.library.agents import MultiLevelBase
@@ -10,8 +10,9 @@ from bootstrapping_olympics.library.nuisances_causal import SimpleRNCObs
 from contracts import contract
 
 
-
-__all__ = ['RemoveDead']
+__all__ = [
+    'RemoveDead',
+]
 
 
 class RemoveDead(MultiLevelBase, LearningAgent, ExploringAgent):
@@ -46,8 +47,26 @@ class RemoveDead(MultiLevelBase, LearningAgent, ExploringAgent):
         expl = ExpSwitcher(beta=1)
         expl.init(self.boot_spec)
         return ExplorerAsSystem(agent=expl)
+    
+    def get_learner_as_sink(self):
+                
+        class RemoveDeadLearner(Sink):
+            def __init__(self, y_stats):
+                self.y_stats = y_stats
+            def reset(self):
+                pass
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                t, (signal, v) = value
+                if signal == 'observations':
+                    self.y_stats.update(v)
+                    
+        return RemoveDeadLearner(self.y_stats)
                                 
     # learning
+    def display(self, report):
+        with report.subsection('y_stats') as sub:
+            self.y_stats.publish(sub)
     
     def merge(self, other):
         self.y_stats.merge(other.y_stats)
