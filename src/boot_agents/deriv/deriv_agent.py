@@ -1,9 +1,8 @@
 from .sync_box import get_sync_deriv_box
 from abc import abstractmethod
-from blocks import Sink, series
+from blocks import Info, Sink, series
 from bootstrapping_olympics import BasicAgent, LearningAgent
 from contracts import contract
-from blocks.library.simple.info import Info
 
 __all__ = [
     'DerivAgent',

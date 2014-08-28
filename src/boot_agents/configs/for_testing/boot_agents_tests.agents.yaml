@@ -52,7 +52,7 @@
 - id: test_bgdsagent_C1
   desc: "Dev. version"
   code:
-      - boot_agents.BGDSAgent
+      - boot_agents_bgds.BGDSAgent
       - beta: 1
         skip: 1
         scales: [0.0, 1.0]

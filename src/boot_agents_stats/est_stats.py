@@ -12,12 +12,15 @@ class EstStats(BasicAgent, LearningAgent):
         A simple agent that estimates various statistics 
         of the observations. 
     '''
+    
+    def __init__(self):
+        pass
 
     def init(self, boot_spec):
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 1D signals.')
 
-        from boot_agents.utils import MeanCovariance, cov2corr
+        from boot_agents.utils import MeanCovariance
 
         self.y_stats = MeanCovariance()
 
