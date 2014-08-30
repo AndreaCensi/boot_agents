@@ -1,23 +1,24 @@
-from boot_agents.simple_stats import ExpSwitcher
+from blocks import Sink, check_timed_named
 from boot_agents.utils import DerivativeBox, MeanCovariance, scale_score
-from bootstrapping_olympics import LearningAgent, UnsupportedSpec
+from bootstrapping_olympics import BasicAgent, LearningAgent, UnsupportedSpec
+from contracts import contract
 from geometry import double_center, inner_product_embedding, mds
 from reprep.plot_utils import style_ieee_halfcol_xy
 import numpy as np
 
 
-__all__ = ['Embed']
+__all__ = [
+    'Embed',       
+]
 
 
-class Embed(ExpSwitcher, LearningAgent):
+class Embed(BasicAgent, LearningAgent):
 
-    def __init__(self, statistic='y_corr', scale_score=False, **kwargs):  # @UnusedVariable
-        ExpSwitcher.__init__(self, **kwargs)
+    def __init__(self, statistic='y_corr', scale_score=False):
         self.statistic = statistic
-        self.scale_score = False
+        self.scale_score = scale_score
 
     def init(self, boot_spec):
-        ExpSwitcher.init(self, boot_spec)
         if len(boot_spec.get_observations().shape()) != 1:
             raise UnsupportedSpec('I assume 1D signals.')
 
@@ -28,6 +29,14 @@ class Embed(ExpSwitcher, LearningAgent):
 
         self.count = 0
         self.y_deriv = DerivativeBox()
+        
+    def merge(self, other):
+        self.y_stats.merge(other.y_stats)
+        self.y_dot_stats.merge(other.y_dot_stats)
+        self.y_dot_sgn_stats.merge(other.y_dot_sgn_stats)
+        self.y_dot_abs_stats.merge(other.y_dot_abs_stats)
+        self.count += other.count
+        
 
     def get_similarity(self, which):
         if which == 'y_corr':
@@ -42,9 +51,27 @@ class Embed(ExpSwitcher, LearningAgent):
         raise ValueError()
         # check_contained(statistic, self.statistics, 'statistic')
 
-    def process_observations(self, obs):
-        y = obs['observations']
-        dt = obs['dt'].item()
+    def get_learner_as_sink(self):
+        
+        class LearnerSink(Sink):
+            
+            def __init__(self, agent):
+                self.agent = agent
+                
+            def reset(self):
+                pass
+            
+            def put(self, value, block=True, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                (_, (signal, v)) = value
+                if signal == 'observations': 
+                    self.agent.update(v)
+        
+        return LearnerSink(self)
+    
+    @contract(y='array')
+    def update(self,y):
+        dt = 1.0
 
         self.y_deriv.update(y, dt)
         if self.y_deriv.ready():

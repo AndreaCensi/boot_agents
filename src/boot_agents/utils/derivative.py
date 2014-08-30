@@ -1,7 +1,10 @@
-from . import Queue
 from contracts import contract 
+from .queue import Queue
 
-__all__ = ['DerivativeBox', 'DerivativeBox2']
+__all__ = [
+    'DerivativeBox', 
+    'DerivativeBox2',
+]
 
 
 class DerivativeBox():

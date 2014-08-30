@@ -3,7 +3,9 @@ from contracts import contract
 import numpy as np
 import warnings
 
-__all__ = ['ImageStats']
+__all__ = [
+    'ImageStats',
+]
 
 
 class ImageStats(object):

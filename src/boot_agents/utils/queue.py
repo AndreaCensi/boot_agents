@@ -1,6 +1,8 @@
 import numpy as np
 
-__all__ = ['Queue']
+__all__ = [
+    'Queue',
+]
 
 
 class Queue():

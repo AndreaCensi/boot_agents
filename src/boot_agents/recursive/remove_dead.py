@@ -1,9 +1,8 @@
-from blocks import SimpleBlackBox, Sink, check_timed_named
+from blocks import Sink, check_timed_named
 from boot_agents.utils import MeanCovariance
 from boot_agents.utils.mean_covariance import get_odd_measurements
-from boot_agents_explorers.exp_switcher import ExpSwitcher
-from bootstrapping_olympics import (ExploringAgent, LearningAgent, 
-    RepresentationNuisanceCausal, UnsupportedSpec)
+from bootstrapping_olympics import (LearningAgent, RepresentationNuisanceCausal, 
+    UnsupportedSpec)
 from bootstrapping_olympics.library.agents import MultiLevelBase
 from bootstrapping_olympics.library.nuisances import Select
 from bootstrapping_olympics.library.nuisances_causal import SimpleRNCObs
@@ -15,7 +14,7 @@ __all__ = [
 ]
 
 
-class RemoveDead(MultiLevelBase, LearningAgent, ExploringAgent):
+class RemoveDead(MultiLevelBase, LearningAgent):
     ''' 
         A filter module that removes dead sensels,
         as measured by how different their statistics are.
@@ -40,14 +39,13 @@ class RemoveDead(MultiLevelBase, LearningAgent, ExploringAgent):
     def set_state(self, state):
         self.y_stats = state['y_stats']
 
-    # ExploringAgent
-    @contract(returns=SimpleBlackBox)
-    def get_explorer(self):
-        from bootstrapping_olympics.interfaces.agent_misc import ExplorerAsSystem
-        expl = ExpSwitcher(beta=1)
-        expl.init(self.boot_spec)
-        return ExplorerAsSystem(agent=expl)
-    
+#     # ExploringAgent
+#     @contract(returns=SimpleBlackBox)
+#     def get_explorer(self):
+#         expl = ExpSwitcher(beta=1)
+#         expl.init(self.boot_spec)
+#         return expl.get_explorer()
+#     
     def get_learner_as_sink(self):
                 
         class RemoveDeadLearner(Sink):

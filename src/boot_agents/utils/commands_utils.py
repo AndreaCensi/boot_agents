@@ -1,12 +1,14 @@
-import itertools
-
-from contracts import contract
-
 from bootstrapping_olympics import StreamSpec
+from contracts import contract
+import itertools
 import numpy as np
 
 
-__all__ = ['RandomCanonicalCommand', 'RandomCommand', 'get_canonical_commands']
+__all__ = [
+    'RandomCanonicalCommand', 
+    'RandomCommand', 
+    'get_canonical_commands',
+]
 
 
 class RandomCanonicalCommand(object):

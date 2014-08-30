@@ -1,5 +1,4 @@
-from blocks.library import Instantaneous
-from blocks import  check_timed_named
+from blocks import Instantaneous, check_timed_named
 from bootstrapping_olympics import BasicAgent, ExploringAgent, ServoingAgent
 import numpy as np
 
@@ -28,7 +27,8 @@ class RandomSwitcher(object):
 
 
 class ExpSwitcher(BasicAgent, ExploringAgent, ServoingAgent):
-    ''' A simple agent that switches commands randomly according 
+    ''' 
+        A simple agent that switches commands randomly according 
         to an exponential distribution. 
         
         ``beta`` is the scale parameter; E{switch} = beta
