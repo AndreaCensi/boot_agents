@@ -23,8 +23,8 @@ class BDSEAgent2(DerivAgent,
         This agent needs to have pre-computed derivative.
     '''
 
-    @contract(servo='code_spec', estimator='str|code_spec')
-    def __init__(self, servo, estimator):
+    @contract(servo='None|code_spec', estimator='str|code_spec')
+    def __init__(self, estimator, servo=None):
         """
             :param servo: extra parameters for servo; if string, the ID of an agent.
                 
@@ -58,7 +58,7 @@ class BDSEAgent2(DerivAgent,
             dict(y=..., y_dot=..., u=...)
         """
         
-        class MySync(Sink):
+        class MySink(Sink):
             def __init__(self, agent):
                 self.agent = agent
             def reset(self):
@@ -82,7 +82,7 @@ class BDSEAgent2(DerivAgent,
                 self.agent.y_stats.update(y)
                 self.agent.stats.update(y, y_dot, u, 1.0)
 
-        return MySync(self) 
+        return MySink(self) 
 
     def display(self, report):
         if not 'boot_spec' in self.__dict__:

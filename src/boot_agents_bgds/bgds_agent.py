@@ -1,28 +1,23 @@
 from bgds import BGDSEstimator, BGDSPredictor, smooth2d
-from boot_agents.utils import DerivativeBox, Expectation, RemoveDoubles
-from bootstrapping_olympics import (BasicAgent, LearningAgent, PredictingAgent, 
-    ServoingAgent, UnsupportedSpec)
-from contracts import contract
+from blocks import Sink, check_timed_named
+from boot_agents.deriv.deriv_agent import DerivAgent
+from bootstrapping_olympics import (PredictingAgent, ServoingAgent, 
+    UnsupportedSpec)
+from contracts import check_isinstance, contract
 import numpy as np
 
 __all__ = ['BGDSAgent']
  
 
-class BGDSAgent(BasicAgent, LearningAgent, PredictingAgent, ServoingAgent):
+class BGDSAgent(DerivAgent, PredictingAgent, ServoingAgent):
     '''
-        Skip: only consider every $skip observations.
-        
         scales: list of floats, represents the scales at which the 
                 sensels are analyzed. 0=raw data, 1= convolved with sigma=1.
     '''
-    @contract(scales='list[>=1](number,>=0)')
-    def __init__(self, beta=None, skip=1, scales=[0], fixed_dt=0):
-        if beta is not None:
-            self.warn('Beta = %s is useless now.' % beta)
-        self.skip = skip
-        self.scales = scales
-        self.fixed_dt = fixed_dt
-
+    #@contract(scales='list[>=1](number,>=0)')
+    def __init__(self):
+        pass
+    
     def init(self, boot_spec):
         # TODO: do the 1D version
         shape = boot_spec.get_observations().shape()
@@ -40,96 +35,88 @@ class BGDSAgent(BasicAgent, LearningAgent, PredictingAgent, ServoingAgent):
         self.is1D = len(boot_spec.get_observations().shape()) == 1
 
         self.count = 0
-        self.y_deriv = DerivativeBox()
         self.bgds_estimator = BGDSEstimator()
 
-        self.model = None
-        self.y_disag = Expectation()
-        self.y_disag_s = Expectation()
-        self.u_stats = []
-        self.last_y0 = None
+#         self.model = None
+#         self.y_disag = Expectation()
+#         self.y_disag_s = Expectation()
+#         self.u_stats = []
+#         
         self.last_y = None
 
-        self.rd = RemoveDoubles(0.5)
+    
+    @contract(returns=Sink)
+    def get_learner_u_y_y_dot(self):
+        """ 
+            Returns a Sink that receives dictionaries
+            dict(y=..., y_dot=..., u=...)
+        """
+        
+        class MySink(Sink):
+            def __init__(self, agent):
+                self.agent = agent
+            def reset(self):
+                pass
+            def put(self, value, block=False, timeout=None):  # @UnusedVariable
+                check_timed_named(value)
+                (_, (name, x)) = value  # @UnusedVariable
+                check_isinstance(x, dict)
+                y = x['y_dot']
+                y_dot = x['y']
+                u = x['u']
+                
+                u=u.astype('float32')
+                y=y.astype('float32')
+                y_dot=y_dot.astype('float32')
+                
+                self.agent.update(u=u, y=y,y_dot=y_dot, w=1.0)
 
-    def process_observations(self, obs):
-        dt = float(obs['dt'])
-        u = obs['commands']
-        y0 = obs['observations']
-        episode_start = obs['episode_start']
-
-        self.count += 1
-        if self.count % self.skip != 0:
-            return
-
-        if self.fixed_dt:
-            # dt is not reliable sometime
-            # you don't want to give high weight to higher dt samples.
-            dt = 1  # XXX: add in constants
-
-        self.rd.update(y0)
-        if not self.rd.ready():
-            return
-
-        if self.is2D:
-            y = create_scales(y0, self.scales)
-        else:
-            y = y0
-
-        if episode_start:
-            self.y_deriv.reset()
-            return
-
-        self.y_deriv.update(y, dt)
-
-        if not self.y_deriv.ready():
-            return
-
-        y_sync, y_dot_sync = self.y_deriv.get_value()
-
+        return MySink(self) 
+    
+    def update(self, u, y, y_dot, w):
         self.bgds_estimator.update(u=u.astype('float32'),
-                                   y=y_sync.astype('float32'),
-                                   y_dot=y_dot_sync.astype('float32'),
-                                   dt=dt)
-        self.last_y0 = y0
+                                   y=y.astype('float32'),
+                                   y_dot=y_dot.astype('float32'),
+                                   dt=w)
         self.last_y = y
+        
+    
+    def merge(self, agent2):
+        assert isinstance(agent2, BGDSAgent)
+        self.bgds_estimator.merge(agent2.bgds_estimator)
 
         # TODO: implement this separately
     
-        if False: # and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
-            # TODO: do for 1D
-            if self.count % 200 == 0 or self.model is None:
-                self.info('Updating BGDS model.')
-                self.model = self.bgds_estimator.get_model()
-
-            gy = self.bgds_estimator.last_gy
-            y_dot_est = self.model.estimate_y_dot(y, u, gy=gy)
-            y_dot_corr = y_dot_est * y_dot_sync
-            self.y_disag.update(np.maximum(-y_dot_corr, 0))
-            self.y_disag_s.update(np.sign(y_dot_corr))
-
-            u_est = self.model.estimate_u(y, y_dot_sync, gy=gy)
-
-            data = {'u': u,
-                    'u_est': u_est,
-                    'timestamp': obs.time,
-                    'id_episode': obs.id_episode
-            }
-            self.u_stats.append(data)
+#         if False: # and self.is2D and self.count > MINIMUM_FOR_PREDICTION:
+#             # TODO: do for 1D
+#             if self.count % 200 == 0 or self.model is None:
+#                 self.info('Updating BGDS model.')
+#                 self.model = self.bgds_estimator.get_model()
+# 
+#             gy = self.bgds_estimator.last_gy
+#             y_dot_est = self.model.estimate_y_dot(y, u, gy=gy)
+#             y_dot_corr = y_dot_est * y_dot_sync
+#             self.y_disag.update(np.maximum(-y_dot_corr, 0))
+#             self.y_disag_s.update(np.sign(y_dot_corr))
+# 
+#             u_est = self.model.estimate_u(y, y_dot_sync, gy=gy)
+# 
+#             data = {'u': u,
+#                     'u_est': u_est,
+#                     'timestamp': obs.time,
+#                     'id_episode': obs.id_episode
+#             }
+#             self.u_stats.append(data)
 
 #          u_est = self.model.estimate_u(y, y_dot_sync, gy=self.bgds_estimator)
 #          self.u_stats.append()
 #            
     def publish(self, pub):
-        if self.count < 10:
-            self.info('Skipping publishing as count=%d' % self.count)
-            return
-
-        self.bgds_estimator.publish(pub.section('model'))
+        with pub.subsection('model')as sub:
+            self.bgds_estimator.publish(sub)
 
         if False and self.is2D:  # TODO: implement separately
             sec = pub.section('preprocessing')
-            sec.array_as_image('last_y0', self.last_y0, filter='scale')
             sec.array_as_image('last_y', self.last_y, filter='scale')
             example = np.zeros(self.last_y.shape)
             example.flat[150] = 1
@@ -228,18 +215,16 @@ class BGDSAgent(BasicAgent, LearningAgent, PredictingAgent, ServoingAgent):
                     x_axis_set(pylab, episode_bounds[0], episode_bounds[1])
 
     def get_predictor(self):
-        self.info('get_predictor() at count = %s (skip %d)' 
-                  % (self.count, self.skip))
         if self.count == 0:
             msg = 'No observation processed yet.'
             raise ValueError(msg)
         model = self.bgds_estimator.get_model()
         return BGDSPredictor(model)
 
-    def merge(self, agent2):
-        assert isinstance(agent2, BGDSAgent)
-        self.bgds_estimator.merge(agent2.bgds_estimator)
 
+    def get_servo_system(self):
+        # TODO: implement
+        raise NotImplementedError(type(self))
 
 
 def plot_with_colors(pylab,

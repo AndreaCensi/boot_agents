@@ -8,7 +8,13 @@ from .servo import *
 
 def jobs_comptests(context):
     from conf_tools import GlobalConfig
-    GlobalConfig.global_load_dirs(['boot_agents_bdse.configs'])
+    
+    config_dirs = [
+        'bootstrapping_olympics.configs',
+        'boot_agents_bdse.configs',
+        'bdse.configs',
+    ]
+    GlobalConfig.global_load_dirs(config_dirs)
 
     # unittests for boot olympics
     import bootstrapping_olympics.unittests

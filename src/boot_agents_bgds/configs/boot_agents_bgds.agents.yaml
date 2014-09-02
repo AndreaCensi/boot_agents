@@ -1,0 +1,6 @@
+
+- id: bgds
+  desc: A BGDS agent
+  code:
+  - boot_agents_bgds.BGDSAgent
+  - {}

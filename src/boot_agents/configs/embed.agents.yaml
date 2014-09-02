@@ -1,0 +1,57 @@
+- id: embed1a
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_corr
+    ndim: 1
+  
+- id: embed1b
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_corr
+    ndim: 1
+
+
+- id: embed1c
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_sgn_corr
+    ndim: 1
+
+
+- id: embed1d
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_abs_corr
+    ndim: 1
+
+- id: embed2a
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_corr
+    ndim: 2
+
+- id: embed2b
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_corr
+    ndim: 2
+
+- id: embed2c
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_sgn_corr
+    ndim: 2
+
+- id: embed2d
+  desc: "Dev. version"
+  code:
+  - boot_agents.Embed
+  - statistic: y_dot_abs_corr
+    ndim: 2

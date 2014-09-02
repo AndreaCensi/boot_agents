@@ -1,34 +1,11 @@
  
 
-# - id: test_diffeoagent2d_r1
-#   desc: "Dev. version (real)"
-#   code:
-#       - boot_agents.DiffeoAgent2Db
-#       - rate: 1
-#         delta: 0.29
-#         target_resolution: [50,50]
-#         ratios: [0.15, 0.03]
-        
-# - id: test_bdsagent
-#   desc: "Dev. version"
-#   code:
-#       - boot_agents_bdse.BDSAgent
-#       - beta: 1
-#         change_fraction: 0.5
-
-
-- id: test_embed_b1
-  desc: "Dev. version"
-  code:
-      - boot_agents.Embed
-      - beta: 1
-
+  
 - id: test_cond30
   desc: "Estimates the conditional distribution"
   code:
   - boot_agents.EstConditionalDistribution
-  - beta: 1
-    index: 0
+  - index: 0
 
 
 - id: test_remove_dead
@@ -52,12 +29,9 @@
 - id: test_bgdsagent_C1
   desc: "Dev. version"
   code:
-      - boot_agents_bgds.BGDSAgent
-      - beta: 1
-        skip: 1
-        scales: [0.0, 1.0]
-        # scales: [0.0, 1.0, 4.0]
-
+  - boot_agents_bgds.BGDSAgent
+  - {}
+  
 
 - id: deriv_agent_dummy
   desc: "Dummy version of DerivAgent"

@@ -5,7 +5,11 @@ from .bgds_agent_robust import *
 
 def jobs_comptests(context):
     from conf_tools import GlobalConfig
-    GlobalConfig.global_load_dirs(['boot_agents_bgds.configs'])
+    config_dirs = [
+        'bootstrapping_olympics.configs',
+        'boot_agents_bgds.configs',
+    ]
+    GlobalConfig.global_load_dirs(config_dirs)
 
     # unittests for boot olympics
     import bootstrapping_olympics.unittests

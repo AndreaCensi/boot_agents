@@ -14,8 +14,9 @@ __all__ = [
 
 class Embed(BasicAgent, LearningAgent):
 
-    def __init__(self, statistic='y_corr', scale_score=False):
+    def __init__(self, ndim=2, statistic='y_corr',  scale_score=False):
         self.statistic = statistic
+        self.ndim = ndim
         self.scale_score = scale_score
 
     def init(self, boot_spec):
@@ -48,8 +49,8 @@ class Embed(BasicAgent, LearningAgent):
         if which == 'y_dot_abs_corr':
             return self.y_dot_abs_stats.get_correlation()
 
-        raise ValueError()
-        # check_contained(statistic, self.statistics, 'statistic')
+        raise ValueError(which)
+        
 
     def get_learner_as_sink(self):
         
@@ -141,22 +142,34 @@ class Embed(BasicAgent, LearningAgent):
         pub.text('info', 'Using statistics: %s' % self.statistic)
 
         if False:  # TODO: make option
-            S = self.get_S_discrete(2, pub=pub.section('computation'))
+            S = self.get_S_discrete(self.ndim, pub=pub.section('computation'))
         else:
-            S = self.get_S(2, pub=pub.section('computation'))
+            S = self.get_S(self.ndim, pub=pub.section('computation'))
 
-        with pub.plot('S') as pylab:
-            style_ieee_halfcol_xy(pylab)
-            pylab.plot(S[0, :], S[1, :], 's')
 
-        with pub.plot('S_joined') as pylab:
-            style_ieee_halfcol_xy(pylab)
-            pylab.plot(S[0, :], S[1, :], '-')
-
-        self.y_stats.publish(pub.section('y_stats'))
-        self.y_dot_stats.publish(pub.section('y_dot_stats'))
-        self.y_dot_sgn_stats.publish(pub.section('y_dot_sgn_stats'))
-        self.y_dot_abs_stats.publish(pub.section('y_dot_abs_stats'))
+        if self.ndim == 2:
+    
+            with pub.plot('S') as pylab:
+                style_ieee_halfcol_xy(pylab)
+                pylab.plot(S[0, :], S[1, :], 's')
+    
+            with pub.plot('S_joined') as pylab:
+                style_ieee_halfcol_xy(pylab)
+                pylab.plot(S[0, :], S[1, :], '-')
+        
+        elif self.ndim == 1:
+            with pub.plot('S1') as pylab:
+                pylab.plot(range(S.size), S, '.')
+                pylab.xlabel('index')
+        else:
+            self.text('warning', 'Cannot plot dimension %r' % self.ndim)
+            
+                
+        with pub.subsection('sub') as sub:
+            self.y_stats.publish(sub.section('y_stats'))
+            self.y_dot_stats.publish(sub.section('y_dot_stats'))
+            self.y_dot_sgn_stats.publish(sub.section('y_dot_sgn_stats'))
+            self.y_dot_abs_stats.publish(sub.section('y_dot_abs_stats'))
 
 
 def discretize(M, w):
